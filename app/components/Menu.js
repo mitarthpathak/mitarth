@@ -42,8 +42,8 @@ export default function Menu() {
   };
 
   return (
-    <div 
-      className={`menu-wrapper ${isOpen ? "open" : ""} ${view === "contact" ? "contact-open" : ""}`} 
+    <div
+      className={`menu-wrapper ${isOpen ? "open" : ""} ${view === "contact" ? "contact-open" : ""}`}
       onClick={!isOpen ? toggleMenu : undefined}
     >
       <div className="menu-inner">
@@ -55,7 +55,7 @@ export default function Menu() {
           </div>
         ) : (
           <div className="menu-contact-view">
-            <h3 className="contact-header">HUH, you seriously wanna contact me?</h3>
+            <h3 className="contact-header">if you wanna contact me (ONLY IF)</h3>
             <ul className="contact-list">
               <li>Email: mpathak6207@gmail.com</li>
               <li>Mobile number: 9587507407</li>
