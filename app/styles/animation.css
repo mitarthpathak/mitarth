@@ -1,0 +1,136 @@
+/* ============================================================
+   MITARTH SIGNATURE ANIMATION
+   Separate animation stylesheet -- does NOT touch existing styles
+   ============================================================ */
+
+/* ---- Layout / Structural ---- */
+
+#sig-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 9999;
+  background: transparent;
+  pointer-events: none;
+}
+
+#sig-svg-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 45vmin;
+  height: 45vmin;
+  will-change: transform, top, width, height;
+}
+
+#sig-svg-wrap svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Phase 2: Signature move & shrink to header logo size */
+@keyframes sig-shrink-move {
+  from {
+    top: 50%;
+    width: 45vmin;
+    height: 45vmin;
+    transform: translate(-50%, -50%);
+  }
+  to {
+    top: 28px;
+    width: 22.5vmin;
+    height: 22.5vmin;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Page content: hidden during phase 1 */
+#sig-page-content {
+  opacity: 0;
+  will-change: opacity;
+}
+
+/* ---- SVG Path Base States (all paths start hidden) ---- */
+
+#stroke-m,
+#stroke-p,
+#stroke-athak,
+#stroke-underline {
+  stroke-dashoffset: var(--path-len, 9999);
+  stroke-dasharray: var(--path-len, 9999);
+}
+
+/* ---- Phase 1: Stroke Drawing Animations ---- */
+
+@keyframes draw-stroke {
+  from { stroke-dashoffset: var(--path-len, 9999); }
+  to   { stroke-dashoffset: 0; }
+}
+
+#stroke-m {
+  animation: draw-stroke 1.2s cubic-bezier(0.42, 0, 0.58, 1) 0s forwards;
+}
+
+#stroke-p {
+  animation: draw-stroke 1.0s cubic-bezier(0.42, 0, 0.58, 1) 1.2s forwards;
+}
+
+#stroke-athak {
+  animation: draw-stroke 2.3s cubic-bezier(0.42, 0, 0.58, 1) 2.2s forwards;
+}
+
+#stroke-underline {
+  animation: draw-stroke 0.18s cubic-bezier(0.4, 0, 0.2, 1) 4.3s forwards;
+}
+
+#sig-svg-wrap {
+  animation: sig-shrink-move 1s ease-in-out 4.7s forwards;
+}
+
+/* ---- Phase 2: Page content fade-in (starts at 5s) ---- */
+
+@keyframes content-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+#sig-page-content {
+  animation: content-fadein 1s ease-in-out 4.7s forwards;
+}
+
+
+
+/* ---- Responsive sizing ---- */
+
+@media (min-width: 1024px) {
+  #sig-svg-wrap  { width: 45vmin; height: 45vmin; }
+  #sig-header-logo { width: 15vmin; top: 28px; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  #sig-svg-wrap  { width: 50vmin; height: 50vmin; }
+  #sig-header-logo { width: 14vmin; top: 24px; }
+}
+
+@media (max-width: 767px) {
+  #sig-svg-wrap  { width: 56vmin; height: 56vmin; }
+  #sig-header-logo { width: 12vmin; top: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #stroke-m, #stroke-p, #stroke-athak, #stroke-underline {
+    stroke-dashoffset: 0 !important;
+    stroke-dasharray: none !important;
+    animation: none !important;
+  }
+  #sig-page-content {
+    animation: content-fadein 0.01s linear 0.5s forwards !important;
+  }
+  #sig-svg-wrap {
+    animation: sig-shrink-move 0.01s linear 0.5s forwards !important;
+  }
+}

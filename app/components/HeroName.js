@@ -1,51 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function HeroName() {
-  const line1 = ["N", "I", "T", "H", "I", "N"];
-  const space = " ";
-  const line1b = ["M"];
-  const line2 = ["W", "A", "R", "R", "I", "E", "R"];
+export default function HeroText({ text, size, globalDelay = 0 }) {
+  const isSmall = size === "small";
+  const defaultSize = "clamp(40px, 8vw, 130px)";
+  const smallSize = "clamp(32px, 4vw, 70px)";
+  const currentFontSize = isSmall ? smallSize : defaultSize;
 
   return (
-    <div className="hero-name-container">
-      <div className="hero-name-line">
-        <span style={{ display: "inline-block", overflow: "visible" }}>
-          {line1.map((letter, i) => (
-            <HeroLetter key={`l1-${i}`} letter={letter} />
-          ))}
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(60px, 15.8vw, 280px)",
-            lineHeight: "0.95",
-            display: "inline-block",
-            whiteSpace: "pre",
-          }}
-        >
-          {space}
-        </span>
-        <span style={{ display: "inline-block", overflow: "visible" }}>
-          {line1b.map((letter, i) => (
-            <HeroLetter key={`l1b-${i}`} letter={letter} />
-          ))}
-        </span>
-      </div>
-      <div className="hero-name-line">
-        <span style={{ display: "inline-block", overflow: "visible" }}>
-          {line2.map((letter, i) => (
-            <HeroLetter key={`l2-${i}`} letter={letter} />
-          ))}
-        </span>
-      </div>
+    <div className="hero-name" style={{ display: "flex", justifyContent: "center" }}>
+      {text.split("").map((letter, index) => {
+        if (letter === " ") {
+          return (
+            <span
+              key={index}
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: currentFontSize,
+                lineHeight: "0.95",
+                display: "inline-block",
+                whiteSpace: "pre",
+              }}
+            >
+              {" "}
+            </span>
+          );
+        }
+
+        return (
+          <HeroLetter 
+            key={index} 
+            letter={letter} 
+            fontSize={currentFontSize} 
+            index={index}
+            globalDelay={globalDelay}
+          />
+        );
+      })}
     </div>
   );
 }
 
-function HeroLetter({ letter }) {
+function HeroLetter({ letter, fontSize, index, globalDelay }) {
   const [hovered, setHovered] = useState(false);
+
+  useEffect(() => {
+    // Initial auto-hover ripple effect on load
+    const triggerTimer = setTimeout(() => {
+      setHovered(true);
+      // Reset hover state after 300ms to complete the "bounce"
+      setTimeout(() => {
+        setHovered(false);
+      }, 300);
+    }, globalDelay + (index * 60)); // 60ms between letters for a fast ripple
+    
+    return () => clearTimeout(triggerTimer);
+  }, [index, globalDelay]);
 
   return (
     <span
@@ -53,8 +64,12 @@ function HeroLetter({ letter }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
+        fontSize: fontSize,
         transform: hovered ? "translateY(-12px) scale(1.08)" : "translateY(0) scale(1)",
         color: hovered ? "var(--blue)" : "var(--dark)",
+        display: "inline-block",
+        transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        cursor: "default"
       }}
     >
       {letter}

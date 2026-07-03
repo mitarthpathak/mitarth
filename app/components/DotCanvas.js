@@ -53,7 +53,7 @@ export default function DotCanvas() {
       }
     };
 
-    canvas.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove);
 
     // Animation loop
     const animate = () => {
@@ -78,7 +78,7 @@ export default function DotCanvas() {
 
     return () => {
       window.removeEventListener("resize", resize);
-      canvas.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mousemove", handleMouseMove);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
