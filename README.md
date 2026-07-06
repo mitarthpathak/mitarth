@@ -1,2 +1,2 @@
 i am lazy 
-I'll write it later
+I'll write README later
