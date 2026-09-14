@@ -8,6 +8,7 @@ import ProjectImageCursor from "./components/ProjectImageCursor";
 import SplitText from "./components/SplitText";
 import VariableProximity from "./components/VariableProximity";
 import TiltedCard from "./components/TiltedCard";
+import TechStack from "./components/TechStack";
 
 const projects = [
   {
@@ -27,6 +28,24 @@ const projects = [
     variant: "serif",
     image: "/run-neeti.png",
     link: "https://run-neeti.vercel.app/",
+  },
+  {
+    year: "July 2026",
+    title: "DevTask",
+    type: "JWT-secured Task Management REST API",
+    mark: "D",
+    variant: "solid",
+    image: "/devtask.png",
+    link: "https://github.com/mitarthpathak/DevTask",
+  },
+  {
+    year: "August 2026",
+    title: "Yap-Render",
+    type: "Speech/Text to Indian Sign Language Translator",
+    mark: "Y",
+    variant: "script",
+    image: "/yap-render.png",
+    link: "https://yap-render.vercel.app/",
   },
 ];
 
@@ -330,6 +349,8 @@ export default function Home() {
             </div>
 
           </section>
+
+          <TechStack />
 
           <section id="projects-section" className="projects-section" aria-labelledby="projects-title">
             <div className="projects-intro">
