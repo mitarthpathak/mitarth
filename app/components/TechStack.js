@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SiTypescript, SiJavascript, SiHtml5, SiCss } from "react-icons/si";
+import { SiTypescript, SiJavascript, SiHtml5, SiCss, SiClaude } from "react-icons/si";
 import { FaJava } from "react-icons/fa6";
 
 const FILE_ICONS = {
@@ -116,9 +116,10 @@ const AGENT_CARDS = [
     title: "yap-render",
     color: "#3fb950",
     branch: "main",
-    kind: "commit",
-    text: "Add ISL gloss fallback",
-    meta: "yap-render · gemini-2.5 · 2d",
+    kind: "agent",
+    agentName: "Codex",
+    status: "Thinking",
+    time: "(18s)",
   },
   {
     title: "devtask",
@@ -126,17 +127,115 @@ const AGENT_CARDS = [
     branch: "fix/readme-repo-polish",
     kind: "agent",
     agentName: "Claude Code",
-    status: "Idle",
-    time: "now",
+    status: "Nesting",
+    time: "(34s)",
+    icon: "claude",
   },
 ];
 
+const DOCKER_ASCII = [
+  "                    ##        .",
+  "              ## ## ##       ==",
+  "           ## ## ## ## ##   ===",
+  "       /\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\\___/ ===",
+  "  ~~~ {~~ ~~~~ ~~~~ ~~~ ~~~~ ~~~ ~ /  ===- ~~~",
+  "       \\______ o          __/",
+  "        \\    \\        __/",
+  "         \\____\\______/",
+].join("\n");
+
+const UBUNTU_ASCII = [
+  "            .-/+oossssoo+/-.",
+  "        `:+ssssssssssssssssss+:`",
+  "      -+ssssssssssssssssssyyssss+-",
+  "    .ossssssssssssssssssdMMMNysssso.",
+  "   /ssssssssssshdmmNNmmyNMMMMhssssss/",
+  "  +ssssssssshmydMMMMMMMNddddyssssssss+",
+  " /sssssssshNMMMyhhyyyyhmNMMMNhssssssss/",
+  ".ssssssssdMMMNhsssssssssshNMMMdssssssss.",
+  "+sssshhhyNMMNyssssssssssssyNMMMysssssss+",
+  "ossyNMMMNyMMhsssssssssssssshmmmhssssssso",
+  "ossyNMMMNyMMhsssssssssssssshmmmhssssssso",
+  "+sssshhhyNMMNyssssssssssssyNMMMysssssss+",
+  ".ssssssssdMMMNhsssssssssshNMMMdssssssss.",
+  " /sssssssshNMMMyhhyyyyhdNMMMNhssssssss/",
+  "  +sssssssssdmydMMMMMMMMddddyssssssss+",
+  "   /ssssssssssshdmNNNNmyNMMMMhssssss/",
+  "    .ossssssssssssssssssdMMMNysssso.",
+  "      -+sssssssssssssssssyyssss+-",
+  "        `:+ssssssssssssssssss+:`",
+  "            .-/+oossssoo+/-.",
+].join("\n");
+
+const UBUNTU_COLORBAR = [
+  "#2e3436", "#cc0000", "#4e9a06", "#c4a000",
+  "#3465a4", "#75507b", "#06989a", "#d3d7cf",
+];
+
 const TOOLS = [
-  { name: "Next.js", shell: "npm", cmd: "npm run dev", out: "▲ ready on :3000" },
-  { name: "Tailwind CSS", shell: "npx", cmd: "tailwindcss --watch", out: "Rebuilt in 42ms" },
-  { name: "GSAP", shell: "node", cmd: "ScrollTrigger.create()", out: "3 triggers registered" },
-  { name: "React Three Fiber", shell: "node", cmd: "<Canvas />", out: "WebGL context ready" },
-  { name: "Git", shell: "bash", cmd: "git status", out: "On branch main · clean" },
+  {
+    kind: "fetch",
+    name: "React Three Fiber",
+    shell: "docker",
+    cmd: "docker info",
+    accent: "#2496ED",
+    ascii: DOCKER_ASCII,
+    info: [
+      ["Containers", "12 (3 running)"],
+      ["Images", "27"],
+      ["Server Version", "24.0.7"],
+      ["Storage Driver", "overlay2"],
+      ["Cgroup Driver", "systemd"],
+      ["Kernel Version", "6.4.0-generic"],
+      ["Operating System", "Ubuntu 22.04.3 LTS"],
+      ["Architecture", "x86_64"],
+      ["CPUs", "8"],
+      ["Total Memory", "15.6GiB"],
+    ],
+  },
+  {
+    kind: "cmd",
+    name: "Next.js",
+    shell: "npm",
+    cmd: "npm run dev",
+    lines: [
+      "> portfolio@0.1.0 dev",
+      "> next dev",
+      "",
+      "  ▲ Next.js 15.0.3",
+      "  - Local:        http://localhost:3000",
+      "",
+      " ✓ Starting...",
+      " ✓ Ready in 1284ms",
+    ],
+  },
+  {
+    kind: "fetch",
+    name: "WSL Ubuntu",
+    shell: "bash",
+    prefixLine: "ongubuntu@ubuntu-16-10-yakkety-yak:~/Downloads$ neofetch",
+    accent: "#E95420",
+    tall: true,
+    ascii: UBUNTU_ASCII,
+    info: [
+      ["OS", "Ubuntu 16.10 yakkety yak x86_64"],
+      ["Model", "VMware Virtual Platform None"],
+      ["Kernel", "4.4.0-34-generic"],
+      ["Uptime", "2 hours, 9 mins"],
+      ["Packages", "2097"],
+      ["Shell", "bash 4.3.46"],
+      ["Resolution", "1440x900"],
+      ["DE", "Unity"],
+      ["WM", "Compiz"],
+      ["Theme", "Ambiance [GTK2/3]"],
+      ["Icons", "Ubuntu-mono-dark [GTK2/3]"],
+      ["Terminal", "gnome-terminal"],
+      ["CPU", "Intel Core i5-2400S (1) @ 2.4GHz"],
+      ["GPU", "VMware SVGA II Adapter"],
+      ["Memory", "561MB / 983MB"],
+    ],
+    colorbar: UBUNTU_COLORBAR,
+  },
 ];
 
 // This session's actual working-tree changes.
@@ -150,16 +249,16 @@ const SCM_FILES = [
   { name: "yap-render.png", path: "public", status: "U" },
 ];
 
-function TerminalChrome({ name, children, draggable, titlebarProps }) {
+function TerminalChrome({ name, children, draggable, titlebarProps, bodyClassName, cardClassName }) {
   return (
-    <div className={`ide-terminal-card ${draggable ? "is-draggable" : ""}`}>
+    <div className={`ide-terminal-card ${draggable ? "is-draggable" : ""} ${cardClassName || ""}`}>
       <div className="ide-terminal-titlebar" {...titlebarProps}>
         <span className="tech-dot tech-dot-red" />
         <span className="tech-dot tech-dot-yellow" />
         <span className="tech-dot tech-dot-green" />
         <span className="ide-terminal-name">{name}</span>
       </div>
-      <div className="ide-terminal-body">{children}</div>
+      <div className={`ide-terminal-body ${bodyClassName || ""}`}>{children}</div>
     </div>
   );
 }
@@ -217,13 +316,195 @@ function LanguagesPane() {
   );
 }
 
+const SAKILA_TABLES = [
+  "actor", "address", "category", "city", "country", "customer", "film",
+  "film_actor", "film_actor2", "film_category", "inventory", "language",
+  "payment", "rental", "staff", "store", "test",
+];
+
+const FILM_ROWS = [
+  [1, "ACE GOLDFINGER", "4.99", "G", "2006", "48", "Horror", "FAWCETT, GUINESS, ZELLWEGER, DEPP"],
+  [2, "AIRPLANE SIERRA", "4.99", "PG-13", "2006", "62", "Comedy", "PENN, KILMER, MOSTEL, BOLGER, HOPPER"],
+  [3, "AIRPORT POLLOCK", "4.99", "R", "2006", "54", "Horror", "WILLIS, KILMER, DAVIS, DEE"],
+  [4, "ALADDIN CALENDAR", "4.99", "NC-17", "2006", "63", "Sports", "RYDER, BOLGER, TRACY, JOHANSSON, MALDEN, DUKAKIS, WAYNE, CHASE"],
+  [5, "ALI FOREVER", "4.99", "PG", "2006", "150", "Horror", "TORN, BERRY, MCCONAUGHEY, MCDORMAND, CHASE"],
+  [6, "AMELIE HELLFIGHTERS", "4.99", "R", "2006", "79", "Music", "HUNT, TANDY, TORN, MANSFIELD, GOODING, BRODY"],
+  [7, "AMERICAN CIRCUS", "4.99", "R", "2006", "129", "Action", "TOMEI, JACKMAN, BLOOM, CROWE, CRAWFORD"],
+  [8, "ANTHEM LUKE", "4.99", "PG-13", "2006", "91", "Comedy", "KEITEL, KILMER"],
+  [9, "APACHE DIVINE", "4.99", "NC-17", "2006", "92", "Family", "CRONYN, OLIVIER, BERRY, WAHLBERG"],
+  [10, "APOCALYPSE FLAMINGOS", "4.99", "R", "2006", "119", "New", "CLOSE, HOFFMAN, BASINGER, KILMER, WILSON"],
+  [11, "ATTACKS HATE", "4.99", "PG-13", "2006", "113", "Sci-Fi", "KEITEL, TEMPLE, TORN, DUNST"],
+  [12, "ATTRACTION NEWTON", "4.99", "PG-13", "2006", "83", "New", "WOOD, WEST, PENN, TAUTOU, HUDSON"],
+  [13, "AUTUMN CROW", "4.99", "G", "2006", "108", "Games", "PITT, TAUTOU, JOHANSSON, WAHLBERG, DEAN"],
+];
+
+const QUERY_LINES = [
+  [{ t: "SELECT", c: "kw" }],
+  [{ t: "    f.title," }],
+  [{ t: "    f.rental_rate," }],
+  [{ t: "    f.rating," }],
+  [{ t: "    f.release_year," }],
+  [{ t: "    f.length," }],
+  [{ t: "    c.name " }, { t: "AS", c: "kw" }, { t: " category_name," }],
+  [
+    { t: "    " },
+    { t: "STRING_AGG", c: "fn" },
+    { t: "(a.last_name, " },
+    { t: "', '", c: "str" },
+    { t: ") " },
+    { t: "AS", c: "kw" },
+    { t: " actors" },
+  ],
+  [{ t: "FROM", c: "kw" }],
+  [{ t: "    film f" }],
+  [{ t: "JOIN", c: "kw" }],
+  [{ t: "    film_actor fa " }, { t: "ON", c: "kw" }, { t: " f.film_id = fa.film_id" }],
+  [{ t: "JOIN", c: "kw" }],
+  [{ t: "    actor a " }, { t: "ON", c: "kw" }, { t: " fa.actor_id = a.actor_id" }],
+  [{ t: "JOIN", c: "kw" }],
+];
+
+function DbReplicaBackground() {
+  return (
+    <div className="db-replica">
+      <div className="dbrep-tabbar">
+        <div className="dbrep-tabbar-left">
+          <button type="button" className="dbrep-tab is-active">Databases</button>
+          <button type="button" className="dbrep-tab">Scripts</button>
+          <button type="button" className="dbrep-tab">&#9733; Favorites</button>
+        </div>
+        <div className="dbrep-tabbar-right">
+          <button type="button" className="dbrep-querytab is-active">
+            4: Top rental actors{" "}
+            <span className="dbrep-tab-close">&times;</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="dbrep-toolbar">
+        <div className="dbrep-toolbar-icons">
+          <button type="button" className="dbrep-icon dbrep-icon-run" title="Execute">&#9654;</button>
+          {["▷", "⏹", "↺", "↻", "⌕", "▦", "▧", "⋮"].map((g, i) => (
+            <button type="button" className="dbrep-icon" key={i}>
+              {g}
+            </button>
+          ))}
+        </div>
+        <div className="dbrep-toolbar-conn">
+          <label className="dbrep-check">
+            <input type="checkbox" /> Sticky
+          </label>
+          <span className="dbrep-conn-label">Database Connection</span>
+          <button type="button" className="dbrep-dd">&#128031; PostgreSQL 14.1</button>
+          <button type="button" className="dbrep-dd">&#128451; sakila</button>
+          <span className="dbrep-conn-label">Schema</span>
+          <button type="button" className="dbrep-dd">&#128273; public</button>
+          <span className="dbrep-conn-label">Max Rows</span>
+          <span className="dbrep-input">1000</span>
+          <span className="dbrep-conn-label">Max Chars</span>
+          <span className="dbrep-input">-1</span>
+        </div>
+      </div>
+
+      <div className="dbrep-body">
+        <div className="dbrep-sidebar">
+          <button type="button" className="dbrep-tree-row lvl0">&#128451; PostgreSQL 14.1</button>
+          <button type="button" className="dbrep-tree-row lvl1">Databases</button>
+          <button type="button" className="dbrep-tree-row lvl2">&#128451; sakila</button>
+          <button type="button" className="dbrep-tree-row lvl3">Schemas</button>
+          <button type="button" className="dbrep-tree-row lvl4">information_schema</button>
+          <button type="button" className="dbrep-tree-row lvl4">other</button>
+          <button type="button" className="dbrep-tree-row lvl4">pg_catalog</button>
+          <button type="button" className="dbrep-tree-row lvl4">pg_toast</button>
+          <button type="button" className="dbrep-tree-row lvl4">public</button>
+          <button type="button" className="dbrep-tree-row lvl5">Tables</button>
+          {SAKILA_TABLES.map((t) => (
+            <button
+              type="button"
+              className={`dbrep-tree-row lvl6 ${t === "category" ? "is-selected" : ""}`}
+              key={t}
+            >
+              {t}
+            </button>
+          ))}
+          <button type="button" className="dbrep-tree-row lvl5">Foreign Tables</button>
+          <button type="button" className="dbrep-tree-row lvl5">Views</button>
+          <button type="button" className="dbrep-tree-row lvl5">Materialized Views</button>
+          <button type="button" className="dbrep-tree-row lvl5">Indexes</button>
+          <button type="button" className="dbrep-tree-row lvl5">Triggers</button>
+        </div>
+
+        <div className="dbrep-main">
+          <div className="dbrep-editor">
+            {QUERY_LINES.map((tokens, i) => (
+              <div className="dbrep-editor-line" key={i}>
+                <span className="dbrep-ln">{i + 1}</span>
+                <span className="dbrep-code">
+                  {tokens.map((tok, j) => (
+                    <span key={j} className={tok.c ? `dbrep-tok-${tok.c}` : undefined}>
+                      {tok.t}
+                    </span>
+                  ))}
+                  {i === QUERY_LINES.length - 1 && <span className="dbrep-caret" />}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="dbrep-editor-status">
+            <span>8 / 15&nbsp;&nbsp;[130]&nbsp;&nbsp;INS</span>
+            <span>LF&nbsp;&nbsp;Auto Commit: ON&nbsp;&nbsp;UTF-8&nbsp;&nbsp;Untitled*</span>
+          </div>
+
+          <div className="dbrep-resulttabs">
+            <button type="button" className="dbrep-resulttab">Log</button>
+            <button type="button" className="dbrep-resulttab is-active">
+              1: film [657] <span className="dbrep-tab-close">&times;</span>
+            </button>
+          </div>
+
+          <div className="dbrep-grid-wrap">
+            <table className="dbrep-grid">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>title</th>
+                  <th>rental_rate</th>
+                  <th>rating</th>
+                  <th>release_year</th>
+                  <th>length</th>
+                  <th>category_name</th>
+                  <th>actors</th>
+                </tr>
+              </thead>
+              <tbody>
+                {FILM_ROWS.map((row) => (
+                  <tr key={row[0]}>
+                    {row.map((cell, i) => (
+                      <td key={i}>{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="dbrep-grid-status">
+            <span>Format: &lt;Select a Cell&gt;</span>
+            <span>0.104/0.004 sec&nbsp;&nbsp;657/7&nbsp;&nbsp;1-14</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BackendPane() {
   const lines = [
-    { cmd: "./mvnw spring-boot:run" },
-    { text: "Started DevtaskApplication · PostgreSQL connected" },
-    { text: "POST /register        201" },
-    { text: "POST /login           200 · JWT issued" },
-    { text: "GET  /tasks           200" },
+    { cmd: "whoami" },
+    { text: "" },
+    { text: "Database:  PostgreSQL, MongoDB Atlas" },
+    { text: "Backend:   Spring Boot, JWT" },
+    { text: "Tools:     IntelliJ IDEA" },
   ];
 
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -248,10 +529,16 @@ function BackendPane() {
 
   return (
     <div className="ide-terminal-stage">
-      <div style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}>
+      <DbReplicaBackground />
+      <div
+        className="ide-terminal-float ide-terminal-float-whoami"
+        style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
+      >
         <TerminalChrome
-          name="devtask (local)"
+          name="whoami — bash"
           draggable
+          bodyClassName="ide-terminal-body-compact"
+          cardClassName="ide-terminal-card-wide"
           titlebarProps={{
             onPointerDown,
             onPointerMove,
@@ -268,27 +555,112 @@ function BackendPane() {
   );
 }
 
-function ToolTerminalPane({ name, shell, cmd, out }) {
+function TerminalActionBar({ shell }) {
+  return (
+    <div className="ide-vs-terminal-actions">
+      <span className="ide-vs-terminal-shell">{shell}</span>
+      <button type="button" className="ide-vs-terminal-icon" title="New Terminal">
+        +
+      </button>
+      <button type="button" className="ide-vs-terminal-icon" title="Split Terminal">
+        &#10697;
+      </button>
+      <button type="button" className="ide-vs-terminal-icon" title="Kill Terminal">
+        &#128465;
+      </button>
+      <button type="button" className="ide-vs-terminal-icon" title="More Actions">
+        &#8942;
+      </button>
+    </div>
+  );
+}
+
+function LivePrompt() {
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") e.preventDefault();
+  };
+
+  return (
+    <div className="term-line term-live-line">
+      <span className="term-ps-chevron">&#10095;</span>{" "}
+      <span className="term-ps-path">PS D:\code\PROJECTS\portfolio&gt;</span>
+      <input
+        type="text"
+        className="term-live-input"
+        spellCheck={false}
+        autoComplete="off"
+        autoCapitalize="off"
+        onKeyDown={handleKeyDown}
+        aria-label="terminal input"
+      />
+    </div>
+  );
+}
+
+function ToolTerminalPane({ tool }) {
   return (
     <div className="ide-vs-terminal">
       <div className="ide-vs-terminal-head">
         <span className="ide-vs-terminal-chevron">&#8964;</span>
-        <span className="ide-vs-terminal-title">{name}</span>
-        <div className="ide-vs-terminal-actions">
-          <span className="ide-vs-terminal-shell">{shell}</span>
-          <span className="ide-vs-terminal-icon">+</span>
-          <span className="ide-vs-terminal-icon">&#10697;</span>
-          <span className="ide-vs-terminal-icon">&#128465;</span>
-          <span className="ide-vs-terminal-icon">&#8942;</span>
-        </div>
+        <span className="ide-vs-terminal-title">{tool.name}</span>
+        <TerminalActionBar shell={tool.shell} />
       </div>
       <div className="ide-vs-terminal-body">
         <div className="term-line">
-          <span className="term-prompt">$</span> <span className="term-cmd">{cmd}</span>
+          <span className="term-prompt">$</span> <span className="term-cmd">{tool.cmd}</span>
         </div>
-        <div className="term-line">
-          <span className="term-out">{out}</span>
+        {tool.lines.map((line, i) => (
+          <div className="term-line" key={i}>
+            <span className="term-out">{line || " "}</span>
+          </div>
+        ))}
+        <LivePrompt />
+      </div>
+    </div>
+  );
+}
+
+function FetchTerminalPane({ tool }) {
+  return (
+    <div className="ide-vs-terminal">
+      <div className="ide-vs-terminal-head">
+        <span className="ide-vs-terminal-chevron">&#8964;</span>
+        <span className="ide-vs-terminal-title">{tool.name}</span>
+        <TerminalActionBar shell={tool.shell} />
+      </div>
+      <div className="ide-vs-terminal-body ide-vs-terminal-body-fetch">
+        {tool.prefixLine ? (
+          <div className="term-line">
+            <span className="term-cmd">{tool.prefixLine}</span>
+          </div>
+        ) : (
+          <div className="term-line">
+            <span className="term-prompt">$</span> <span className="term-cmd">{tool.cmd}</span>
+          </div>
+        )}
+        <div className="fetch-row">
+          <pre className="fetch-ascii" style={{ color: tool.accent }}>
+            {tool.ascii}
+          </pre>
+          <div className="fetch-info">
+            {tool.info.map(([label, value]) => (
+              <div className="fetch-info-row" key={label}>
+                <span className="fetch-info-label" style={{ color: tool.accent }}>
+                  {label}
+                </span>
+                <span className="fetch-info-value">{value}</span>
+              </div>
+            ))}
+            {tool.colorbar && (
+              <div className="fetch-colorbar">
+                {tool.colorbar.map((c, i) => (
+                  <span key={i} style={{ background: c }} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+        <LivePrompt />
       </div>
     </div>
   );
@@ -298,8 +670,8 @@ function FrameworkPane() {
   return (
     <div className="ide-agent-grid">
       {TOOLS.map((t) => (
-        <div className="ide-agent-pane" key={t.name}>
-          <ToolTerminalPane {...t} />
+        <div className={`ide-agent-pane ${t.tall ? "ide-agent-pane-tall" : ""}`} key={t.name}>
+          {t.kind === "fetch" ? <FetchTerminalPane tool={t} /> : <ToolTerminalPane tool={t} />}
         </div>
       ))}
     </div>
@@ -310,7 +682,11 @@ function AgentCard({ card }) {
   return (
     <div className="ide-agent-card">
       <div className="ide-agent-card-head">
-        <span className="ide-agent-card-icon" />
+        {card.icon === "claude" ? (
+          <SiClaude className="ide-agent-card-icon ide-agent-card-icon-claude" color="#D97757" />
+        ) : (
+          <span className="ide-agent-card-icon" />
+        )}
         <span className="ide-agent-card-title">{card.title}</span>
         <span className="ide-agent-card-actions">&#8942; +</span>
       </div>
@@ -320,22 +696,13 @@ function AgentCard({ card }) {
         <span className="ide-agent-card-pill">primary</span>
       </div>
       <div className="ide-agent-card-branch-muted">{card.branch}</div>
-      {card.kind === "commit" ? (
-        <div className="ide-agent-card-activity">
-          <span className="ide-agent-card-check">&#10003;</span>
-          <span className="ide-agent-card-activity-text">
-            {card.text} <span className="ide-agent-card-meta">| {card.meta}</span>
-          </span>
-        </div>
-      ) : (
-        <div className="ide-agent-card-activity">
-          <span className="ide-agent-card-spark">&#10022;</span>
-          <span className="ide-agent-card-activity-text">
-            {card.agentName} · {card.status}
-          </span>
-          <span className="ide-agent-card-time">{card.time}</span>
-        </div>
-      )}
+      <div className="ide-agent-card-activity">
+        <span className="ide-agent-card-spark">&#10022;</span>
+        <span className="ide-agent-card-activity-text">
+          {card.agentName} · {card.status}&hellip;
+        </span>
+        <span className="ide-agent-card-time">{card.time}</span>
+      </div>
     </div>
   );
 }
@@ -459,6 +826,7 @@ export default function TechStack() {
             </div>
 
             <div className="tech-window-body">
+              {active.mode !== "terminal" && (
               <div className="ide-sidebar">
                 <p className="ide-sidebar-caption">Explorer</p>
 
@@ -505,6 +873,7 @@ export default function TechStack() {
                   })}
                 </div>
               </div>
+              )}
 
               <div className="ide-main">
                 {active.mode === "ls" && <LanguagesPane />}
@@ -550,7 +919,11 @@ export default function TechStack() {
 
                 <p className="ide-right-panel-label">Source Control</p>
                 <div className="ide-scm-commit-box">
-                  <div className="ide-scm-commit-input">Message (Ctrl+Enter to commit on &quot;main&quot;)</div>
+                  <textarea
+                    className="ide-scm-commit-input"
+                    placeholder='Message (Ctrl+Enter to commit on "main")'
+                    rows={1}
+                  />
                   <button type="button" className="ide-scm-commit-btn">
                     &#10003; Commit <span className="ide-scm-commit-caret">&#8964;</span>
                   </button>
