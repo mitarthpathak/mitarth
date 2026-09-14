@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
@@ -17,6 +18,7 @@
   --gray-line: #ACACAC;
   --font-display: 'Inter', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, "SF Mono", "Fira Code", Menlo, Consolas, monospace;
 }
 
 html {
@@ -664,6 +666,812 @@ body {
   filter: drop-shadow(0 15px 40px rgba(0, 0, 0, 0.25));
 }
 
+/* ========== TECH STACK SECTION ========== */
+.tech-stack-section {
+  position: relative;
+  z-index: 55;
+  height: 300vh;
+  background: var(--cream);
+  margin: 0 3vw;
+  border-left: 1px solid var(--gray-line);
+  border-right: 1px solid var(--gray-line);
+}
+
+.tech-stack-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tech-stack-scene {
+  width: 100%;
+  max-width: 1720px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 clamp(20px, 4vw, 48px);
+}
+
+/* --- IDE window --- */
+.tech-window {
+  width: 100%;
+  min-width: 0;
+  background: #000000;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 24px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.tech-window-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  background: #000000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tech-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.tech-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.tech-dot-red {
+  background: #ff5f56;
+}
+
+.tech-dot-yellow {
+  background: #ffbd2e;
+}
+
+.tech-dot-green {
+  background: #27c93f;
+}
+
+.ide-tabs {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 1.8vw, 26px);
+  overflow: hidden;
+}
+
+.ide-tab {
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 0.9vw, 12px);
+  color: rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+  transition: color 0.35s ease;
+}
+
+.ide-tab.is-active {
+  color: #ffffff;
+}
+
+.tech-window-body {
+  position: relative;
+  display: flex;
+  height: clamp(520px, 68vh, 840px);
+}
+
+/* --- Sidebar file tree --- */
+.ide-sidebar {
+  flex: 0 0 clamp(150px, 17vw, 210px);
+  background: #0a0a0a;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px 9px;
+  overflow-y: auto;
+}
+
+.ide-sidebar-label {
+  margin: 0 0 10px 8px;
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 0.85vw, 11px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.ide-sidebar-caption {
+  margin: 0 0 14px 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.ide-sidebar-section {
+  margin-bottom: 18px;
+}
+
+.ide-agent-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ide-agent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 11px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.ide-agent-card-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ide-agent-card-icon {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.14);
+  flex: 0 0 auto;
+}
+
+.ide-agent-card-title {
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 1vw, 13px);
+  font-weight: 700;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ide-agent-card-actions {
+  margin-left: auto;
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.ide-agent-card-branch-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ide-agent-card-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.ide-agent-card-branch {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.ide-agent-card-pill {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.ide-agent-card-branch-muted {
+  margin-left: 13px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ide-agent-card-activity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.ide-agent-card-check {
+  color: #3fb950;
+  font-size: 11px;
+  flex: 0 0 auto;
+}
+
+.ide-agent-card-spark {
+  color: #e0793a;
+  font-size: 11px;
+  flex: 0 0 auto;
+}
+
+.ide-agent-card-activity-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ide-agent-card-meta {
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.ide-agent-card-time {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.ide-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 5px 7px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 0.95vw, 13px);
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.ide-tree-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ide-chevron {
+  display: inline-flex;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.4);
+  transition: transform 0.25s ease;
+  transform: rotate(0deg);
+}
+
+.ide-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.ide-folder-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: #e8c547;
+  flex: 0 0 auto;
+}
+
+.ide-folder-dot-sm {
+  width: 6px;
+  height: 6px;
+  margin-left: 2px;
+}
+
+.ide-tree-children {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0 6px 28px;
+}
+
+.ide-tree-file {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 0;
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 0.85vw, 12px);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.ide-tree-file svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+}
+
+.ide-file-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  flex: 0 0 auto;
+}
+
+.ide-file-image-icon {
+  font-size: 12px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+/* --- Breadcrumb --- */
+.ide-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 0.9vw, 12px);
+  color: rgba(255, 255, 255, 0.4);
+  background: #0a0a0a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ide-breadcrumb-sep {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* --- Main editor pane --- */
+.ide-main {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: clamp(16px, 2.2vw, 26px);
+  overflow: hidden;
+}
+
+/* --- Terminal card (shared chrome for all "running tool" views) --- */
+.ide-terminal-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.lang-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(14px, 2vh, 22px);
+}
+
+.lang-project-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 1vw, 13px);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.ide-terminal-card {
+  width: min(520px, 92%);
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 16px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.ide-terminal-card.is-draggable .ide-terminal-titlebar {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.ide-terminal-card.is-draggable .ide-terminal-titlebar:active {
+  cursor: grabbing;
+}
+
+.ide-terminal-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #000000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ide-terminal-name {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.ide-terminal-body {
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 1vw, 13px);
+  line-height: 1.7;
+}
+
+.term-prompt {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.term-cmd {
+  color: #ffffff;
+}
+
+.term-out {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ls-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 4px;
+}
+
+.ls-file {
+  font-weight: 500;
+}
+
+/* --- Framework & Tools: 3-up / 2-down bento grid of VS-Code-style terminals --- */
+.ide-agent-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(8px, 1.2vw, 14px);
+  height: 100%;
+}
+
+.ide-agent-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  grid-column: span 2;
+}
+
+.ide-agent-pane:nth-child(n + 4) {
+  grid-column: span 3;
+}
+
+.ide-vs-terminal {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ide-vs-terminal-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #0a0a0a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-mono);
+  font-size: clamp(9px, 0.85vw, 11px);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ide-vs-terminal-chevron {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.ide-vs-terminal-title {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ide-vs-terminal-actions {
+  margin-left: auto;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.ide-vs-terminal-shell {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ide-vs-terminal-body {
+  flex: 1 1 auto;
+  padding: 10px 12px;
+  border-left: 2px solid rgba(255, 255, 255, 0.3);
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 0.85vw, 12px);
+  line-height: 1.6;
+}
+
+/* --- Status bar --- */
+.ide-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 14px;
+  background: #000000;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.ide-status-left,
+.ide-status-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.ide-status-item {
+  white-space: nowrap;
+}
+
+.ide-status-live {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #6dd39e;
+}
+
+/* --- Right panel: category nav + changed files (replaces external label list) --- */
+.ide-right-panel {
+  flex: 0 0 clamp(200px, 20vw, 270px);
+  background: #0a0a0a;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  padding: clamp(15px, 2vw, 23px) clamp(13px, 1.7vw, 19px);
+  overflow-y: auto;
+}
+
+.ide-right-nav {
+  display: flex;
+  gap: clamp(12px, 1.4vw, 18px);
+}
+
+.ide-right-nav-track {
+  position: relative;
+  width: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.ide-right-nav-track-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--yellow);
+  transform: scaleY(0);
+  transform-origin: top;
+  will-change: transform;
+}
+
+.ide-right-nav-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.4vh, 26px);
+}
+
+.ide-right-nav-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: var(--font-body);
+  font-size: clamp(14px, 1.05vw, 17px);
+  font-weight: 500;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.55);
+  opacity: 1;
+  transition: color 0.4s ease;
+}
+
+.ide-right-nav-item.is-active {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.ide-right-nav-index {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.ide-right-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: clamp(20px, 3vh, 30px) 0 clamp(14px, 2vh, 20px);
+}
+
+.ide-right-panel-label {
+  margin: 0 0 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ide-file-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ide-file-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 1vw, 13px);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.ide-file-stat-row svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+}
+
+.ide-file-stat-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ide-file-stat-nums {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.ide-stat-add {
+  color: #3fb950;
+}
+
+.ide-stat-del {
+  color: #f85149;
+}
+
+/* --- Source Control panel (real VS Code SCM replica) --- */
+.ide-scm-commit-box {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.ide-scm-commit-input {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ide-scm-commit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 0;
+  border: none;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #000000;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: default;
+}
+
+.ide-scm-commit-caret {
+  opacity: 0.7;
+}
+
+.ide-scm-changes-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.ide-scm-count {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.ide-scm-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ide-scm-file-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 0.9vw, 12px);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.ide-scm-file-row svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+}
+
+.ide-scm-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ide-scm-file-path {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ide-scm-status {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.ide-scm-status-M {
+  color: #e2c08d;
+}
+
+.ide-scm-status-U {
+  color: #3fb950;
+}
+
 /* ========== PROJECTS SECTION ========== */
 .projects-section {
   position: relative;
@@ -1203,6 +2011,69 @@ body {
 
   .yellow-section {
     height: 150vh;
+  }
+
+  .tech-stack-section {
+    height: 340vh;
+    margin: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .tech-stack-scene {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 28px;
+    padding: 0 20px;
+  }
+
+  .tech-window {
+    flex: 0 0 auto;
+  }
+
+  .tech-window-body {
+    flex-direction: column;
+    height: clamp(520px, 76vh, 760px);
+    overflow-y: auto;
+  }
+
+  .ide-sidebar {
+    flex: 0 0 auto;
+    max-height: 30%;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .ide-right-panel {
+    max-height: 40%;
+  }
+
+  .ide-terminal-card {
+    width: 100%;
+  }
+
+  .ide-agent-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .ide-agent-pane,
+  .ide-agent-pane:nth-child(n + 4) {
+    grid-column: span 1;
+  }
+
+  .ide-vs-terminal {
+    height: auto;
+  }
+
+  .ide-right-panel {
+    flex: 0 0 auto;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .ide-right-nav-list {
+    gap: 12px;
   }
 
   .projects-section {
