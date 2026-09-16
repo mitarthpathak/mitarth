@@ -27,6 +27,33 @@ const FILE_ICONS = {
   next: { Icon: SiNextdotjs, color: "#ffffff" },
 };
 
+// Deeper jewel-tone palette for the language graph only — the IDE-mockup file
+// icons elsewhere keep their true brand colors via FILE_ICONS.
+const LANG_COLORS = {
+  js: "#D9A441",
+  ts: "#3E63DD",
+  next: "#C7CCD6",
+  html: "#D2543A",
+  css: "#2FA8A0",
+  java: "#B5542E",
+  py: "#6366B8",
+  cpp: "#3E8E63",
+};
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function mixWith(hex, target, amount) {
+  const [r, g, b] = hexToRgb(hex);
+  const mix = (c) => Math.round(c + (target - c) * amount);
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
+
+const lighten = (hex, amount) => mixWith(hex, 255, amount);
+const deepen = (hex, amount) => mixWith(hex, 0, amount);
+
 const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "svg", "webp"];
 
 function extOf(name) {
@@ -350,13 +377,13 @@ const REPO_DATA = [
   { name: "Lottery---Raffle-Contract", label: "Lottery-Raffle-Contract", big: false, langs: { Rust: 2928, Makefile: 171 } },
   { name: "mitarthpathak", label: "mitarthpathak", big: false, langs: {} },
   { name: "OAuthExample", label: "OAuthExample", big: false, langs: { Java: 2130 } },
-  { name: "SAGACITY", label: "SAGACITY", big: false, langs: { TypeScript: 85271, JavaScript: 30239, CSS: 938 } },
+  { name: "SAGACITY", label: "SAGACITY", big: false, langs: { TypeScript: 85271, JavaScript: 30239, CSS: 938 }, drop: ["JavaScript"] },
   { name: "ScholarGuru", label: "ScholarGuru", big: false, langs: { HTML: 1293149, CSS: 320760, JavaScript: 194879, TypeScript: 145532, Batchfile: 1189, Shell: 1134 } },
   { name: "spring-security", label: "spring-security", big: false, langs: { Java: 18332 } },
   { name: "SpringJPA", label: "SpringJPA", big: false, langs: { Java: 4352 } },
   { name: "studentManagement", label: "studentManagement", big: false, langs: { Java: 2810 } },
-  { name: "yap-render-APP", label: "yap-render-APP", big: false, langs: { JavaScript: 516130, Kotlin: 401299, TypeScript: 17466, HTML: 2358 } },
-  { name: "yap-render-extension", label: "yap-render-extension", big: false, langs: { JavaScript: 548473, CSS: 8046, HTML: 6351 } },
+  { name: "yap-render-APP", label: "yap-render-APP", big: false, langs: { JavaScript: 516130, Kotlin: 401299, TypeScript: 17466, HTML: 2358 }, drop: ["JavaScript"] },
+  { name: "yap-render-extension", label: "yap-render-extension", big: false, langs: { JavaScript: 548473, CSS: 8046, HTML: 6351 }, drop: ["JavaScript"] },
 ];
 
 function bytesToRadius(bytes, allBytes, min, max) {
@@ -404,6 +431,7 @@ function repoMajorEntries(repo) {
   let nextBytes = 0;
   const entries = [];
   for (const [ghName, bytes] of Object.entries(repo.langs)) {
+    if (repo.drop?.includes(ghName)) continue;
     const key = LANG_NAME_TO_KEY[ghName];
     if (!key) continue;
     if (isNext && (key === "js" || key === "ts")) {
@@ -699,12 +727,12 @@ function LanguagesPane() {
               onMouseLeave={clearHover}
               onClick={() => selectLang(s.key)}
             >
-              <span className="lang-graph-row-dot" style={{ background: FILE_ICONS[s.key]?.color }} />
+              <span className="lang-graph-row-dot" style={{ background: LANG_COLORS[s.key] }} />
               <span className="lang-graph-row-name">{s.name}</span>
               <span className="lang-graph-row-bar">
                 <span
                   className="lang-graph-row-bar-fill"
-                  style={{ width: `${s.pct}%`, background: FILE_ICONS[s.key]?.color }}
+                  style={{ width: `${s.pct}%`, background: LANG_COLORS[s.key] }}
                 />
               </span>
               <span className="lang-graph-row-pct">{s.pct}%</span>
@@ -726,7 +754,7 @@ function LanguagesPane() {
               <span className="lang-graph-row-name">{p.label}</span>
               <span className="lang-graph-row-chips">
                 {p.majorKeys.map((key) => (
-                  <span key={key} className="lang-graph-row-chipdot" style={{ background: FILE_ICONS[key]?.color }} />
+                  <span key={key} className="lang-graph-row-chipdot" style={{ background: LANG_COLORS[key] }} />
                 ))}
               </span>
             </div>
@@ -758,9 +786,9 @@ function LanguagesPane() {
               </filter>
               {MAJOR_KEYS.map((key) => (
                 <radialGradient key={key} id={`sph-${key}`} cx="35%" cy="30%" r="75%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.65" />
-                  <stop offset="38%" stopColor={FILE_ICONS[key]?.color} stopOpacity="1" />
-                  <stop offset="100%" stopColor={FILE_ICONS[key]?.color} stopOpacity="1" />
+                  <stop offset="0%" stopColor={lighten(LANG_COLORS[key], 0.6)} />
+                  <stop offset="45%" stopColor={LANG_COLORS[key]} />
+                  <stop offset="100%" stopColor={deepen(LANG_COLORS[key], 0.45)} />
                 </radialGradient>
               ))}
             </defs>
@@ -776,7 +804,7 @@ function LanguagesPane() {
                   d={edgePath(from.x, from.y, to.x, to.y)}
                   fill="none"
                   className={`lang-graph-edge ${isActive ? "is-active" : "is-dim"} ${edge.big ? "is-big-edge" : ""} ${isFocused ? "is-flowing" : ""}`}
-                  stroke={FILE_ICONS[edge.key]?.color}
+                  stroke={LANG_COLORS[edge.key]}
                   filter={isFocused ? "url(#langEdgeGlow)" : undefined}
                 />
               );
