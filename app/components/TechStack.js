@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SiTypescript, SiJavascript, SiHtml5, SiCss, SiClaude } from "react-icons/si";
+import { RiOpenaiFill } from "react-icons/ri";
 import { FaJava } from "react-icons/fa6";
 
 const FILE_ICONS = {
@@ -120,6 +121,7 @@ const AGENT_CARDS = [
     agentName: "Codex",
     status: "Thinking",
     time: "(18s)",
+    activityIcon: "codex",
   },
   {
     title: "devtask",
@@ -130,6 +132,7 @@ const AGENT_CARDS = [
     status: "Nesting",
     time: "(34s)",
     icon: "claude",
+    activityIcon: "claude",
   },
 ];
 
@@ -294,22 +297,74 @@ function TermLine({ line }) {
   );
 }
 
+const LANGUAGE_STATS = [
+  { name: "JavaScript", ext: "js", pct: 42 },
+  { name: "TypeScript", ext: "ts", pct: 28 },
+  { name: "Java", ext: "java", pct: 18 },
+  { name: "CSS", ext: "css", pct: 8 },
+  { name: "HTML", ext: "html", pct: 4 },
+];
+
 function LanguagesPane() {
   const lines = [
     { cmd: "ls" },
     { ls: ["App.jsx", "index.css", "TaskController.java", "islTranslator.ts", "package.json"] },
   ];
 
+  const [hovered, setHovered] = useState(null);
+
   return (
-    <div className="ide-terminal-stage">
-      <div className="lang-scene">
+    <div className="ide-terminal-stage lang-stage">
+      <div className="lang-ghosts" aria-hidden="true">
+        {LANGUAGE_STATS.map((s, i) => (
+          <span
+            key={s.ext}
+            className={`lang-ghost lang-ghost-${i + 1} ${hovered === s.ext ? "is-focus" : ""}`}
+            style={{ color: FILE_ICONS[s.ext]?.color }}
+          >
+            {s.name}
+          </span>
+        ))}
+      </div>
+      <div className="lang-scene lang-scene-full">
         <div className="lang-project-chip">
           <span className="ide-folder-dot" /> Swasthya-Neeti
         </div>
-        <TerminalChrome name="swasthya-neeti — zsh">
+        <TerminalChrome name="swasthya-neeti — zsh" cardClassName="ide-terminal-card-wide lang-card">
           {lines.map((line, i) => (
             <TermLine line={line} key={i} />
           ))}
+
+          <div className="term-line lang-stats-cmd">
+            <span className="term-prompt">$</span>{" "}
+            <span className="term-cmd">git language-stats --repo .</span>
+          </div>
+
+          <div className="lang-bar" onMouseLeave={() => setHovered(null)}>
+            {LANGUAGE_STATS.map((s) => (
+              <span
+                key={s.ext}
+                className={`lang-bar-seg ${hovered && hovered !== s.ext ? "is-dim" : ""} ${hovered === s.ext ? "is-focus" : ""}`}
+                style={{ "--seg-w": `${s.pct}%`, background: FILE_ICONS[s.ext]?.color }}
+                onMouseEnter={() => setHovered(s.ext)}
+              />
+            ))}
+          </div>
+
+          <div className="lang-legend">
+            {LANGUAGE_STATS.map((s) => (
+              <div
+                className={`lang-legend-row ${hovered && hovered !== s.ext ? "is-dim" : ""} ${hovered === s.ext ? "is-focus" : ""}`}
+                key={s.ext}
+                onMouseEnter={() => setHovered(s.ext)}
+                onMouseLeave={() => setHovered(null)}
+              >
+                <span className="lang-legend-dot" style={{ background: FILE_ICONS[s.ext]?.color }} />
+                <span className="lang-legend-name">{s.name}</span>
+                <span className="lang-legend-pct">{s.pct}%</span>
+              </div>
+            ))}
+          </div>
         </TerminalChrome>
       </div>
     </div>
@@ -555,6 +610,10 @@ function BackendPane() {
   );
 }
 
+function focusTerminalInput(e) {
+  e.currentTarget.querySelector(".term-live-input")?.focus();
+}
+
 function TerminalActionBar({ shell }) {
   return (
     <div className="ide-vs-terminal-actions">
@@ -605,7 +664,7 @@ function ToolTerminalPane({ tool }) {
         <span className="ide-vs-terminal-title">{tool.name}</span>
         <TerminalActionBar shell={tool.shell} />
       </div>
-      <div className="ide-vs-terminal-body">
+      <div className="ide-vs-terminal-body" onClick={focusTerminalInput}>
         <div className="term-line">
           <span className="term-prompt">$</span> <span className="term-cmd">{tool.cmd}</span>
         </div>
@@ -628,7 +687,7 @@ function FetchTerminalPane({ tool }) {
         <span className="ide-vs-terminal-title">{tool.name}</span>
         <TerminalActionBar shell={tool.shell} />
       </div>
-      <div className="ide-vs-terminal-body ide-vs-terminal-body-fetch">
+      <div className="ide-vs-terminal-body ide-vs-terminal-body-fetch" onClick={focusTerminalInput}>
         {tool.prefixLine ? (
           <div className="term-line">
             <span className="term-cmd">{tool.prefixLine}</span>
@@ -697,7 +756,13 @@ function AgentCard({ card }) {
       </div>
       <div className="ide-agent-card-branch-muted">{card.branch}</div>
       <div className="ide-agent-card-activity">
-        <span className="ide-agent-card-spark">&#10022;</span>
+        {card.activityIcon === "claude" ? (
+          <SiClaude className="ide-agent-card-activity-icon ide-agent-card-activity-icon-claude" color="#D97757" />
+        ) : card.activityIcon === "codex" ? (
+          <RiOpenaiFill className="ide-agent-card-activity-icon ide-agent-card-activity-icon-codex" color="#ffffff" />
+        ) : (
+          <span className="ide-agent-card-spark">&#10022;</span>
+        )}
         <span className="ide-agent-card-activity-text">
           {card.agentName} · {card.status}&hellip;
         </span>
@@ -729,6 +794,7 @@ function StatusBar({ langMode }) {
 export default function TechStack() {
   const wrapRef = useRef(null);
   const trackFillRef = useRef(null);
+  const sceneRef = useRef(null);
   const rafRef = useRef(null);
   const activeIndexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -748,6 +814,8 @@ export default function TechStack() {
     const lerp = (start, end, factor) => start + (end - start) * factor;
     let targetProgress = 0;
     let currentProgress = 0;
+    let targetEntrance = 0;
+    let currentEntrance = 0;
 
     const computeTarget = () => {
       const el = wrapRef.current;
@@ -755,6 +823,10 @@ export default function TechStack() {
 
       const rect = el.getBoundingClientRect();
       const viewH = window.innerHeight;
+
+      // Reveal the IDE window as its section scrolls up into place, before it pins.
+      targetEntrance = Math.min(1, Math.max(0, 1 - rect.top / (viewH * 0.6)));
+
       const scrollable = rect.height - viewH;
       if (scrollable <= 0) {
         targetProgress = 0;
@@ -765,11 +837,19 @@ export default function TechStack() {
       targetProgress = Math.min(1, Math.max(0, traveled / scrollable));
     };
 
-    const applyProgress = (progress) => {
-      const index = Math.min(SEGMENTS - 1, Math.floor(progress * SEGMENTS));
+    const applyProgress = (progress, entrance, indexProgress) => {
+      // Index tracks the real (unsmoothed) scroll progress so the visible
+      // pane is never behind when the section unpins — the lerp below is
+      // purely cosmetic for the track fill / entrance transform.
+      const index = Math.min(SEGMENTS - 1, Math.floor(indexProgress * SEGMENTS));
 
       if (trackFillRef.current) {
         trackFillRef.current.style.transform = `scaleY(${progress})`;
+      }
+
+      if (sceneRef.current) {
+        sceneRef.current.style.opacity = entrance;
+        sceneRef.current.style.transform = `translateY(${(1 - entrance) * 64}px) scale(${0.92 + entrance * 0.08})`;
       }
 
       if (index !== activeIndexRef.current) {
@@ -784,7 +864,11 @@ export default function TechStack() {
       if (Math.abs(currentProgress - targetProgress) < 0.0005) {
         currentProgress = targetProgress;
       }
-      applyProgress(currentProgress);
+      currentEntrance = lerp(currentEntrance, targetEntrance, 0.1);
+      if (Math.abs(currentEntrance - targetEntrance) < 0.0005) {
+        currentEntrance = targetEntrance;
+      }
+      applyProgress(currentProgress, currentEntrance, targetProgress);
       rafRef.current = requestAnimationFrame(tick);
     };
 
@@ -801,7 +885,7 @@ export default function TechStack() {
     <section className="tech-stack-section" ref={wrapRef}>
       <div className="tech-stack-sticky">
         <div className="tech-stack-scene">
-          <div className="tech-window">
+          <div className="tech-window" ref={sceneRef}>
             <div className="tech-window-titlebar">
               <div className="tech-dots">
                 <span className="tech-dot tech-dot-red" />
@@ -826,8 +910,7 @@ export default function TechStack() {
             </div>
 
             <div className="tech-window-body">
-              {active.mode !== "terminal" && (
-              <div className="ide-sidebar">
+              <div className={`ide-sidebar ${active.mode === "terminal" ? "is-collapsed" : ""}`}>
                 <p className="ide-sidebar-caption">Explorer</p>
 
                 <div className="ide-sidebar-section">
@@ -873,7 +956,6 @@ export default function TechStack() {
                   })}
                 </div>
               </div>
-              )}
 
               <div className="ide-main">
                 {active.mode === "ls" && <LanguagesPane />}

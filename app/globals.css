@@ -26,6 +26,7 @@ html {
   overscroll-behavior: none;
 }
 
+
 body {
   font-family: var(--font-body);
   background: var(--cream);
@@ -705,6 +706,9 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 24px 60px rgba(0, 0, 0, 0.5);
   overflow: hidden;
+  opacity: 0;
+  transform: translateY(64px) scale(0.92);
+  will-change: opacity, transform;
 }
 
 .tech-window-titlebar {
@@ -770,10 +774,32 @@ body {
 /* --- Sidebar file tree --- */
 .ide-sidebar {
   flex: 0 0 clamp(150px, 17vw, 210px);
+  width: clamp(150px, 17vw, 210px);
   background: #0a0a0a;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   padding: 14px 9px;
   overflow-y: auto;
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    flex-basis 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    padding 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease,
+    transform 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.45s ease;
+}
+
+.ide-sidebar.is-collapsed {
+  flex-basis: 0;
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  opacity: 0;
+  transform: translateX(-28px);
+  border-right-color: transparent;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .ide-sidebar-label {
@@ -907,6 +933,45 @@ body {
   color: #e0793a;
   font-size: 11px;
   flex: 0 0 auto;
+}
+
+.ide-agent-card-activity-icon {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
+}
+
+.ide-agent-card-activity-icon-claude {
+  animation: agent-icon-pulse 1.4s ease-in-out infinite;
+}
+
+.ide-agent-card-activity-icon-codex {
+  animation: agent-icon-spin 2.2s linear infinite;
+}
+
+@keyframes agent-icon-pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(0.88);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes agent-icon-spin {
+  from {
+    transform: rotate(0deg);
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  to {
+    transform: rotate(360deg);
+    opacity: 0.6;
+  }
 }
 
 .ide-agent-card-activity-text {
@@ -1086,12 +1151,16 @@ body {
 }
 
 .ide-terminal-card-wide {
-  width: min(620px, 94%);
+  width: min(760px, 96%);
 }
 
 .ide-terminal-float-whoami {
-  margin-top: clamp(-120px, -14vh, -50px);
-  margin-left: clamp(80px, 12vw, 180px);
+  margin-top: -100px;
+  margin-left: 165px;
+}
+
+.ide-terminal-float-whoami .ide-terminal-card-wide {
+  width: min(836px, 98%);
 }
 
 .ide-terminal-card.is-draggable .ide-terminal-titlebar {
@@ -1128,8 +1197,8 @@ body {
 }
 
 .ide-terminal-body-compact {
-  font-size: clamp(9px, 0.8vw, 10px);
-  line-height: 1.6;
+  font-size: clamp(11px, 1vw, 12px);
+  line-height: 1.7;
 }
 
 .term-prompt {
@@ -1153,6 +1222,131 @@ body {
 
 .ls-file {
   font-weight: 500;
+}
+
+.lang-stats-cmd {
+  margin-top: 10px;
+}
+
+.lang-stage {
+  position: relative;
+}
+
+.lang-scene-full {
+  position: relative;
+  z-index: 1;
+}
+
+.lang-card {
+  width: min(880px, 96%);
+}
+
+/* Faint scattered language-name watermarks filling the empty stage backdrop */
+.lang-ghosts {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.lang-ghost {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  opacity: 0.08;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.lang-ghost.is-focus {
+  opacity: 0.28;
+  transform: scale(1.06);
+}
+
+.lang-ghost-1 { top: 6%; left: 6%; font-size: clamp(28px, 4.6vw, 64px); }
+.lang-ghost-2 { top: 12%; right: 5%; font-size: clamp(22px, 3.6vw, 50px); }
+.lang-ghost-3 { bottom: 10%; left: 4%; font-size: clamp(24px, 4vw, 56px); }
+.lang-ghost-4 { bottom: 8%; right: 8%; font-size: clamp(20px, 3.2vw, 44px); }
+.lang-ghost-5 { top: 44%; left: 2%; font-size: clamp(18px, 2.8vw, 38px); }
+
+.lang-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 12px 0 14px;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.lang-bar-seg {
+  height: 100%;
+  width: var(--seg-w);
+  cursor: pointer;
+  transform-origin: left center;
+  animation: lang-bar-grow 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  transition: opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease;
+}
+
+.lang-bar-seg.is-dim {
+  opacity: 0.25;
+}
+
+.lang-bar-seg.is-focus {
+  filter: brightness(1.25);
+  transform: scaleY(1.25);
+}
+
+@keyframes lang-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.lang-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.lang-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: clamp(10px, 0.9vw, 12px);
+  padding: 3px 6px;
+  margin: -3px -6px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.lang-legend-row.is-focus {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.lang-legend-row.is-dim {
+  opacity: 0.4;
+}
+
+.lang-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.lang-legend-name {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.lang-legend-pct {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* --- DataGrip-style DB client replica (backdrop behind the devtask popup) --- */
@@ -1547,7 +1741,7 @@ body {
 /* --- Framework & Tools: 3-up / 2-down bento grid of VS-Code-style terminals --- */
 .ide-agent-grid {
   position: absolute;
-  inset: calc(-1 * var(--ide-main-pad, 0px));
+  inset: 0;
   display: grid;
   grid-auto-flow: column;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1656,6 +1850,7 @@ body {
   font-size: clamp(10px, 0.85vw, 12px);
   line-height: 1.6;
   overflow-y: auto;
+  cursor: text;
 }
 
 .ide-vs-terminal-body-fetch {
@@ -1835,18 +2030,27 @@ body {
   line-height: 1.2;
   color: rgba(255, 255, 255, 0.55);
   opacity: 1;
-  transition: color 0.4s ease;
+  transform: translateX(0) scale(1);
+  transform-origin: left center;
+  transition: color 0.35s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.35s ease;
 }
 
 .ide-right-nav-item.is-active {
-  color: #ffffff;
-  font-weight: 700;
+  color: var(--yellow);
+  font-weight: 800;
+  transform: translateX(3px) scale(1.08);
+  text-shadow: 0 0 18px rgba(255, 209, 70, 0.45);
+}
+
+.ide-right-nav-item.is-active .ide-right-nav-index {
+  color: var(--yellow);
 }
 
 .ide-right-nav-index {
   font-family: var(--font-mono);
   font-size: 10px;
   color: rgba(255, 255, 255, 0.4);
+  transition: color 0.35s ease;
 }
 
 .ide-right-divider {
@@ -2607,9 +2811,19 @@ body {
 
   .ide-sidebar {
     flex: 0 0 auto;
+    width: auto;
     max-height: 30%;
     border-right: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    transform: translateY(0);
+  }
+
+  .ide-sidebar.is-collapsed {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom-color: transparent;
+    transform: translateY(-16px);
   }
 
   .ide-right-panel {
