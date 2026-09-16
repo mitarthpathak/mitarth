@@ -1,0 +1,290 @@
+- generic [active] [ref=f16e1]:
+  - generic "Signature animation loading"
+  - main [ref=f16e5]:
+    - generic [ref=f16e6]:
+      - generic [ref=f16e9]:
+        - generic [ref=f16e10]: M
+        - generic [ref=f16e11]: I
+        - generic [ref=f16e12]: T
+        - generic [ref=f16e13]: A
+        - generic [ref=f16e14]: R
+        - generic [ref=f16e15]: T
+        - generic [ref=f16e16]: H
+      - generic [ref=f16e17]:
+        - generic [ref=f16e18]: Visual Designer
+        - generic [ref=f16e22]:
+          - generic [ref=f16e23]: T
+          - generic [ref=f16e24]: H
+          - generic [ref=f16e25]: E
+          - generic [ref=f16e27]: G
+          - generic [ref=f16e28]: R
+          - generic [ref=f16e29]: E
+          - generic [ref=f16e30]: A
+          - generic [ref=f16e31]: T
+        - generic [ref=f16e32]: Based in Jaipur, Rajasthan
+    - generic [ref=f16e36]:
+      - generic [ref=f16e38]: AI Developer
+      - generic [ref=f16e39]: Web Designer
+      - generic [ref=f16e40]: AI Learner
+      - generic:
+        - img "Mitarth The Great"
+    - generic [ref=f16e44]:
+      - generic [ref=f16e50]:
+        - generic [ref=f16e51]: Swasthya-Neeti
+        - generic [ref=f16e52]: Run-Neeti
+        - generic [ref=f16e53]: Yap-Render
+        - generic [ref=f16e54]: DevTask
+      - generic [ref=f16e55]:
+        - text: Swasthya-Neeti
+        - generic [ref=f16e56]: ›
+        - text: App.jsx
+      - generic [ref=f16e57]:
+        - generic [ref=f16e58]:
+          - paragraph [ref=f16e59]: Explorer
+          - generic [ref=f16e60]:
+            - paragraph [ref=f16e61]: Open Agents
+            - generic [ref=f16e62]:
+              - generic [ref=f16e63]:
+                - generic [ref=f16e64]:
+                  - generic [ref=f16e66]: yap-render
+                  - generic [ref=f16e67]: ⋮ +
+                - generic [ref=f16e68]:
+                  - generic [ref=f16e70]: main
+                  - generic [ref=f16e71]: primary
+                - generic [ref=f16e72]: main
+                - generic [ref=f16e73]:
+                  - generic [ref=f16e76]: Codex · Thinking…
+                  - generic [ref=f16e77]: (18s)
+              - generic [ref=f16e78]:
+                - generic [ref=f16e79]:
+                  - generic [ref=f16e82]: devtask
+                  - generic [ref=f16e83]: ⋮ +
+                - generic [ref=f16e84]:
+                  - generic [ref=f16e86]: fix/readme-repo-polish
+                  - generic [ref=f16e87]: primary
+                - generic [ref=f16e88]: fix/readme-repo-polish
+                - generic [ref=f16e89]:
+                  - generic [ref=f16e92]: Claude Code · Nesting…
+                  - generic [ref=f16e93]: (34s)
+          - generic [ref=f16e94]:
+            - paragraph [ref=f16e95]: Portfolio
+            - generic [ref=f16e96]:
+              - button "▸ Swasthya-Neeti" [ref=f16e97] [cursor=pointer]:
+                - generic [ref=f16e98]: ▸
+                - generic [ref=f16e100]: Swasthya-Neeti
+              - generic [ref=f16e101]:
+                - generic [ref=f16e102]: src
+                - generic [ref=f16e105]: components
+                - generic [ref=f16e108]: App.jsx
+                - generic [ref=f16e112]: index.css
+                - generic [ref=f16e116]: package.json
+            - button "▸ Run-Neeti" [ref=f16e120] [cursor=pointer]:
+              - generic [ref=f16e121]: ▸
+              - generic [ref=f16e123]: Run-Neeti
+            - button "▸ Yap-Render" [ref=f16e125] [cursor=pointer]:
+              - generic [ref=f16e126]: ▸
+              - generic [ref=f16e128]: Yap-Render
+            - button "▸ DevTask" [ref=f16e130] [cursor=pointer]:
+              - generic [ref=f16e131]: ▸
+              - generic [ref=f16e133]: DevTask
+        - generic [ref=f16e135]:
+          - generic [aria-hidden]:
+            - generic: JavaScript
+            - generic: TypeScript
+            - generic: Java
+            - generic: CSS
+            - generic: HTML
+          - generic [ref=f16e136]:
+            - generic [ref=f16e137]: Swasthya-Neeti
+            - generic [ref=f16e139]:
+              - generic [ref=f16e140]: swasthya-neeti — zsh
+              - generic [ref=f16e145]:
+                - generic [ref=f16e146]: $ ls
+                - generic [ref=f16e148]:
+                  - generic [ref=f16e149]: App.jsx
+                  - generic [ref=f16e150]: index.css
+                  - generic [ref=f16e151]: TaskController.java
+                  - generic [ref=f16e152]: islTranslator.ts
+                  - generic [ref=f16e153]: package.json
+                - generic [ref=f16e154]: $ git language-stats --repo .
+                - generic [ref=f16e155]:
+                  - generic [ref=f16e156] [cursor=pointer]
+                  - generic [ref=f16e157] [cursor=pointer]
+                  - generic [ref=f16e158] [cursor=pointer]
+                  - generic [ref=f16e159] [cursor=pointer]
+                  - generic [ref=f16e160] [cursor=pointer]
+                - generic [ref=f16e161]:
+                  - generic [ref=f16e162] [cursor=pointer]:
+                    - generic [ref=f16e164]: JavaScript
+                    - generic [ref=f16e165]: 42%
+                  - generic [ref=f16e166] [cursor=pointer]:
+                    - generic [ref=f16e168]: TypeScript
+                    - generic [ref=f16e169]: 28%
+                  - generic [ref=f16e170] [cursor=pointer]:
+                    - generic [ref=f16e172]: Java
+                    - generic [ref=f16e173]: 18%
+                  - generic [ref=f16e174] [cursor=pointer]:
+                    - generic [ref=f16e176]: CSS
+                    - generic [ref=f16e177]: 8%
+                  - generic [ref=f16e178] [cursor=pointer]:
+                    - generic [ref=f16e180]: HTML
+                    - generic [ref=f16e181]: 4%
+        - generic [ref=f16e182]:
+          - list [ref=f16e185]:
+            - listitem [ref=f16e186]:
+              - generic [ref=f16e187]: "01"
+              - text: Languages
+            - listitem [ref=f16e188]:
+              - generic [ref=f16e189]: "02"
+              - text: Backend & Database
+            - listitem [ref=f16e190]:
+              - generic [ref=f16e191]: "03"
+              - text: Framework & Tools
+          - paragraph [ref=f16e193]: Changes
+          - generic [ref=f16e194]:
+            - generic [ref=f16e195]:
+              - generic [ref=f16e198]: App.jsx
+              - generic [ref=f16e199]:
+                - generic [ref=f16e200]: "+48"
+                - generic [ref=f16e201]: "-6"
+            - generic [ref=f16e202]:
+              - generic [ref=f16e205]: index.css
+              - generic [ref=f16e206]: "+12"
+          - paragraph [ref=f16e209]: Source Control
+          - generic [ref=f16e210]:
+            - textbox "Message (Ctrl+Enter to commit on \"main\")" [ref=f16e211]
+            - button "✓ Commit ⌄" [ref=f16e212] [cursor=pointer]:
+              - text: ✓ Commit
+              - generic [ref=f16e213]: ⌄
+          - generic [ref=f16e214]:
+            - generic [ref=f16e215]: Changes
+            - generic [ref=f16e216]: "7"
+          - generic [ref=f16e217]:
+            - generic [ref=f16e218]:
+              - generic [ref=f16e220]: package-lock.json
+              - generic [ref=f16e221]: M
+            - generic [ref=f16e222]:
+              - generic [ref=f16e224]: package.json
+              - generic [ref=f16e225]: M
+            - generic [ref=f16e226]:
+              - generic [ref=f16e229]: globals.css
+              - generic [ref=f16e230]: app
+              - generic [ref=f16e231]: M
+            - generic [ref=f16e232]:
+              - generic [ref=f16e235]: page.js
+              - generic [ref=f16e236]: app
+              - generic [ref=f16e237]: M
+            - generic [ref=f16e238]:
+              - generic [ref=f16e241]: TechStack.js
+              - generic [ref=f16e242]: app\components
+              - generic [ref=f16e243]: U
+            - generic [ref=f16e244]:
+              - generic [ref=f16e245]: 🖼
+              - generic [ref=f16e246]: devtask.png
+              - generic [ref=f16e247]: public
+              - generic [ref=f16e248]: U
+            - generic [ref=f16e249]:
+              - generic [ref=f16e250]: 🖼
+              - generic [ref=f16e251]: yap-render.png
+              - generic [ref=f16e252]: public
+              - generic [ref=f16e253]: U
+      - generic [ref=f16e254]:
+        - generic [ref=f16e255]:
+          - generic [ref=f16e256]: ⎇ main
+          - generic [ref=f16e257]: ↻
+          - generic [ref=f16e258]: ⊗ 0 ⚠ 0
+        - generic [ref=f16e259]:
+          - generic [ref=f16e260]: JavaScript
+          - generic [ref=f16e261]: UTF-8
+          - generic [ref=f16e262]: LF
+          - generic [ref=f16e263]: ● Go Live
+          - generic [ref=f16e264]: 🔔
+    - region [ref=f16e265]:
+      - generic [ref=f16e266]:
+        - heading "CREATED PROJECTS" [level=1] [ref=f16e267]
+        - paragraph [ref=f16e268]: The following are my projects which are deployed
+      - generic [ref=f16e269]:
+        - article [ref=f16e270]:
+          - generic:
+            - img "Swasthya-Neeti"
+          - paragraph [ref=f16e271]: April 2026
+          - generic [ref=f16e272]:
+            - generic [ref=f16e273]: S
+            - heading "Swasthya-Neeti" [level=2] [ref=f16e274]
+          - paragraph [ref=f16e275]: AI Chatbot for Rural Healthcare Guidance
+        - article [ref=f16e276]:
+          - generic:
+            - img "Run-Neeti"
+          - paragraph [ref=f16e277]: May 2026
+          - generic [ref=f16e278]:
+            - generic [ref=f16e279]: "*"
+            - heading "Run-Neeti" [level=2] [ref=f16e280]
+          - paragraph [ref=f16e281]: AI powered graph Synthesis
+        - article [ref=f16e282]:
+          - generic:
+            - img "DevTask"
+          - paragraph [ref=f16e283]: July 2026
+          - generic [ref=f16e284]:
+            - generic [ref=f16e285]: D
+            - heading "DevTask" [level=2] [ref=f16e286]
+          - paragraph [ref=f16e287]: JWT-secured Task Management REST API
+        - article [ref=f16e288]:
+          - generic:
+            - img "Yap-Render"
+          - paragraph [ref=f16e289]: August 2026
+          - generic [ref=f16e290]:
+            - generic [ref=f16e291]: "Y"
+            - heading "Yap-Render" [level=2] [ref=f16e292]
+          - paragraph [ref=f16e293]: Speech/Text to Indian Sign Language Translator
+    - generic [ref=f16e294]:
+      - generic [aria-hidden] [ref=f16e295]:
+        - generic [ref=f16e296]:
+          - generic [ref=f16e297]:
+            - generic [aria-hidden] [ref=f16e298]: M
+            - generic [aria-hidden] [ref=f16e299]: I
+            - generic [aria-hidden] [ref=f16e300]: T
+            - generic [aria-hidden] [ref=f16e301]: A
+            - generic [aria-hidden] [ref=f16e302]: R
+            - generic [aria-hidden] [ref=f16e303]: T
+            - generic [aria-hidden] [ref=f16e304]: H
+          - generic [ref=f16e305]: MITARTH
+        - generic [ref=f16e306]:
+          - generic [ref=f16e307]:
+            - generic [aria-hidden] [ref=f16e308]: P
+            - generic [aria-hidden] [ref=f16e309]: A
+            - generic [aria-hidden] [ref=f16e310]: T
+            - generic [aria-hidden] [ref=f16e311]: H
+            - generic [aria-hidden] [ref=f16e312]: A
+            - generic [aria-hidden] [ref=f16e313]: K
+          - generic [ref=f16e314]: PATHAK
+      - figure "Mitarth Pathak" [ref=f16e316]:
+        - img "Portrait of Mitarth" [ref=f16e318]
+      - generic [ref=f16e319]:
+        - generic [ref=f16e320]:
+          - paragraph [ref=f16e321]: Let's build something
+          - paragraph [ref=f16e322]: MEANINGFULAND MEMORABLE
+        - generic [ref=f16e323]:
+          - paragraph [ref=f16e324]: Reach out
+          - generic [ref=f16e325]:
+            - link "Instagram" [ref=f16e326] [cursor=pointer]:
+              - /url: https://www.instagram.com/_mitarth
+            - link "GitHub" [ref=f16e331] [cursor=pointer]:
+              - /url: https://github.com/mitarthpathak/
+            - link "LinkedIn" [ref=f16e334] [cursor=pointer]:
+              - /url: https://www.linkedin.com/in/mitarth-pathak
+            - link "Twitter" [ref=f16e338] [cursor=pointer]:
+              - /url: https://x.com/mpathak6207
+            - link "Spotify" [ref=f16e341] [cursor=pointer]:
+              - /url: https://open.spotify.com/user/31fufrhc4ywnuuhw3b2nj4f3xdsq?si=4a3c68532c794088
+            - generic [ref=f16e347]:
+              - generic [aria-hidden]: mpathak6207@gmail.com
+              - button "Copy email ID" [ref=f16e348]
+  - generic [ref=f16e353] [cursor=pointer]:
+    - generic:
+      - generic: HOME
+      - generic: WORKS
+      - generic: CONTACT
+    - generic [ref=f16e354]:
+      - generic [ref=f16e355]: Menu
+      - generic [ref=f16e356]: =
+  - button "Open Next.js Dev Tools" [ref=f16e362] [cursor=pointer]
