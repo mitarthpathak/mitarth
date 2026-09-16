@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SiTypescript, SiJavascript, SiHtml5, SiCss, SiClaude } from "react-icons/si";
+import {
+  SiTypescript,
+  SiJavascript,
+  SiHtml5,
+  SiCss,
+  SiClaude,
+  SiPython,
+  SiCplusplus,
+  SiNextdotjs,
+} from "react-icons/si";
 import { RiOpenaiFill } from "react-icons/ri";
 import { FaJava } from "react-icons/fa6";
 
@@ -13,7 +22,37 @@ const FILE_ICONS = {
   java: { Icon: FaJava, color: "#ED8B00" },
   css: { Icon: SiCss, color: "#3A7BC8" },
   html: { Icon: SiHtml5, color: "#E34F26" },
+  py: { Icon: SiPython, color: "#3776AB" },
+  cpp: { Icon: SiCplusplus, color: "#00599C" },
+  next: { Icon: SiNextdotjs, color: "#ffffff" },
 };
+
+// Deeper jewel-tone palette for the language graph only — the IDE-mockup file
+// icons elsewhere keep their true brand colors via FILE_ICONS.
+const LANG_COLORS = {
+  js: "#D9A441",
+  ts: "#3E63DD",
+  next: "#C7CCD6",
+  html: "#D2543A",
+  css: "#2FA8A0",
+  java: "#B5542E",
+  py: "#6366B8",
+  cpp: "#3E8E63",
+};
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function mixWith(hex, target, amount) {
+  const [r, g, b] = hexToRgb(hex);
+  const mix = (c) => Math.round(c + (target - c) * amount);
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
+
+const lighten = (hex, amount) => mixWith(hex, 255, amount);
+const deepen = (hex, amount) => mixWith(hex, 0, amount);
 
 const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "svg", "webp"];
 
@@ -297,75 +336,561 @@ function TermLine({ line }) {
   );
 }
 
-const LANGUAGE_STATS = [
-  { name: "JavaScript", ext: "js", pct: 42 },
-  { name: "TypeScript", ext: "ts", pct: 28 },
-  { name: "Java", ext: "java", pct: 18 },
-  { name: "CSS", ext: "css", pct: 8 },
-  { name: "HTML", ext: "html", pct: 4 },
+// Real data pulled from github.com/mitarthpathak — one repo missed here is one
+// missed in the graph, so this mirrors `gh api users/mitarthpathak/repos` + per-repo
+// `/languages` exactly (byte counts), except Next.js which GitHub doesn't report
+// as a "language" — it's tagged on manually for the mitarth (portfolio) repo.
+const LANG_NAME_TO_KEY = {
+  JavaScript: "js",
+  TypeScript: "ts",
+  Java: "java",
+  "C++": "cpp",
+  Python: "py",
+  HTML: "html",
+  CSS: "css",
+};
+
+const MAJOR_KEYS = ["js", "ts", "next", "html", "css", "java", "py", "cpp"];
+const LANG_LABELS = {
+  js: "JavaScript",
+  ts: "TypeScript",
+  next: "Next.js",
+  html: "HTML",
+  css: "CSS",
+  java: "Java",
+  py: "Python",
+  cpp: "C++",
+};
+// Both are Next.js apps under the hood — their JS/TS byte counts roll into the
+// Next.js node instead of the raw-language nodes.
+const NEXTJS_REPOS = ["mitarth", "Swasthya-Neeti"];
+
+const REPO_DATA = [
+  { name: "Swasthya-Neeti", label: "Swasthya-Neeti", big: true, langs: { TypeScript: 272040, JavaScript: 120660, CSS: 99984, HTML: 678 } },
+  { name: "Run-Neeti", label: "Run-Neeti", big: true, langs: { TypeScript: 127503, JavaScript: 15751, CSS: 1413, HTML: 638 } },
+  { name: "DevTask", label: "DevTask", big: true, langs: { Java: 26688 } },
+  { name: "mitarth", label: "Mitarth", big: true, langs: { JavaScript: 99645, CSS: 65968, Python: 617 } },
+  { name: "yap-render", label: "Yap-Render", big: true, langs: { JavaScript: 505621, TypeScript: 75368, CSS: 41634 } },
+  { name: "PeerLink", label: "PeerLink", big: true, langs: { "C++": 29450 } },
+  { name: "Cognizant", label: "Cognizant", big: false, langs: { Python: 107615 } },
+  { name: "ecom", label: "ecom", big: false, langs: { Java: 7156 } },
+  { name: "Lottery---Raffle-Contract", label: "Lottery-Raffle-Contract", big: false, langs: { Rust: 2928, Makefile: 171 } },
+  { name: "mitarthpathak", label: "mitarthpathak", big: false, langs: {} },
+  { name: "OAuthExample", label: "OAuthExample", big: false, langs: { Java: 2130 } },
+  { name: "SAGACITY", label: "SAGACITY", big: false, langs: { TypeScript: 85271, JavaScript: 30239, CSS: 938 }, drop: ["JavaScript"] },
+  { name: "ScholarGuru", label: "ScholarGuru", big: false, langs: { HTML: 1293149, CSS: 320760, JavaScript: 194879, TypeScript: 145532, Batchfile: 1189, Shell: 1134 } },
+  { name: "spring-security", label: "spring-security", big: false, langs: { Java: 18332 } },
+  { name: "SpringJPA", label: "SpringJPA", big: false, langs: { Java: 4352 } },
+  { name: "studentManagement", label: "studentManagement", big: false, langs: { Java: 2810 } },
+  { name: "yap-render-APP", label: "yap-render-APP", big: false, langs: { JavaScript: 516130, Kotlin: 401299, TypeScript: 17466, HTML: 2358 }, drop: ["JavaScript"] },
+  { name: "yap-render-extension", label: "yap-render-extension", big: false, langs: { JavaScript: 548473, CSS: 8046, HTML: 6351 }, drop: ["JavaScript"] },
 ];
 
-function LanguagesPane() {
-  const lines = [
-    { cmd: "ls" },
-    { ls: ["App.jsx", "index.css", "TaskController.java", "islTranslator.ts", "package.json"] },
-  ];
+function bytesToRadius(bytes, allBytes, min, max) {
+  const lo = Math.log10(min + 1);
+  const hi = Math.log10(max + 1);
+  const t = hi > lo ? (Math.log10(bytes + 1) - lo) / (hi - lo) : 0.5;
+  return round2(15 + t * 19);
+}
 
+const GRAPH_CENTER = { x: 330, y: 240 };
+const LANG_RING = 95;
+const BIG_RING = 172;
+const SMALL_RING = 224;
+
+function round2(n) {
+  return Math.round(n * 100) / 100;
+}
+
+function polar(cx, cy, r, deg) {
+  const rad = (deg * Math.PI) / 180;
+  return { x: round2(cx + r * Math.cos(rad)), y: round2(cy + r * Math.sin(rad)) };
+}
+
+function clamp(v, lo, hi) {
+  return Math.min(hi, Math.max(lo, v));
+}
+
+// Gentle bezier bow so edges read as curved "pipelines" instead of flat wires.
+function edgePath(x1, y1, x2, y2) {
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len;
+  const ny = dx / len;
+  const bow = len * 0.14;
+  const cx = round2(mx + nx * bow);
+  const cy = round2(my + ny * bow);
+  return `M${x1},${y1} Q${cx},${cy} ${x2},${y2}`;
+}
+
+function repoMajorEntries(repo) {
+  const isNext = NEXTJS_REPOS.includes(repo.name);
+  let nextBytes = 0;
+  const entries = [];
+  for (const [ghName, bytes] of Object.entries(repo.langs)) {
+    if (repo.drop?.includes(ghName)) continue;
+    const key = LANG_NAME_TO_KEY[ghName];
+    if (!key) continue;
+    if (isNext && (key === "js" || key === "ts")) {
+      nextBytes += bytes;
+      continue;
+    }
+    entries.push([key, bytes]);
+  }
+  if (isNext) entries.push(["next", nextBytes]);
+  return entries;
+}
+
+const LANG_TOTALS = MAJOR_KEYS.reduce((acc, key) => {
+  acc[key] = REPO_DATA.reduce((sum, repo) => {
+    const entry = repoMajorEntries(repo).find(([k]) => k === key);
+    return sum + (entry ? entry[1] : 0);
+  }, 0);
+  return acc;
+}, {});
+
+const LANG_TOTAL_VALUES = Object.values(LANG_TOTALS);
+const LANG_MIN = Math.min(...LANG_TOTAL_VALUES);
+const LANG_MAX = Math.max(...LANG_TOTAL_VALUES);
+const LANG_SUM = LANG_TOTAL_VALUES.reduce((a, b) => a + b, 0);
+
+const LANG_NODES = MAJOR_KEYS.map((key, i) => {
+  const angle = -90 + i * (360 / MAJOR_KEYS.length);
+  const { x, y } = polar(GRAPH_CENTER.x, GRAPH_CENTER.y, LANG_RING, angle);
+  const bytes = LANG_TOTALS[key];
+  return {
+    key,
+    name: LANG_LABELS[key],
+    angle,
+    x,
+    y,
+    pct: Math.round((bytes / LANG_SUM) * 100),
+    r: bytesToRadius(bytes, LANG_TOTAL_VALUES, LANG_MIN, LANG_MAX),
+  };
+});
+
+const LANG_BY_KEY = LANG_NODES.reduce((acc, n) => ({ ...acc, [n.key]: n }), {});
+
+let bigIdx = 0;
+let smallIdx = 0;
+const PROJECT_NODES = REPO_DATA.map((repo) => {
+  const majorEntries = repoMajorEntries(repo);
+  const extra = Object.keys(repo.langs).filter((n) => !LANG_NAME_TO_KEY[n]);
+  const dominant = majorEntries.sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+  let angle;
+  if (repo.big) {
+    angle = -60 + bigIdx * (360 / 6);
+    bigIdx += 1;
+  } else {
+    angle = -15 + smallIdx * (360 / 12);
+    smallIdx += 1;
+  }
+  const { x, y } = polar(GRAPH_CENTER.x, GRAPH_CENTER.y, repo.big ? BIG_RING : SMALL_RING, angle);
+
+  return {
+    ...repo,
+    angle,
+    x,
+    y,
+    r: repo.big ? 7.5 : 3.5,
+    majorKeys: majorEntries.map(([key]) => key),
+    extra,
+    dominant,
+    url: `https://github.com/mitarthpathak/${repo.name}`,
+  };
+});
+
+const PROJECT_BY_NAME = PROJECT_NODES.reduce((acc, n) => ({ ...acc, [n.name]: n }), {});
+
+const GRAPH_EDGES = PROJECT_NODES.flatMap((p) =>
+  p.majorKeys.map((key) => ({ project: p.name, key, big: p.big }))
+);
+
+const VIEW_W = 660;
+const VIEW_H = 480;
+const VIEW_MIN_W = 190;
+const DEFAULT_VIEW = { x: 0, y: 0, w: VIEW_W, h: VIEW_H };
+
+function LanguagesPane() {
   const [hovered, setHovered] = useState(null);
+  const [pinned, setPinned] = useState(null);
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
+  const [view, setView] = useState(DEFAULT_VIEW);
+  const [query, setQuery] = useState("");
+  const [tab, setTab] = useState("network");
+  const canvasRef = useRef(null);
+  const tiltRaf = useRef(null);
+  const tiltPending = useRef(null);
+  const zoomRaf = useRef(null);
+  const zoomPending = useRef(null);
+
+  const active = hovered || pinned;
+
+  const q = query.trim().toLowerCase();
+  const searching = q.length > 0;
+  const searchLangKeys = new Set();
+  const searchProjectNames = new Set();
+  if (searching) {
+    LANG_NODES.forEach((l) => {
+      if (l.name.toLowerCase().includes(q)) searchLangKeys.add(l.key);
+    });
+    PROJECT_NODES.forEach((p) => {
+      if (p.label.toLowerCase().includes(q)) searchProjectNames.add(p.name);
+    });
+    searchProjectNames.forEach((name) =>
+      PROJECT_BY_NAME[name].majorKeys.forEach((key) => searchLangKeys.add(key))
+    );
+    Array.from(searchLangKeys).forEach((key) =>
+      PROJECT_NODES.forEach((p) => {
+        if (p.majorKeys.includes(key)) searchProjectNames.add(p.name);
+      })
+    );
+  }
+
+  const selectLang = (key) => setPinned((p) => (p?.type === "lang" && p.key === key ? null : { type: "lang", key }));
+  const selectProject = (name) =>
+    setPinned((p) => (p?.type === "project" && p.name === name ? null : { type: "project", name }));
+  const hoverLang = (key) => setHovered({ type: "lang", key });
+  const hoverProject = (name) => setHovered({ type: "project", name });
+  const clearHover = () => setHovered(null);
+  const clearOnBackgroundClick = (e) => {
+    if (e.target === e.currentTarget) setPinned(null);
+  };
+
+  const langActive = (key) => {
+    if (searching) return searchLangKeys.has(key);
+    return (
+      !active ||
+      (active.type === "lang" && active.key === key) ||
+      (active.type === "project" && PROJECT_BY_NAME[active.name].majorKeys.includes(key))
+    );
+  };
+
+  const projectActive = (name) => {
+    if (searching) return searchProjectNames.has(name);
+    return (
+      !active ||
+      (active.type === "project" && active.name === name) ||
+      (active.type === "lang" && PROJECT_BY_NAME[name].majorKeys.includes(active.key))
+    );
+  };
+
+  const edgeActive = (edge) => {
+    if (searching) return searchLangKeys.has(edge.key) && searchProjectNames.has(edge.project);
+    return (
+      !active ||
+      (active.type === "lang" && active.key === edge.key) ||
+      (active.type === "project" && active.name === edge.project)
+    );
+  };
+
+  const edgeFocused = (edge) => !!active && edgeActive(edge);
+
+  const zoomT = clamp((VIEW_W - view.w) / (VIEW_W - VIEW_MIN_W), 0, 1);
+
+  const handleCanvasMove = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const nx = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+    const ny = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    const depth = 1 + zoomT * 1.6;
+    tiltPending.current = { rx: -ny * 7 * depth, ry: nx * 10 * depth };
+    if (!tiltRaf.current) {
+      tiltRaf.current = requestAnimationFrame(() => {
+        setTilt(tiltPending.current);
+        tiltRaf.current = null;
+      });
+    }
+  };
+
+  const resetCanvas = () => {
+    clearHover();
+    setTilt({ rx: 0, ry: 0 });
+    setView(DEFAULT_VIEW);
+  };
+
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const onWheel = (e) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width;
+      const py = (e.clientY - rect.top) / rect.height;
+      zoomPending.current = { deltaY: e.deltaY, px, py };
+      if (!zoomRaf.current) {
+        zoomRaf.current = requestAnimationFrame(() => {
+          const { deltaY, px: fx, py: fy } = zoomPending.current;
+          setView((v) => {
+            const scale = deltaY > 0 ? 1.14 : 1 / 1.14;
+            const newW = clamp(v.w * scale, VIEW_MIN_W, VIEW_W);
+            const newH = round2(newW * (VIEW_H / VIEW_W));
+            const cursorX = v.x + fx * v.w;
+            const cursorY = v.y + fy * v.h;
+            const newX = clamp(round2(cursorX - fx * newW), -(VIEW_W - newW), VIEW_W - newW);
+            const newY = clamp(round2(cursorY - fy * newH), -(VIEW_H - newH), VIEW_H - newH);
+            return { x: newX, y: newY, w: newW, h: newH };
+          });
+          zoomRaf.current = null;
+        });
+      }
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  const detail = (() => {
+    if (active?.type === "lang") {
+      const s = LANG_BY_KEY[active.key];
+      const usedIn = PROJECT_NODES.filter((p) => p.majorKeys.includes(active.key));
+      return {
+        title: s.name,
+        rows: [
+          ["Share of repos", `${s.pct}%`],
+          ["Used in", `${usedIn.length} project${usedIn.length === 1 ? "" : "s"}`],
+        ],
+        chips: usedIn.map((p) => p.label),
+        link: null,
+      };
+    }
+    if (active?.type === "project") {
+      const p = PROJECT_BY_NAME[active.name];
+      return {
+        title: p.label,
+        rows: [
+          ["Languages", `${p.majorKeys.length + p.extra.length}`],
+          ["Tier", p.big ? "Featured" : "Repo"],
+        ],
+        chips: [
+          ...p.majorKeys.map((key) => LANG_BY_KEY[key].name),
+          ...(NEXTJS_REPOS.includes(p.name) ? [] : p.extra),
+        ],
+        link: p.url,
+      };
+    }
+    return {
+      title: "mitarthpathak/*",
+      rows: [
+        ["Languages", `${LANG_NODES.length}`],
+        ["Repos", `${PROJECT_NODES.length}`],
+        ["Primary", LANG_NODES.slice().sort((a, b) => b.pct - a.pct)[0].name],
+      ],
+      chips: [],
+      link: "https://github.com/mitarthpathak?tab=repositories",
+    };
+  })();
 
   return (
-    <div className="ide-terminal-stage lang-stage">
-      <div className="lang-ghosts" aria-hidden="true">
-        {LANGUAGE_STATS.map((s, i) => (
+    <div className="lang-graph">
+      <div className="lang-graph-header">
+        <label className="lang-graph-search">
+          <span className="lang-graph-search-icon">&#9906;</span>
+          <input
+            type="text"
+            className="lang-graph-search-input"
+            placeholder="Find language, repo…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+          />
+        </label>
+        <span className="lang-graph-filters">Filters &#9662;</span>
+        <div className="lang-graph-tabs">
           <span
-            key={s.ext}
-            className={`lang-ghost lang-ghost-${i + 1} ${hovered === s.ext ? "is-focus" : ""}`}
-            style={{ color: FILE_ICONS[s.ext]?.color }}
+            className={`lang-graph-tab ${tab === "network" ? "is-active" : ""}`}
+            onClick={() => setTab("network")}
           >
-            {s.name}
+            Network
           </span>
-        ))}
-      </div>
-      <div className="lang-scene lang-scene-full">
-        <div className="lang-project-chip">
-          <span className="ide-folder-dot" /> Swasthya-Neeti
+          <span
+            className={`lang-graph-tab ${tab === "list" ? "is-active" : ""}`}
+            onClick={() => setTab("list")}
+          >
+            List
+          </span>
         </div>
-        <TerminalChrome name="swasthya-neeti — zsh" cardClassName="ide-terminal-card-wide lang-card">
-          {lines.map((line, i) => (
-            <TermLine line={line} key={i} />
+        <span className="lang-graph-info">&#8505;</span>
+      </div>
+
+      <div className="lang-graph-body">
+        <div className="lang-graph-sidebar">
+          <p className="lang-graph-group-label">Languages ({LANG_NODES.length})</p>
+          {LANG_NODES.map((s) => (
+            <div
+              key={s.key}
+              className={`lang-graph-row ${langActive(s.key) ? "" : "is-dim"} ${active?.type === "lang" && active.key === s.key ? "is-focus" : ""}`}
+              onMouseEnter={() => hoverLang(s.key)}
+              onMouseLeave={clearHover}
+              onClick={() => selectLang(s.key)}
+            >
+              <span className="lang-graph-row-dot" style={{ background: LANG_COLORS[s.key] }} />
+              <span className="lang-graph-row-name">{s.name}</span>
+              <span className="lang-graph-row-bar">
+                <span
+                  className="lang-graph-row-bar-fill"
+                  style={{ width: `${s.pct}%`, background: LANG_COLORS[s.key] }}
+                />
+              </span>
+              <span className="lang-graph-row-pct">{s.pct}%</span>
+            </div>
           ))}
 
-          <div className="term-line lang-stats-cmd">
-            <span className="term-prompt">$</span>{" "}
-            <span className="term-cmd">git language-stats --repo .</span>
-          </div>
+          <p className="lang-graph-group-label lang-graph-group-label-spaced">
+            Repos ({PROJECT_NODES.length})
+          </p>
+          {PROJECT_NODES.map((p) => (
+            <div
+              key={p.name}
+              className={`lang-graph-row ${projectActive(p.name) ? "" : "is-dim"} ${p.big ? "is-big-row" : ""} ${active?.type === "project" && active.name === p.name ? "is-focus" : ""}`}
+              onMouseEnter={() => hoverProject(p.name)}
+              onMouseLeave={clearHover}
+              onClick={() => selectProject(p.name)}
+            >
+              <span className="ide-folder-dot" />
+              <span className="lang-graph-row-name">{p.label}</span>
+              <span className="lang-graph-row-chips">
+                {p.majorKeys.map((key) => (
+                  <span key={key} className="lang-graph-row-chipdot" style={{ background: LANG_COLORS[key] }} />
+                ))}
+              </span>
+            </div>
+          ))}
+        </div>
 
-          <div className="lang-bar" onMouseLeave={() => setHovered(null)}>
-            {LANGUAGE_STATS.map((s) => (
-              <span
-                key={s.ext}
-                className={`lang-bar-seg ${hovered && hovered !== s.ext ? "is-dim" : ""} ${hovered === s.ext ? "is-focus" : ""}`}
-                style={{ "--seg-w": `${s.pct}%`, background: FILE_ICONS[s.ext]?.color }}
-                onMouseEnter={() => setHovered(s.ext)}
-              />
-            ))}
-          </div>
+        <div
+          className={`lang-graph-canvas ${zoomT > 0.02 ? "is-zoomed" : ""}`}
+          ref={canvasRef}
+          onMouseMove={handleCanvasMove}
+          onMouseLeave={resetCanvas}
+        >
+          <svg
+            viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
+            className="lang-graph-svg"
+            style={{ transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)` }}
+            onClick={clearOnBackgroundClick}
+          >
+            <defs>
+              <filter id="langNodeShadow" x="-60%" y="-60%" width="220%" height="220%">
+                <feDropShadow dx="0" dy="3" stdDeviation="3.2" floodColor="#000000" floodOpacity="0.55" />
+              </filter>
+              <filter id="langEdgeGlow" x="-80%" y="-80%" width="260%" height="260%">
+                <feGaussianBlur stdDeviation="1.6" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              {MAJOR_KEYS.map((key) => (
+                <radialGradient key={key} id={`sph-${key}`} cx="35%" cy="30%" r="75%">
+                  <stop offset="0%" stopColor={lighten(LANG_COLORS[key], 0.6)} />
+                  <stop offset="45%" stopColor={LANG_COLORS[key]} />
+                  <stop offset="100%" stopColor={deepen(LANG_COLORS[key], 0.45)} />
+                </radialGradient>
+              ))}
+            </defs>
 
-          <div className="lang-legend">
-            {LANGUAGE_STATS.map((s) => (
-              <div
-                className={`lang-legend-row ${hovered && hovered !== s.ext ? "is-dim" : ""} ${hovered === s.ext ? "is-focus" : ""}`}
-                key={s.ext}
-                onMouseEnter={() => setHovered(s.ext)}
-                onMouseLeave={() => setHovered(null)}
+            {GRAPH_EDGES.map((edge, i) => {
+              const from = PROJECT_BY_NAME[edge.project];
+              const to = LANG_BY_KEY[edge.key];
+              const isActive = edgeActive(edge);
+              const isFocused = edgeFocused(edge);
+              return (
+                <path
+                  key={i}
+                  d={edgePath(from.x, from.y, to.x, to.y)}
+                  fill="none"
+                  className={`lang-graph-edge ${isActive ? "is-active" : "is-dim"} ${edge.big ? "is-big-edge" : ""} ${isFocused ? "is-flowing" : ""}`}
+                  stroke={LANG_COLORS[edge.key]}
+                  filter={isFocused ? "url(#langEdgeGlow)" : undefined}
+                />
+              );
+            })}
+
+            {PROJECT_NODES.map((p) => (
+              <g
+                key={p.name}
+                className={`lang-graph-node ${projectActive(p.name) ? "" : "is-dim"} ${p.big ? "is-big" : "is-small"}`}
+                onMouseEnter={() => hoverProject(p.name)}
+                onMouseLeave={clearHover}
+                onClick={() => selectProject(p.name)}
               >
-                <span className="lang-legend-dot" style={{ background: FILE_ICONS[s.ext]?.color }} />
-                <span className="lang-legend-name">{s.name}</span>
-                <span className="lang-legend-pct">{s.pct}%</span>
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={p.r}
+                  className="lang-graph-project-dot"
+                  style={{
+                    fill: p.big && p.dominant ? `url(#sph-${p.dominant})` : "rgba(255,255,255,0.55)",
+                  }}
+                  filter={p.big ? "url(#langNodeShadow)" : undefined}
+                />
+                {(p.big || (active?.type === "project" && active.name === p.name)) && (
+                  <text
+                    x={p.x + (p.x < GRAPH_CENTER.x ? -(p.r + 5) : p.r + 5)}
+                    y={p.y + 3}
+                    textAnchor={p.x < GRAPH_CENTER.x ? "end" : "start"}
+                    className={`lang-graph-project-label ${p.big ? "is-big" : ""}`}
+                  >
+                    {p.label}
+                  </text>
+                )}
+              </g>
+            ))}
+
+            {LANG_NODES.map((s) => (
+              <g
+                key={s.key}
+                className={`lang-graph-node ${langActive(s.key) ? "" : "is-dim"} ${active?.type === "lang" && active.key === s.key ? "is-focus" : ""}`}
+                onMouseEnter={() => hoverLang(s.key)}
+                onMouseLeave={clearHover}
+                onClick={() => selectLang(s.key)}
+              >
+                <circle
+                  cx={s.x}
+                  cy={s.y}
+                  r={s.r}
+                  className="lang-graph-lang-dot"
+                  style={{ fill: `url(#sph-${s.key})` }}
+                  filter="url(#langNodeShadow)"
+                />
+                <text x={s.x} y={s.y + s.r + 15} textAnchor="middle" className="lang-graph-lang-label">
+                  {s.name}
+                </text>
+              </g>
+            ))}
+          </svg>
+        </div>
+
+        <div className="lang-graph-detail">
+          <p className="lang-graph-detail-label">Selected</p>
+          <p className="lang-graph-detail-title">{detail.title}</p>
+          <div className="lang-graph-detail-rows">
+            {detail.rows.map(([k, v]) => (
+              <div className="lang-graph-detail-row" key={k}>
+                <span>{k}</span>
+                <span>{v}</span>
               </div>
             ))}
           </div>
-        </TerminalChrome>
+          {detail.chips.length > 0 && (
+            <div className="lang-graph-detail-chips">
+              {detail.chips.map((c) => (
+                <span className="lang-graph-detail-chip" key={c}>
+                  {c}
+                </span>
+              ))}
+            </div>
+          )}
+          {detail.link && (
+            <a className="lang-graph-detail-link" href={detail.link} target="_blank" rel="noopener noreferrer">
+              View on GitHub &#8599;
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -910,7 +1435,7 @@ export default function TechStack() {
             </div>
 
             <div className="tech-window-body">
-              <div className={`ide-sidebar ${active.mode === "terminal" ? "is-collapsed" : ""}`}>
+              <div className={`ide-sidebar ${active.mode === "terminal" || active.mode === "ls" ? "is-collapsed" : ""}`}>
                 <p className="ide-sidebar-caption">Explorer</p>
 
                 <div className="ide-sidebar-section">
