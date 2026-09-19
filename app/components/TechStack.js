@@ -13,6 +13,8 @@ import {
 } from "react-icons/si";
 import { RiOpenaiFill } from "react-icons/ri";
 import { FaJava } from "react-icons/fa6";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { OrbitControls, Line, Html } from "@react-three/drei";
 
 const FILE_ICONS = {
   ts: { Icon: SiTypescript, color: "#3178C6" },
@@ -56,7 +58,6 @@ function mixWith(hex, target, amount) {
 }
 
 const lighten = (hex, amount) => mixWith(hex, 255, amount);
-const deepen = (hex, amount) => mixWith(hex, 0, amount);
 
 const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "svg", "webp"];
 
@@ -397,7 +398,9 @@ function bytesToRadius(bytes, allBytes, min, max) {
   return round2(15 + t * 19);
 }
 
-const GRAPH_CENTER = { x: 330, y: 240 };
+const GRAPH_CUBE = 480;
+const GRAPH_CENTER = { x: 330, y: 240, z: GRAPH_CUBE / 2 };
+const WORLD_SCALE = 60;
 const LANG_RING = 95;
 const BIG_RING = 172;
 const SMALL_RING = 224;
@@ -411,25 +414,6 @@ function polar(cx, cy, r, deg) {
   return { x: round2(cx + r * Math.cos(rad)), y: round2(cy + r * Math.sin(rad)) };
 }
 
-function clamp(v, lo, hi) {
-  return Math.min(hi, Math.max(lo, v));
-}
-
-// Gentle bezier bow so edges read as curved "pipelines" instead of flat wires.
-function edgePath(x1, y1, x2, y2) {
-  const mx = (x1 + x2) / 2;
-  const my = (y1 + y2) / 2;
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const len = Math.hypot(dx, dy) || 1;
-  const nx = -dy / len;
-  const ny = dx / len;
-  const bow = len * 0.14;
-  const cx = round2(mx + nx * bow);
-  const cy = round2(my + ny * bow);
-  return `M${x1},${y1} Q${cx},${cy} ${x2},${y2}`;
-}
-
 function mulberry32(seed) {
   let t = seed >>> 0;
   return function () {
@@ -440,40 +424,44 @@ function mulberry32(seed) {
   };
 }
 
-// Stretches the settled node cloud to fill the target viewBox rect. X and Y
-// are normalized independently (not a single uniform scale) so the cluster
-// always uses the full width and height of the canvas instead of leaving
-// empty margins when the organic shape doesn't match the canvas aspect
-// ratio — node radii are untouched, so circles stay circles.
-function fitNodesToBounds(nodes, x, y, w, h, padding) {
-  const xs = nodes.map((n) => n.x);
-  const ys = nodes.map((n) => n.y);
-  const minX = Math.min(...xs);
-  const minY = Math.min(...ys);
-  const spanX = Math.max(Math.max(...xs) - minX, 1);
-  const spanY = Math.max(Math.max(...ys) - minY, 1);
-  const scaleX = (w - padding * 2) / spanX;
-  const scaleY = (h - padding * 2) / spanY;
+// Stretches the settled node cloud to fill the target cube. X, Y and Z are
+// normalized independently (not a single uniform scale) so the cluster
+// always uses the full volume instead of leaving empty margins when the
+// organic shape doesn't match the cube's proportions — node radii are
+// untouched, so spheres stay spheres.
+function fitNodesToBounds3D(nodes, size, padding) {
+  const axes = ["x", "y", "z"];
+  const bounds = {};
+  axes.forEach((axis) => {
+    const vals = nodes.map((n) => n[axis]);
+    bounds[axis] = { min: Math.min(...vals), span: Math.max(Math.max(...vals) - Math.min(...vals), 1) };
+  });
   nodes.forEach((n) => {
-    n.x = round2(x + padding + (n.x - minX) * scaleX);
-    n.y = round2(y + padding + (n.y - minY) * scaleY);
+    axes.forEach((axis) => {
+      const { min, span } = bounds[axis];
+      const scale = (size - padding * 2) / span;
+      n[axis] = round2(padding + (n[axis] - min) * scale);
+    });
   });
 }
 
-// Force-directed relaxation: languages act as heavier cluster hubs, repos get
-// pulled toward the languages they use and pushed apart from everything else.
-// This is what turns the old fixed concentric rings into an organic node-link
-// cloud, like a classic force-graph, instead of a neat wheel. Seeded PRNG keeps
-// the layout identical between server render and client hydration.
-function relaxForceLayout(langNodes, projectNodes, edges, center, viewW, viewH) {
+// Force-directed relaxation in real 3D: languages act as heavier cluster hubs,
+// repos get pulled toward the languages they use and pushed apart from
+// everything else, in x/y/z all at once — a true volumetric node cloud
+// instead of a flat graph, like a scene laid out in a 3D app. Seeded PRNG
+// keeps the layout identical between server render and client hydration.
+function relaxForceLayout(langNodes, projectNodes, edges, center, cube) {
   const rand = mulberry32(20260919);
   const sims = [
     ...langNodes.map((ref) => ({ ref, r: ref.r, mass: 3.2 })),
     ...projectNodes.map((ref) => ({ ref, r: ref.r, mass: ref.big ? 1.5 : 1 })),
   ];
   sims.forEach((n) => {
+    // x/y start from the old polar seed (still a good basin to relax from);
+    // z has no natural seed, so it starts spread randomly through the cube.
     n.x = n.ref.x + (rand() - 0.5) * 8;
     n.y = n.ref.y + (rand() - 0.5) * 8;
+    n.z = center.z + (rand() - 0.5) * cube * 0.5;
   });
 
   const simByLang = {};
@@ -495,37 +483,47 @@ function relaxForceLayout(langNodes, projectNodes, edges, center, viewW, viewH) 
         const b = sims[j];
         let dx = a.x - b.x;
         let dy = a.y - b.y;
-        let d2 = dx * dx + dy * dy;
+        let dz = a.z - b.z;
+        let d2 = dx * dx + dy * dy + dz * dz;
         if (d2 < 0.02) {
           dx = rand() - 0.5;
           dy = rand() - 0.5;
+          dz = rand() - 0.5;
           d2 = 0.02;
         }
         const d = Math.sqrt(d2);
         const force = (760 / d2) * alpha;
         const fx = (dx / d) * force;
         const fy = (dy / d) * force;
+        const fz = (dz / d) * force;
         a.x += fx / a.mass;
         a.y += fy / a.mass;
+        a.z += fz / a.mass;
         b.x -= fx / b.mass;
         b.y -= fy / b.mass;
+        b.z -= fz / b.mass;
       }
     }
     links.forEach(({ a, b, dist }) => {
       const dx = b.x - a.x;
       const dy = b.y - a.y;
-      const d = Math.sqrt(dx * dx + dy * dy) || 0.02;
+      const dz = b.z - a.z;
+      const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.02;
       const diff = ((d - dist) * 0.05 * alpha) / d;
       const fx = dx * diff;
       const fy = dy * diff;
+      const fz = dz * diff;
       a.x += fx / a.mass;
       a.y += fy / a.mass;
+      a.z += fz / a.mass;
       b.x -= fx / b.mass;
       b.y -= fy / b.mass;
+      b.z -= fz / b.mass;
     });
     sims.forEach((n) => {
       n.x += (center.x - n.x) * 0.012 * alpha;
       n.y += (center.y - n.y) * 0.012 * alpha;
+      n.z += (center.z - n.z) * 0.012 * alpha;
     });
     alpha *= 0.985;
   }
@@ -537,44 +535,44 @@ function relaxForceLayout(langNodes, projectNodes, edges, center, viewW, viewH) 
         const b = sims[j];
         const dx = b.x - a.x;
         const dy = b.y - a.y;
-        const d = Math.sqrt(dx * dx + dy * dy) || 0.02;
+        const dz = b.z - a.z;
+        const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.02;
         const minDist = a.r + b.r + 5;
         if (d < minDist) {
           const overlap = (minDist - d) / 2;
           const nx = dx / d;
           const ny = dy / d;
+          const nz = dz / d;
           a.x -= nx * overlap;
           a.y -= ny * overlap;
+          a.z -= nz * overlap;
           b.x += nx * overlap;
           b.y += ny * overlap;
+          b.z += nz * overlap;
         }
       }
     }
   }
 
-  fitNodesToBounds(sims, 0, 0, viewW, viewH, 34);
+  fitNodesToBounds3D(sims, cube, 40);
 
-  // Pick whichever side (left/right) of a project node has more open space,
-  // so its label doesn't land on top of a neighboring cluster hub.
   sims.forEach((n) => {
-    if (n.ref.big !== undefined) {
-      const gap = n.r + 6;
-      const rightPt = { x: n.x + gap, y: n.y };
-      const leftPt = { x: n.x - gap, y: n.y };
-      let rightClear = Infinity;
-      let leftClear = Infinity;
-      sims.forEach((o) => {
-        if (o === n) return;
-        const dr = Math.hypot(o.x - rightPt.x, o.y - rightPt.y) - o.r;
-        const dl = Math.hypot(o.x - leftPt.x, o.y - leftPt.y) - o.r;
-        if (dr < rightClear) rightClear = dr;
-        if (dl < leftClear) leftClear = dl;
-      });
-      n.ref.labelDir = rightClear >= leftClear ? 1 : -1;
-    }
     n.ref.x = n.x;
     n.ref.y = n.y;
+    n.ref.z = n.z;
   });
+}
+
+// Converts a node's simulated x/y/z (pixel-ish units, 0..GRAPH_CUBE) into
+// Three.js world-space coordinates centered on the origin. Y is flipped so
+// "up" in the data reads as "up" in the 3D scene.
+function toWorld(n) {
+  const half = GRAPH_CUBE / 2;
+  return [
+    round2((n.x - half) / WORLD_SCALE),
+    round2(-(n.y - half) / WORLD_SCALE),
+    round2((n.z - half) / WORLD_SCALE),
+  ];
 }
 
 function repoMajorEntries(repo) {
@@ -657,30 +655,189 @@ const PROJECT_NODES = REPO_DATA.map((repo) => {
 
 const PROJECT_BY_NAME = PROJECT_NODES.reduce((acc, n) => ({ ...acc, [n.name]: n }), {});
 
+// Edges carry the actual byte weight of that language inside that repo, so
+// line thickness reads as "how much of this repo is this language" — the
+// priority signal the graph is drawn from — instead of a flat width.
 const GRAPH_EDGES = PROJECT_NODES.flatMap((p) =>
-  p.majorKeys.map((key) => ({ project: p.name, key, big: p.big }))
+  repoMajorEntries(p).map(([key, bytes]) => ({ project: p.name, key, big: p.big, bytes }))
 );
 
-// Replaces the fixed ring placement above with an organic, clustered layout.
-relaxForceLayout(LANG_NODES, PROJECT_NODES, GRAPH_EDGES, GRAPH_CENTER, 660, 480);
+const EDGE_BYTE_VALUES = GRAPH_EDGES.map((e) => e.bytes);
+const EDGE_MIN = Math.min(...EDGE_BYTE_VALUES);
+const EDGE_MAX = Math.max(...EDGE_BYTE_VALUES);
+GRAPH_EDGES.forEach((e) => {
+  const lo = Math.log10(EDGE_MIN + 1);
+  const hi = Math.log10(EDGE_MAX + 1);
+  const t = hi > lo ? (Math.log10(e.bytes + 1) - lo) / (hi - lo) : 0.5;
+  e.width = round2(1 + t * 3.6);
+});
 
-const VIEW_W = 660;
-const VIEW_H = 480;
-const VIEW_MIN_W = 190;
-const DEFAULT_VIEW = { x: 0, y: 0, w: VIEW_W, h: VIEW_H };
+// Replaces the fixed ring placement above with an organic, clustered 3D layout.
+relaxForceLayout(LANG_NODES, PROJECT_NODES, GRAPH_EDGES, GRAPH_CENTER, GRAPH_CUBE);
+
+LANG_NODES.forEach((n) => {
+  const [wx, wy, wz] = toWorld(n);
+  n.wx = wx;
+  n.wy = wy;
+  n.wz = wz;
+  n.wr = round2(n.r / WORLD_SCALE);
+});
+PROJECT_NODES.forEach((n) => {
+  const [wx, wy, wz] = toWorld(n);
+  n.wx = wx;
+  n.wy = wy;
+  n.wz = wz;
+  n.wr = round2(n.r / WORLD_SCALE);
+});
+
+// A straight 3D edge between a repo and a language hub. Idle edges are a
+// neutral gray; the hovered/pinned node's own edges light up in its
+// language color and get an animated dashed "flow" running through them.
+function EdgeLine3D({ edge, from, to, isActive, isFocused }) {
+  const lineRef = useRef(null);
+
+  useFrame((_, delta) => {
+    const material = lineRef.current?.material;
+    if (isFocused && material) {
+      material.dashOffset -= delta * 1.6;
+    }
+  });
+
+  return (
+    <Line
+      ref={lineRef}
+      points={[
+        [from.wx, from.wy, from.wz],
+        [to.wx, to.wy, to.wz],
+      ]}
+      color={isFocused ? LANG_COLORS[edge.key] : NEUTRAL_EDGE}
+      transparent
+      opacity={isFocused ? 0.95 : isActive ? 0.4 : 0.05}
+      lineWidth={isFocused ? edge.width + 1.3 : edge.width}
+      dashed={isFocused}
+      dashSize={0.14}
+      gapSize={0.1}
+    />
+  );
+}
+
+// Billboarded name tag floating just above a node, screen-projected from its
+// 3D position so it stays readable at any orbit angle.
+function NodeLabel({ position, color, big, children }) {
+  return (
+    <Html position={position} center distanceFactor={8} style={{ pointerEvents: "none" }}>
+      <span
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: big ? "12px" : "10.5px",
+          fontWeight: big ? 700 : 600,
+          color,
+          whiteSpace: "nowrap",
+          textShadow: "0 1px 4px rgba(0,0,0,0.9)",
+        }}
+      >
+        {children}
+      </span>
+    </Html>
+  );
+}
+
+function LangSphere3D({ node, isActive, isFocus, onHover, onLeave, onSelect }) {
+  const color = LANG_COLORS[node.key];
+  return (
+    <group>
+      <mesh
+        position={[node.wx, node.wy, node.wz]}
+        scale={isFocus ? 1.12 : 1}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          onHover();
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          onLeave();
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect();
+        }}
+      >
+        <sphereGeometry args={[node.wr, 32, 32]} />
+        <meshStandardMaterial
+          color={color}
+          roughness={0.35}
+          metalness={0.2}
+          emissive={color}
+          emissiveIntensity={isFocus ? 0.5 : 0.12}
+          transparent
+          opacity={isActive ? 1 : 0.18}
+        />
+      </mesh>
+      <NodeLabel
+        position={[node.wx, node.wy + node.wr + 0.16, node.wz]}
+        color={isActive ? "#ffffff" : "rgba(255,255,255,0.4)"}
+        big
+      >
+        {node.name}
+      </NodeLabel>
+    </group>
+  );
+}
+
+function ProjectSphere3D({ node, isActive, isFocus, showLabel, onHover, onLeave, onSelect }) {
+  const fillColor =
+    node.big && node.dominant
+      ? LANG_COLORS[node.dominant]
+      : node.dominant
+        ? lighten(LANG_COLORS[node.dominant], 0.55)
+        : "#c7ccd6";
+  const labelColor = node.dominant
+    ? lighten(LANG_COLORS[node.dominant], node.big ? 0.32 : 0.18)
+    : "rgba(255,255,255,0.6)";
+
+  return (
+    <group>
+      <mesh
+        position={[node.wx, node.wy, node.wz]}
+        scale={isFocus ? 1.25 : 1}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          onHover();
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          onLeave();
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect();
+        }}
+      >
+        <sphereGeometry args={[node.wr, 24, 24]} />
+        <meshStandardMaterial
+          color={fillColor}
+          roughness={0.4}
+          metalness={node.big ? 0.25 : 0.05}
+          emissive={fillColor}
+          emissiveIntensity={isFocus ? 0.55 : node.big ? 0.08 : 0.03}
+          transparent
+          opacity={isActive ? 1 : 0.15}
+        />
+      </mesh>
+      {showLabel && (
+        <NodeLabel position={[node.wx, node.wy + node.wr + 0.1, node.wz]} color={labelColor} big={node.big}>
+          {node.label}
+        </NodeLabel>
+      )}
+    </group>
+  );
+}
 
 function LanguagesPane() {
   const [hovered, setHovered] = useState(null);
   const [pinned, setPinned] = useState(null);
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
-  const [view, setView] = useState(DEFAULT_VIEW);
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState("network");
-  const canvasRef = useRef(null);
-  const tiltRaf = useRef(null);
-  const tiltPending = useRef(null);
-  const zoomRaf = useRef(null);
-  const zoomPending = useRef(null);
 
   const active = hovered || pinned;
 
@@ -711,9 +868,6 @@ function LanguagesPane() {
   const hoverLang = (key) => setHovered({ type: "lang", key });
   const hoverProject = (name) => setHovered({ type: "project", name });
   const clearHover = () => setHovered(null);
-  const clearOnBackgroundClick = (e) => {
-    if (e.target === e.currentTarget) setPinned(null);
-  };
 
   const langActive = (key) => {
     if (searching) return searchLangKeys.has(key);
@@ -743,58 +897,6 @@ function LanguagesPane() {
   };
 
   const edgeFocused = (edge) => !!active && edgeActive(edge);
-
-  const zoomT = clamp((VIEW_W - view.w) / (VIEW_W - VIEW_MIN_W), 0, 1);
-
-  const handleCanvasMove = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    const nx = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-    const ny = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-    const depth = 1 + zoomT * 1.6;
-    tiltPending.current = { rx: -ny * 7 * depth, ry: nx * 10 * depth };
-    if (!tiltRaf.current) {
-      tiltRaf.current = requestAnimationFrame(() => {
-        setTilt(tiltPending.current);
-        tiltRaf.current = null;
-      });
-    }
-  };
-
-  const resetCanvas = () => {
-    clearHover();
-    setTilt({ rx: 0, ry: 0 });
-    setView(DEFAULT_VIEW);
-  };
-
-  useEffect(() => {
-    const el = canvasRef.current;
-    if (!el) return;
-    const onWheel = (e) => {
-      e.preventDefault();
-      const rect = el.getBoundingClientRect();
-      const px = (e.clientX - rect.left) / rect.width;
-      const py = (e.clientY - rect.top) / rect.height;
-      zoomPending.current = { deltaY: e.deltaY, px, py };
-      if (!zoomRaf.current) {
-        zoomRaf.current = requestAnimationFrame(() => {
-          const { deltaY, px: fx, py: fy } = zoomPending.current;
-          setView((v) => {
-            const scale = deltaY > 0 ? 1.14 : 1 / 1.14;
-            const newW = clamp(v.w * scale, VIEW_MIN_W, VIEW_W);
-            const newH = round2(newW * (VIEW_H / VIEW_W));
-            const cursorX = v.x + fx * v.w;
-            const cursorY = v.y + fy * v.h;
-            const newX = clamp(round2(cursorX - fx * newW), -(VIEW_W - newW), VIEW_W - newW);
-            const newY = clamp(round2(cursorY - fy * newH), -(VIEW_H - newH), VIEW_H - newH);
-            return { x: newX, y: newY, w: newW, h: newH };
-          });
-          zoomRaf.current = null;
-        });
-      }
-    };
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, []);
 
   const detail = (() => {
     if (active?.type === "lang") {
@@ -915,114 +1017,58 @@ function LanguagesPane() {
           ))}
         </div>
 
-        <div
-          className={`lang-graph-canvas ${zoomT > 0.02 ? "is-zoomed" : ""}`}
-          ref={canvasRef}
-          onMouseMove={handleCanvasMove}
-          onMouseLeave={resetCanvas}
-        >
-          <svg
-            viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-            className="lang-graph-svg"
-            style={{ transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)` }}
-            onClick={clearOnBackgroundClick}
+        <div className="lang-graph-canvas" style={{ cursor: "grab" }}>
+          <Canvas
+            camera={{ position: [0, 0.6, 11], fov: 42 }}
+            gl={{ alpha: true, antialias: true }}
+            onPointerMissed={() => setPinned(null)}
           >
-            <defs>
-              <filter id="langNodeShadow" x="-60%" y="-60%" width="220%" height="220%">
-                <feDropShadow dx="0" dy="3" stdDeviation="3.2" floodColor="#000000" floodOpacity="0.55" />
-              </filter>
-              <filter id="langEdgeGlow" x="-80%" y="-80%" width="260%" height="260%">
-                <feGaussianBlur stdDeviation="1.6" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-              {MAJOR_KEYS.map((key) => (
-                <radialGradient key={key} id={`sph-${key}`} cx="35%" cy="30%" r="75%">
-                  <stop offset="0%" stopColor={lighten(LANG_COLORS[key], 0.6)} />
-                  <stop offset="45%" stopColor={LANG_COLORS[key]} />
-                  <stop offset="100%" stopColor={deepen(LANG_COLORS[key], 0.45)} />
-                </radialGradient>
-              ))}
-            </defs>
+            <ambientLight intensity={0.55} />
+            <directionalLight position={[5, 8, 6]} intensity={0.9} />
+            <pointLight position={[-6, -3, -4]} intensity={0.35} color="#5b7cff" />
 
             {GRAPH_EDGES.map((edge, i) => {
               const from = PROJECT_BY_NAME[edge.project];
               const to = LANG_BY_KEY[edge.key];
-              const isActive = edgeActive(edge);
-              const isFocused = edgeFocused(edge);
               return (
-                <path
+                <EdgeLine3D
                   key={i}
-                  d={edgePath(from.x, from.y, to.x, to.y)}
-                  fill="none"
-                  className={`lang-graph-edge ${isActive ? "is-active" : "is-dim"} ${edge.big ? "is-big-edge" : ""} ${isFocused ? "is-flowing" : ""}`}
-                  stroke={isFocused ? LANG_COLORS[edge.key] : NEUTRAL_EDGE}
-                  filter={isFocused ? "url(#langEdgeGlow)" : undefined}
+                  edge={edge}
+                  from={from}
+                  to={to}
+                  isActive={edgeActive(edge)}
+                  isFocused={edgeFocused(edge)}
                 />
               );
             })}
 
             {PROJECT_NODES.map((p) => (
-              <g
+              <ProjectSphere3D
                 key={p.name}
-                className={`lang-graph-node ${projectActive(p.name) ? "" : "is-dim"} ${p.big ? "is-big" : "is-small"}`}
-                onMouseEnter={() => hoverProject(p.name)}
-                onMouseLeave={clearHover}
-                onClick={() => selectProject(p.name)}
-              >
-                <circle
-                  cx={p.x}
-                  cy={p.y}
-                  r={p.r}
-                  className="lang-graph-project-dot"
-                  style={{
-                    fill:
-                      p.big && p.dominant
-                        ? `url(#sph-${p.dominant})`
-                        : p.dominant
-                          ? lighten(LANG_COLORS[p.dominant], 0.55)
-                          : "rgba(255,255,255,0.4)",
-                  }}
-                  filter={p.big ? "url(#langNodeShadow)" : undefined}
-                />
-                {(p.big || (active?.type === "project" && active.name === p.name)) && (
-                  <text
-                    x={p.x + (p.labelDir < 0 ? -(p.r + 5) : p.r + 5)}
-                    y={p.y + 3}
-                    textAnchor={p.labelDir < 0 ? "end" : "start"}
-                    className={`lang-graph-project-label ${p.big ? "is-big" : ""}`}
-                    style={p.dominant ? { fill: lighten(LANG_COLORS[p.dominant], p.big ? 0.32 : 0.18) } : undefined}
-                  >
-                    {p.label}
-                  </text>
-                )}
-              </g>
+                node={p}
+                isActive={projectActive(p.name)}
+                isFocus={active?.type === "project" && active.name === p.name}
+                showLabel={p.big || (active?.type === "project" && active.name === p.name)}
+                onHover={() => hoverProject(p.name)}
+                onLeave={clearHover}
+                onSelect={() => selectProject(p.name)}
+              />
             ))}
 
             {LANG_NODES.map((s) => (
-              <g
+              <LangSphere3D
                 key={s.key}
-                className={`lang-graph-node ${langActive(s.key) ? "" : "is-dim"} ${active?.type === "lang" && active.key === s.key ? "is-focus" : ""}`}
-                onMouseEnter={() => hoverLang(s.key)}
-                onMouseLeave={clearHover}
-                onClick={() => selectLang(s.key)}
-              >
-                <circle
-                  cx={s.x}
-                  cy={s.y}
-                  r={s.r}
-                  className="lang-graph-lang-dot"
-                  style={{ fill: `url(#sph-${s.key})` }}
-                  filter="url(#langNodeShadow)"
-                />
-                <text x={s.x} y={s.y + s.r + 15} textAnchor="middle" className="lang-graph-lang-label">
-                  {s.name}
-                </text>
-              </g>
+                node={s}
+                isActive={langActive(s.key)}
+                isFocus={active?.type === "lang" && active.key === s.key}
+                onHover={() => hoverLang(s.key)}
+                onLeave={clearHover}
+                onSelect={() => selectLang(s.key)}
+              />
             ))}
-          </svg>
+
+            <OrbitControls enablePan={false} minDistance={6} maxDistance={22} rotateSpeed={0.6} zoomSpeed={0.8} makeDefault />
+          </Canvas>
         </div>
 
         <div className="lang-graph-detail">
