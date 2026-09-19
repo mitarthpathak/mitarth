@@ -40,6 +40,10 @@ const LANG_COLORS = {
   cpp: "#3E8E63",
 };
 
+// Idle edges read as a neutral gray mesh; only the hovered/pinned node's own
+// edges pick up their language color (see is-flowing below).
+const NEUTRAL_EDGE = "#aab2c2";
+
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
@@ -426,6 +430,153 @@ function edgePath(x1, y1, x2, y2) {
   return `M${x1},${y1} Q${cx},${cy} ${x2},${y2}`;
 }
 
+function mulberry32(seed) {
+  let t = seed >>> 0;
+  return function () {
+    t = (t + 0x6d2b79f5) | 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Stretches the settled node cloud to fill the target viewBox rect. X and Y
+// are normalized independently (not a single uniform scale) so the cluster
+// always uses the full width and height of the canvas instead of leaving
+// empty margins when the organic shape doesn't match the canvas aspect
+// ratio — node radii are untouched, so circles stay circles.
+function fitNodesToBounds(nodes, x, y, w, h, padding) {
+  const xs = nodes.map((n) => n.x);
+  const ys = nodes.map((n) => n.y);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  const spanX = Math.max(Math.max(...xs) - minX, 1);
+  const spanY = Math.max(Math.max(...ys) - minY, 1);
+  const scaleX = (w - padding * 2) / spanX;
+  const scaleY = (h - padding * 2) / spanY;
+  nodes.forEach((n) => {
+    n.x = round2(x + padding + (n.x - minX) * scaleX);
+    n.y = round2(y + padding + (n.y - minY) * scaleY);
+  });
+}
+
+// Force-directed relaxation: languages act as heavier cluster hubs, repos get
+// pulled toward the languages they use and pushed apart from everything else.
+// This is what turns the old fixed concentric rings into an organic node-link
+// cloud, like a classic force-graph, instead of a neat wheel. Seeded PRNG keeps
+// the layout identical between server render and client hydration.
+function relaxForceLayout(langNodes, projectNodes, edges, center, viewW, viewH) {
+  const rand = mulberry32(20260919);
+  const sims = [
+    ...langNodes.map((ref) => ({ ref, r: ref.r, mass: 3.2 })),
+    ...projectNodes.map((ref) => ({ ref, r: ref.r, mass: ref.big ? 1.5 : 1 })),
+  ];
+  sims.forEach((n) => {
+    n.x = n.ref.x + (rand() - 0.5) * 8;
+    n.y = n.ref.y + (rand() - 0.5) * 8;
+  });
+
+  const simByLang = {};
+  langNodes.forEach((n, i) => (simByLang[n.key] = sims[i]));
+  const simByProject = {};
+  projectNodes.forEach((n, i) => (simByProject[n.name] = sims[langNodes.length + i]));
+
+  const links = edges.map((e) => ({
+    a: simByProject[e.project],
+    b: simByLang[e.key],
+    dist: e.big ? 56 : 88,
+  }));
+
+  let alpha = 1;
+  for (let iter = 0; iter < 320; iter++) {
+    for (let i = 0; i < sims.length; i++) {
+      for (let j = i + 1; j < sims.length; j++) {
+        const a = sims[i];
+        const b = sims[j];
+        let dx = a.x - b.x;
+        let dy = a.y - b.y;
+        let d2 = dx * dx + dy * dy;
+        if (d2 < 0.02) {
+          dx = rand() - 0.5;
+          dy = rand() - 0.5;
+          d2 = 0.02;
+        }
+        const d = Math.sqrt(d2);
+        const force = (760 / d2) * alpha;
+        const fx = (dx / d) * force;
+        const fy = (dy / d) * force;
+        a.x += fx / a.mass;
+        a.y += fy / a.mass;
+        b.x -= fx / b.mass;
+        b.y -= fy / b.mass;
+      }
+    }
+    links.forEach(({ a, b, dist }) => {
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 0.02;
+      const diff = ((d - dist) * 0.05 * alpha) / d;
+      const fx = dx * diff;
+      const fy = dy * diff;
+      a.x += fx / a.mass;
+      a.y += fy / a.mass;
+      b.x -= fx / b.mass;
+      b.y -= fy / b.mass;
+    });
+    sims.forEach((n) => {
+      n.x += (center.x - n.x) * 0.012 * alpha;
+      n.y += (center.y - n.y) * 0.012 * alpha;
+    });
+    alpha *= 0.985;
+  }
+
+  for (let pass = 0; pass < 10; pass++) {
+    for (let i = 0; i < sims.length; i++) {
+      for (let j = i + 1; j < sims.length; j++) {
+        const a = sims[i];
+        const b = sims[j];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const d = Math.sqrt(dx * dx + dy * dy) || 0.02;
+        const minDist = a.r + b.r + 5;
+        if (d < minDist) {
+          const overlap = (minDist - d) / 2;
+          const nx = dx / d;
+          const ny = dy / d;
+          a.x -= nx * overlap;
+          a.y -= ny * overlap;
+          b.x += nx * overlap;
+          b.y += ny * overlap;
+        }
+      }
+    }
+  }
+
+  fitNodesToBounds(sims, 0, 0, viewW, viewH, 34);
+
+  // Pick whichever side (left/right) of a project node has more open space,
+  // so its label doesn't land on top of a neighboring cluster hub.
+  sims.forEach((n) => {
+    if (n.ref.big !== undefined) {
+      const gap = n.r + 6;
+      const rightPt = { x: n.x + gap, y: n.y };
+      const leftPt = { x: n.x - gap, y: n.y };
+      let rightClear = Infinity;
+      let leftClear = Infinity;
+      sims.forEach((o) => {
+        if (o === n) return;
+        const dr = Math.hypot(o.x - rightPt.x, o.y - rightPt.y) - o.r;
+        const dl = Math.hypot(o.x - leftPt.x, o.y - leftPt.y) - o.r;
+        if (dr < rightClear) rightClear = dr;
+        if (dl < leftClear) leftClear = dl;
+      });
+      n.ref.labelDir = rightClear >= leftClear ? 1 : -1;
+    }
+    n.ref.x = n.x;
+    n.ref.y = n.y;
+  });
+}
+
 function repoMajorEntries(repo) {
   const isNext = NEXTJS_REPOS.includes(repo.name);
   let nextBytes = 0;
@@ -509,6 +660,9 @@ const PROJECT_BY_NAME = PROJECT_NODES.reduce((acc, n) => ({ ...acc, [n.name]: n 
 const GRAPH_EDGES = PROJECT_NODES.flatMap((p) =>
   p.majorKeys.map((key) => ({ project: p.name, key, big: p.big }))
 );
+
+// Replaces the fixed ring placement above with an organic, clustered layout.
+relaxForceLayout(LANG_NODES, PROJECT_NODES, GRAPH_EDGES, GRAPH_CENTER, 660, 480);
 
 const VIEW_W = 660;
 const VIEW_H = 480;
@@ -804,7 +958,7 @@ function LanguagesPane() {
                   d={edgePath(from.x, from.y, to.x, to.y)}
                   fill="none"
                   className={`lang-graph-edge ${isActive ? "is-active" : "is-dim"} ${edge.big ? "is-big-edge" : ""} ${isFocused ? "is-flowing" : ""}`}
-                  stroke={LANG_COLORS[edge.key]}
+                  stroke={isFocused ? LANG_COLORS[edge.key] : NEUTRAL_EDGE}
                   filter={isFocused ? "url(#langEdgeGlow)" : undefined}
                 />
               );
@@ -824,16 +978,22 @@ function LanguagesPane() {
                   r={p.r}
                   className="lang-graph-project-dot"
                   style={{
-                    fill: p.big && p.dominant ? `url(#sph-${p.dominant})` : "rgba(255,255,255,0.55)",
+                    fill:
+                      p.big && p.dominant
+                        ? `url(#sph-${p.dominant})`
+                        : p.dominant
+                          ? lighten(LANG_COLORS[p.dominant], 0.55)
+                          : "rgba(255,255,255,0.4)",
                   }}
                   filter={p.big ? "url(#langNodeShadow)" : undefined}
                 />
                 {(p.big || (active?.type === "project" && active.name === p.name)) && (
                   <text
-                    x={p.x + (p.x < GRAPH_CENTER.x ? -(p.r + 5) : p.r + 5)}
+                    x={p.x + (p.labelDir < 0 ? -(p.r + 5) : p.r + 5)}
                     y={p.y + 3}
-                    textAnchor={p.x < GRAPH_CENTER.x ? "end" : "start"}
+                    textAnchor={p.labelDir < 0 ? "end" : "start"}
                     className={`lang-graph-project-label ${p.big ? "is-big" : ""}`}
+                    style={p.dominant ? { fill: lighten(LANG_COLORS[p.dominant], p.big ? 0.32 : 0.18) } : undefined}
                   >
                     {p.label}
                   </text>
