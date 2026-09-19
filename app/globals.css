@@ -1135,12 +1135,12 @@ body {
 }
 
 .ide-terminal-float-whoami {
-  margin-top: -100px;
-  margin-left: 165px;
+  margin-top: -160px;
+  margin-left: 40px;
 }
 
 .ide-terminal-float-whoami .ide-terminal-card-wide {
-  width: min(836px, 98%);
+  width: min(640px, 90vw);
 }
 
 .ide-terminal-card.is-draggable .ide-terminal-titlebar {
@@ -1203,6 +1203,38 @@ body {
 .ls-file {
   font-weight: 500;
 }
+
+.whoami-rows {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.whoami-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.whoami-label {
+  flex: 0 0 84px;
+  color: rgba(255, 209, 70, 0.9);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.whoami-label::after {
+  content: ":";
+  opacity: 0.5;
+}
+
+.whoami-value {
+  color: rgba(255, 255, 255, 0.75);
+}
+
 
 /* --- Language graph explorer (Languages pane) --- */
 .lang-graph {

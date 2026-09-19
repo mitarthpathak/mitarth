@@ -1078,14 +1078,13 @@ function DbReplicaBackground() {
   );
 }
 
+const WHOAMI_ROWS = [
+  { label: "Database", value: "PostgreSQL, MongoDB Atlas" },
+  { label: "Backend", value: "Spring Boot, JWT" },
+  { label: "Tools", value: "IntelliJ IDEA" },
+];
+
 function BackendPane() {
-  const lines = [
-    { cmd: "whoami" },
-    { text: "" },
-    { text: "Database:  PostgreSQL, MongoDB Atlas" },
-    { text: "Backend:   Spring Boot, JWT" },
-    { text: "Tools:     IntelliJ IDEA" },
-  ];
 
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const drag = useRef(null);
@@ -1126,9 +1125,15 @@ function BackendPane() {
             onPointerCancel: onPointerUp,
           }}
         >
-          {lines.map((line, i) => (
-            <TermLine line={line} key={i} />
-          ))}
+          <TermLine line={{ cmd: "whoami" }} />
+          <div className="whoami-rows">
+            {WHOAMI_ROWS.map((row) => (
+              <div className="whoami-row" key={row.label}>
+                <span className="whoami-label">{row.label}</span>
+                <span className="whoami-value">{row.value}</span>
+              </div>
+            ))}
+          </div>
         </TerminalChrome>
       </div>
     </div>
