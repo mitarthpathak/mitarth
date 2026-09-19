@@ -1,6 +1,7 @@
 import "./globals.css";
 import Menu from "./components/Menu";
 import SignatureAnimation from "./components/SignatureAnimation";
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata = {
   title: "Mitarth The Great — Portfolio",
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
         
         {/* Global Morphing Menu */}
         <Menu />
+        <SpeedInsights />
       </body>
     </html>
   );
