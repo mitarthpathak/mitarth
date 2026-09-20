@@ -3140,6 +3140,38 @@ body {
     height: 150vh;
   }
 
+  /* The three pills float left/center/right around a wide desktop portrait —
+     on a narrow screen that spread collides with the portrait itself, so
+     stack them in a clear band above its head instead. The floating
+     micro-animation is desktop-only chrome; dropping it here also means one
+     less continuously-running animation on a phone. */
+  .yellow-pill {
+    font-size: 14px;
+    padding: 10px 22px;
+  }
+
+  .pill-left,
+  .pill-center,
+  .pill-right {
+    animation: none;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    transform: translateX(-50%);
+  }
+
+  .pill-left {
+    top: 4%;
+  }
+
+  .pill-center {
+    top: 13%;
+  }
+
+  .pill-right {
+    top: 22%;
+  }
+
   .tech-stack-section {
     height: 340vh;
     margin: 0;
@@ -3156,21 +3188,41 @@ body {
 
   .tech-window {
     flex: 0 0 auto;
+    max-width: 100%;
+  }
+
+  .tech-window-titlebar {
+    min-width: 0;
+  }
+
+  .ide-tabs {
+    min-width: 0;
+    flex: 1 1 auto;
   }
 
   .tech-window-body {
     flex-direction: column;
     height: clamp(520px, 76vh, 760px);
+    overflow-x: hidden;
     overflow-y: auto;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .ide-sidebar {
     flex: 0 0 auto;
     width: auto;
+    max-width: 100%;
     max-height: 30%;
     border-right: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     transform: translateY(0);
+  }
+
+  /* The fake "open agents" activity cards are pure desktop flourish; drop
+     them to save vertical space and one more thing crammed into 30% height. */
+  .ide-sidebar-section-agents {
+    display: none;
   }
 
   .ide-sidebar.is-collapsed {
@@ -3190,6 +3242,8 @@ body {
   }
 
   .ide-agent-grid {
+    position: static;
+    inset: auto;
     grid-template-columns: 1fr;
     grid-template-rows: none;
     height: auto;
@@ -3201,8 +3255,15 @@ body {
 
   .ide-right-panel {
     flex: 0 0 auto;
+    max-width: 100%;
     border-left: none;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Fake git changes / source control panel — decorative, not information a
+     visitor needs; keep only the functional 01/02/03 category nav above it. */
+  .ide-right-panel-extra {
+    display: none;
   }
 
   .lang-graph-sidebar,
@@ -3217,6 +3278,47 @@ body {
 
   .ide-right-nav-list {
     gap: 12px;
+  }
+
+  .ide-main {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* --- Backend & Database pane: drop the DataGrip-style mockup behind the
+     whoami card, it's a wide fixed layout that can't reasonably reflow, and
+     let the card sit in normal flow instead of floating over it. --- */
+  .db-replica {
+    display: none;
+  }
+
+  .ide-terminal-float-whoami {
+    margin: 0;
+  }
+
+  .ide-terminal-float-whoami .ide-terminal-card-wide {
+    width: 100%;
+  }
+
+  /* --- Framework & Tools pane: the neofetch/docker ASCII art has a fixed
+     character-grid width that can't shrink to a phone screen; keep just the
+     readable info rows. --- */
+  .fetch-ascii {
+    display: none;
+  }
+
+  .fetch-row {
+    min-width: 0;
+  }
+
+  .fetch-info {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .fetch-info-value {
+    white-space: normal;
+    word-break: break-word;
   }
 
   .projects-section {
@@ -3244,5 +3346,41 @@ body {
 
   .project-identity {
     flex-direction: column;
+  }
+
+  /* --- Footer: give the portrait less vertical room and stack the bottom
+     bar instead of the desktop's wide left/right split, so nothing
+     collides on a tall-narrow screen. --- */
+  .footer-yellow-section {
+    min-height: 155vh;
+  }
+
+  .footer-pixel-art .tilted-card-img {
+    height: clamp(260px, 42vh, 420px);
+  }
+
+  .footer-bottom-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 28px;
+    padding: 20px 20px 32px;
+  }
+
+  .footer-cta-main {
+    font-size: clamp(28px, 11vw, 46px);
+  }
+
+  .footer-social {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .footer-social-label {
+    font-size: 18px;
+  }
+
+  .footer-social-icons {
+    flex-wrap: wrap;
+    row-gap: 10px;
   }
 }
