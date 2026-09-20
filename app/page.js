@@ -9,6 +9,7 @@ import SplitText from "./components/SplitText";
 import VariableProximity from "./components/VariableProximity";
 import TiltedCard from "./components/TiltedCard";
 import TechStack from "./components/TechStack";
+import ParticleImageReveal from "./components/ParticleImageReveal";
 
 const projects = [
   {
@@ -460,21 +461,23 @@ export default function Home() {
             </div>
 
             <div className="footer-pixel-art">
-              <TiltedCard
-                imageSrc="/portrait.png"
-                altText="Portrait of Mitarth"
-                captionText="Mitarth Pathak"
-                containerHeight="clamp(430px, 62vh, 430px)"
-                containerWidth="fit-content"
-                imageHeight="clamp(430px, 62vh, 430px)"
-                imageWidth="auto"
-                rotateAmplitude={12}
-                scaleOnHover={1.05}
-                showMobileWarning={false}
-                showTooltip={true}
-                displayOverlayContent={false}
-                showImageGlow={true}
-              />
+              <ParticleImageReveal src="/portrait.png">
+                <TiltedCard
+                  imageSrc="/portrait.png"
+                  altText="Portrait of Mitarth"
+                  captionText="Mitarth Pathak"
+                  containerHeight="clamp(430px, 62vh, 430px)"
+                  containerWidth="fit-content"
+                  imageHeight="clamp(430px, 62vh, 430px)"
+                  imageWidth="auto"
+                  rotateAmplitude={12}
+                  scaleOnHover={1.05}
+                  showMobileWarning={false}
+                  showTooltip={true}
+                  displayOverlayContent={false}
+                  showImageGlow={true}
+                />
+              </ParticleImageReveal>
             </div>
 
             {/* Pixel art image placeholder — will be added later */}
