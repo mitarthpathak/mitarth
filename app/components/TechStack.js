@@ -14,7 +14,8 @@ import {
 import { RiOpenaiFill } from "react-icons/ri";
 import { FaJava } from "react-icons/fa6";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Line, Html } from "@react-three/drei";
+import { OrbitControls, Line, Html, Stars } from "@react-three/drei";
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
 
 const FILE_ICONS = {
   ts: { Icon: SiTypescript, color: "#3178C6" },
@@ -398,7 +399,7 @@ function bytesToRadius(bytes, allBytes, min, max) {
   return round2(15 + t * 19);
 }
 
-const GRAPH_CUBE = 480;
+const GRAPH_CUBE = 640;
 const GRAPH_CENTER = { x: 330, y: 240, z: GRAPH_CUBE / 2 };
 const WORLD_SCALE = 60;
 const LANG_RING = 95;
@@ -453,7 +454,7 @@ function fitNodesToBounds3D(nodes, size, padding) {
 function relaxForceLayout(langNodes, projectNodes, edges, center, cube) {
   const rand = mulberry32(20260919);
   const sims = [
-    ...langNodes.map((ref) => ({ ref, r: ref.r, mass: 3.2 })),
+    ...langNodes.map((ref) => ({ ref, r: ref.r, mass: 2.2 })),
     ...projectNodes.map((ref) => ({ ref, r: ref.r, mass: ref.big ? 1.5 : 1 })),
   ];
   sims.forEach((n) => {
@@ -472,11 +473,11 @@ function relaxForceLayout(langNodes, projectNodes, edges, center, cube) {
   const links = edges.map((e) => ({
     a: simByProject[e.project],
     b: simByLang[e.key],
-    dist: e.big ? 56 : 88,
+    dist: e.big ? 76 : 122,
   }));
 
   let alpha = 1;
-  for (let iter = 0; iter < 320; iter++) {
+  for (let iter = 0; iter < 420; iter++) {
     for (let i = 0; i < sims.length; i++) {
       for (let j = i + 1; j < sims.length; j++) {
         const a = sims[i];
@@ -492,7 +493,7 @@ function relaxForceLayout(langNodes, projectNodes, edges, center, cube) {
           d2 = 0.02;
         }
         const d = Math.sqrt(d2);
-        const force = (760 / d2) * alpha;
+        const force = (2100 / d2) * alpha;
         const fx = (dx / d) * force;
         const fy = (dy / d) * force;
         const fz = (dz / d) * force;
@@ -509,7 +510,7 @@ function relaxForceLayout(langNodes, projectNodes, edges, center, cube) {
       const dy = b.y - a.y;
       const dz = b.z - a.z;
       const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.02;
-      const diff = ((d - dist) * 0.05 * alpha) / d;
+      const diff = ((d - dist) * 0.035 * alpha) / d;
       const fx = dx * diff;
       const fy = dy * diff;
       const fz = dz * diff;
@@ -525,10 +526,10 @@ function relaxForceLayout(langNodes, projectNodes, edges, center, cube) {
       n.y += (center.y - n.y) * 0.012 * alpha;
       n.z += (center.z - n.z) * 0.012 * alpha;
     });
-    alpha *= 0.985;
+    alpha *= 0.988;
   }
 
-  for (let pass = 0; pass < 10; pass++) {
+  for (let pass = 0; pass < 22; pass++) {
     for (let i = 0; i < sims.length; i++) {
       for (let j = i + 1; j < sims.length; j++) {
         const a = sims[i];
@@ -537,7 +538,7 @@ function relaxForceLayout(langNodes, projectNodes, edges, center, cube) {
         const dy = b.y - a.y;
         const dz = b.z - a.z;
         const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.02;
-        const minDist = a.r + b.r + 5;
+        const minDist = (a.r + b.r) * 1.4 + 12;
         if (d < minDist) {
           const overlap = (minDist - d) / 2;
           const nx = dx / d;
@@ -672,6 +673,25 @@ GRAPH_EDGES.forEach((e) => {
   e.width = round2(1 + t * 3.6);
 });
 
+// Quiet background mesh: languages that co-occur inside the same repo get a
+// faint static link between them, so the scene reads as a dense web instead
+// of a bare hub-and-spoke — grounded in real data (how often two languages
+// actually appear together), not decoration.
+const LANG_LINK_COUNTS = new Map();
+PROJECT_NODES.forEach((p) => {
+  const keys = p.majorKeys;
+  for (let i = 0; i < keys.length; i++) {
+    for (let j = i + 1; j < keys.length; j++) {
+      const pairKey = [keys[i], keys[j]].sort().join("|");
+      LANG_LINK_COUNTS.set(pairKey, (LANG_LINK_COUNTS.get(pairKey) || 0) + 1);
+    }
+  }
+});
+const LANG_LINKS = Array.from(LANG_LINK_COUNTS.entries()).map(([pairKey, count]) => {
+  const [a, b] = pairKey.split("|");
+  return { a, b, count };
+});
+
 // Replaces the fixed ring placement above with an organic, clustered 3D layout.
 relaxForceLayout(LANG_NODES, PROJECT_NODES, GRAPH_EDGES, GRAPH_CENTER, GRAPH_CUBE);
 
@@ -717,6 +737,24 @@ function EdgeLine3D({ edge, from, to, isActive, isFocused }) {
       dashed={isFocused}
       dashSize={0.14}
       gapSize={0.1}
+    />
+  );
+}
+
+// Static, non-interactive thread between two languages that co-occur in a
+// repo — always faint, never highlighted. Purely adds background density so
+// the scene reads as a real web instead of a bare hub-and-spoke.
+function BackgroundLink3D({ a, b, count }) {
+  return (
+    <Line
+      points={[
+        [a.wx, a.wy, a.wz],
+        [b.wx, b.wy, b.wz],
+      ]}
+      color={NEUTRAL_EDGE}
+      transparent
+      opacity={0.08 + Math.min(count, 4) * 0.025}
+      lineWidth={0.6}
     />
   );
 }
@@ -768,7 +806,7 @@ function LangSphere3D({ node, isActive, isFocus, onHover, onLeave, onSelect }) {
           roughness={0.35}
           metalness={0.2}
           emissive={color}
-          emissiveIntensity={isFocus ? 0.5 : 0.12}
+          emissiveIntensity={isFocus ? 0.85 : 0.28}
           transparent
           opacity={isActive ? 1 : 0.18}
         />
@@ -819,7 +857,7 @@ function ProjectSphere3D({ node, isActive, isFocus, showLabel, onHover, onLeave,
           roughness={0.4}
           metalness={node.big ? 0.25 : 0.05}
           emissive={fillColor}
-          emissiveIntensity={isFocus ? 0.55 : node.big ? 0.08 : 0.03}
+          emissiveIntensity={isFocus ? 0.9 : node.big ? 0.22 : 0.1}
           transparent
           opacity={isActive ? 1 : 0.15}
         />
@@ -1019,13 +1057,20 @@ function LanguagesPane() {
 
         <div className="lang-graph-canvas" style={{ cursor: "grab" }}>
           <Canvas
-            camera={{ position: [0, 0.6, 11], fov: 42 }}
+            camera={{ position: [9, 6, 13], fov: 40 }}
             gl={{ alpha: true, antialias: true }}
             onPointerMissed={() => setPinned(null)}
           >
-            <ambientLight intensity={0.55} />
-            <directionalLight position={[5, 8, 6]} intensity={0.9} />
-            <pointLight position={[-6, -3, -4]} intensity={0.35} color="#5b7cff" />
+            <ambientLight intensity={0.5} />
+            <directionalLight position={[6, 9, 7]} intensity={0.95} />
+            <pointLight position={[-7, -4, -5]} intensity={0.4} color="#5b7cff" />
+            <pointLight position={[4, -6, 6]} intensity={0.25} color="#ff9d5b" />
+
+            <Stars radius={40} depth={30} count={1400} factor={2.4} saturation={0} fade speed={0.4} />
+
+            {LANG_LINKS.map((link, i) => (
+              <BackgroundLink3D key={i} a={LANG_BY_KEY[link.a]} b={LANG_BY_KEY[link.b]} count={link.count} />
+            ))}
 
             {GRAPH_EDGES.map((edge, i) => {
               const from = PROJECT_BY_NAME[edge.project];
@@ -1067,7 +1112,20 @@ function LanguagesPane() {
               />
             ))}
 
-            <OrbitControls enablePan={false} minDistance={6} maxDistance={22} rotateSpeed={0.6} zoomSpeed={0.8} makeDefault />
+            <OrbitControls
+              enablePan={false}
+              minDistance={8}
+              maxDistance={30}
+              rotateSpeed={0.6}
+              zoomSpeed={0.8}
+              autoRotate
+              autoRotateSpeed={0.5}
+              makeDefault
+            />
+
+            <EffectComposer multisampling={0}>
+              <Bloom luminanceThreshold={0.22} luminanceSmoothing={0.3} intensity={0.75} mipmapBlur radius={0.6} />
+            </EffectComposer>
           </Canvas>
         </div>
 
@@ -1530,7 +1588,9 @@ function StatusBar({ langMode }) {
 export default function TechStack() {
   const wrapRef = useRef(null);
   const trackFillRef = useRef(null);
+  const edgeFillRef = useRef(null);
   const sceneRef = useRef(null);
+  const hintRef = useRef(null);
   const rafRef = useRef(null);
   const activeIndexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -1583,9 +1643,20 @@ export default function TechStack() {
         trackFillRef.current.style.transform = `scaleY(${progress})`;
       }
 
+      if (edgeFillRef.current) {
+        edgeFillRef.current.style.transform = `scaleY(${progress})`;
+      }
+
       if (sceneRef.current) {
         sceneRef.current.style.opacity = entrance;
         sceneRef.current.style.transform = `translateY(${(1 - entrance) * 64}px) scale(${0.92 + entrance * 0.08})`;
+      }
+
+      if (hintRef.current) {
+        // Nudges the visitor once the window has faded in, then gets out of
+        // the way as soon as they actually start scrolling through it.
+        const hintFade = Math.max(0, 1 - progress * 5);
+        hintRef.current.style.opacity = (entrance * hintFade).toFixed(3);
       }
 
       if (index !== activeIndexRef.current) {
@@ -1621,7 +1692,14 @@ export default function TechStack() {
     <section className="tech-stack-section" ref={wrapRef}>
       <div className="tech-stack-sticky">
         <div className="tech-stack-scene">
+          <div className="tech-scroll-hint" ref={hintRef}>
+            <span className="tech-scroll-hint-chevron">&#8595;</span>
+            Scroll to continue
+          </div>
           <div className="tech-window" ref={sceneRef}>
+            <div className="tech-window-edge-track">
+              <span className="tech-window-edge-fill" ref={edgeFillRef} />
+            </div>
             <div className="tech-window-titlebar">
               <div className="tech-dots">
                 <span className="tech-dot tech-dot-red" />
