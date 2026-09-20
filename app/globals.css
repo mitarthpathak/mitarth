@@ -2965,6 +2965,11 @@ body {
 }
 
 /* Left CTA */
+.footer-cta {
+  display: flex;
+  flex-direction: column;
+}
+
 .footer-cta-sub {
   font-family: var(--font-body);
   font-size: clamp(11px, 0.9vw, 15px);
