@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 
 /*
  * ParticleImageReveal -- wraps an already-built image element (its children)
- * and, the first time it scrolls into view, plays a one-off "dust settling
- * into place" intro: pixels sampled from `src` scatter outward then ease
- * back into the exact shape of the image, on a canvas laid on top.
+ * and, every time it scrolls into view, plays a "dust settling into place"
+ * intro: pixels sampled from `src` scatter outward then ease back into the
+ * exact shape of the image, on a canvas laid on top. Scrolling away and back
+ * replays it from scratch.
  *
  * The wrapped children are never modified -- they sit underneath the whole
  * time and simply fade in once the particles finish, so any interaction the
@@ -17,7 +18,9 @@ import { useEffect, useRef, useState } from "react";
 export default function ParticleImageReveal({ src, children, duration = 1.6, particleGap = 3 }) {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
-  const startedRef = useRef(false);
+  const particlesRef = useRef(null); // cached { w, h, base: [{tx,ty,r,g,b,a}] } — computed once per src
+  const rafRef = useRef(null);
+  const wasVisibleRef = useRef(false);
   const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
@@ -27,26 +30,29 @@ export default function ParticleImageReveal({ src, children, duration = 1.6, par
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        if (entry.isIntersecting && !startedRef.current) {
-          startedRef.current = true;
-          observer.disconnect();
-          startParticles();
+        if (entry.isIntersecting && !wasVisibleRef.current) {
+          wasVisibleRef.current = true;
+          playParticles();
+        } else if (!entry.isIntersecting && wasVisibleRef.current) {
+          wasVisibleRef.current = false;
+          if (rafRef.current) cancelAnimationFrame(rafRef.current);
+          setRevealed(false);
         }
       },
       { threshold: 0.4 }
     );
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
 
-    function startParticles() {
-      const wrap = wrapRef.current;
-      const canvas = canvasRef.current;
-      if (!wrap || !canvas) return;
-
-      const rect = wrap.getBoundingClientRect();
-      const w = Math.max(1, Math.round(rect.width));
-      const h = Math.max(1, Math.round(rect.height));
-
+    function getBaseParticles(w, h, onReady) {
+      const cached = particlesRef.current;
+      if (cached && cached.w === w && cached.h === h) {
+        onReady(cached.base);
+        return;
+      }
       const img = new Image();
       img.src = src;
       img.onload = () => {
@@ -60,32 +66,55 @@ export default function ParticleImageReveal({ src, children, duration = 1.6, par
         try {
           data = octx.getImageData(0, 0, w, h).data;
         } catch {
-          setRevealed(true);
+          particlesRef.current = { w, h, base: [] };
+          onReady([]);
           return;
         }
 
-        const particles = [];
+        const base = [];
         for (let y = 0; y < h; y += particleGap) {
           for (let x = 0; x < w; x += particleGap) {
             const i = (y * w + x) * 4;
             const a = data[i + 3];
             if (a < 60) continue;
-            const angle = Math.random() * Math.PI * 2;
-            const dist = Math.max(w, h) * (0.35 + Math.random() * 0.55);
-            particles.push({
-              tx: x,
-              ty: y,
-              x: w / 2 + Math.cos(angle) * dist,
-              y: h / 2 + Math.sin(angle) * dist,
-              r: data[i],
-              g: data[i + 1],
-              b: data[i + 2],
-              a: a / 255,
-              delay: Math.random() * 0.4,
-              size: particleGap * 1.1,
-            });
+            base.push({ tx: x, ty: y, r: data[i], g: data[i + 1], b: data[i + 2], a: a / 255 });
           }
         }
+        particlesRef.current = { w, h, base };
+        onReady(base);
+      };
+    }
+
+    function playParticles() {
+      const wrap = wrapRef.current;
+      const canvas = canvasRef.current;
+      if (!wrap || !canvas) return;
+
+      setRevealed(false);
+
+      const rect = wrap.getBoundingClientRect();
+      const w = Math.max(1, Math.round(rect.width));
+      const h = Math.max(1, Math.round(rect.height));
+
+      getBaseParticles(w, h, (base) => {
+        // Not visible any more by the time the image/base finished loading.
+        if (!wasVisibleRef.current) return;
+        if (base.length === 0) {
+          setRevealed(true);
+          return;
+        }
+
+        const particles = base.map((p) => {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = Math.max(w, h) * (0.35 + Math.random() * 0.55);
+          return {
+            ...p,
+            x: w / 2 + Math.cos(angle) * dist,
+            y: h / 2 + Math.sin(angle) * dist,
+            delay: Math.random() * 0.4,
+            size: particleGap * 1.1,
+          };
+        });
 
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = w * dpr;
@@ -114,13 +143,14 @@ export default function ParticleImageReveal({ src, children, duration = 1.6, par
           }
           ctx.globalAlpha = 1;
           if (!done) {
-            requestAnimationFrame(frame);
+            rafRef.current = requestAnimationFrame(frame);
           } else {
-            setTimeout(() => setRevealed(true), 150);
+            rafRef.current = null;
+            if (wasVisibleRef.current) setTimeout(() => setRevealed(true), 150);
           }
         }
-        requestAnimationFrame(frame);
-      };
+        rafRef.current = requestAnimationFrame(frame);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
