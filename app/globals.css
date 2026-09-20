@@ -736,6 +736,7 @@ body {
 
 /* --- IDE window --- */
 .tech-window {
+  position: relative;
   width: 100%;
   min-width: 0;
   background: #000000;
@@ -746,6 +747,33 @@ body {
   opacity: 0;
   transform: translateY(64px) scale(0.92);
   will-change: opacity, transform;
+}
+
+/* Thicker echo of the right-panel scroll track, running the full height of
+   the terminal so how far you've scrolled through this section reads at a
+   glance even before your eye reaches the sidebar. */
+.tech-window-edge-track {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.tech-window-edge-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--yellow);
+  box-shadow: 0 0 18px rgba(255, 209, 70, 0.8), 0 0 4px rgba(255, 209, 70, 1);
+  transform: scaleY(0);
+  transform-origin: top;
+  will-change: transform;
 }
 
 .tech-window-titlebar {
