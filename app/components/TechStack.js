@@ -16,6 +16,7 @@ import { FaJava } from "react-icons/fa6";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Line, Html, Stars } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
+import useIsMobile from "../hooks/useIsMobile";
 
 const FILE_ICONS = {
   ts: { Icon: SiTypescript, color: "#3178C6" },
@@ -741,6 +742,20 @@ function EdgeLine3D({ edge, from, to, isActive, isFocused }) {
   );
 }
 
+// Slowly circles the camera around the scene on its own — used instead of
+// OrbitControls on touch devices so there's nothing here to capture a
+// finger swipe that's actually meant to scroll the page.
+function AutoOrbitCamera({ radius = 16, height = 6, speed = 0.12 }) {
+  useFrame(({ camera, clock }) => {
+    const t = clock.elapsedTime * speed;
+    camera.position.x = Math.sin(t) * radius;
+    camera.position.z = Math.cos(t) * radius;
+    camera.position.y = height;
+    camera.lookAt(0, 0, 0);
+  });
+  return null;
+}
+
 // Static, non-interactive thread between two languages that co-occur in a
 // repo — always faint, never highlighted. Purely adds background density so
 // the scene reads as a real web instead of a bare hub-and-spoke.
@@ -872,6 +887,7 @@ function ProjectSphere3D({ node, isActive, isFocus, showLabel, onHover, onLeave,
 }
 
 function LanguagesPane() {
+  const isMobile = useIsMobile();
   const [hovered, setHovered] = useState(null);
   const [pinned, setPinned] = useState(null);
   const [query, setQuery] = useState("");
@@ -1055,10 +1071,11 @@ function LanguagesPane() {
           ))}
         </div>
 
-        <div className="lang-graph-canvas" style={{ cursor: "grab" }}>
+        <div className="lang-graph-canvas" style={{ cursor: isMobile ? "default" : "grab" }}>
           <Canvas
             camera={{ position: [9, 6, 13], fov: 40 }}
-            gl={{ alpha: true, antialias: true }}
+            gl={{ alpha: true, antialias: !isMobile }}
+            dpr={isMobile ? 1 : [1, 2]}
             onPointerMissed={() => setPinned(null)}
           >
             <ambientLight intensity={0.5} />
@@ -1066,7 +1083,7 @@ function LanguagesPane() {
             <pointLight position={[-7, -4, -5]} intensity={0.4} color="#5b7cff" />
             <pointLight position={[4, -6, 6]} intensity={0.25} color="#ff9d5b" />
 
-            <Stars radius={40} depth={30} count={1400} factor={2.4} saturation={0} fade speed={0.4} />
+            <Stars radius={40} depth={30} count={isMobile ? 450 : 1400} factor={2.4} saturation={0} fade speed={0.4} />
 
             {LANG_LINKS.map((link, i) => (
               <BackgroundLink3D key={i} a={LANG_BY_KEY[link.a]} b={LANG_BY_KEY[link.b]} count={link.count} />
@@ -1112,20 +1129,29 @@ function LanguagesPane() {
               />
             ))}
 
-            <OrbitControls
-              enablePan={false}
-              minDistance={8}
-              maxDistance={30}
-              rotateSpeed={0.6}
-              zoomSpeed={0.8}
-              autoRotate
-              autoRotateSpeed={0.5}
-              makeDefault
-            />
+            {isMobile ? (
+              // A drag-to-orbit control would fight the page's own vertical
+              // swipe-to-scroll on a touchscreen, so mobile gets a purely
+              // cosmetic auto-orbit instead — no pointer capture at all.
+              <AutoOrbitCamera />
+            ) : (
+              <OrbitControls
+                enablePan={false}
+                minDistance={8}
+                maxDistance={30}
+                rotateSpeed={0.6}
+                zoomSpeed={0.8}
+                autoRotate
+                autoRotateSpeed={0.5}
+                makeDefault
+              />
+            )}
 
-            <EffectComposer multisampling={0}>
-              <Bloom luminanceThreshold={0.22} luminanceSmoothing={0.3} intensity={0.75} mipmapBlur radius={0.6} />
-            </EffectComposer>
+            {!isMobile && (
+              <EffectComposer multisampling={0}>
+                <Bloom luminanceThreshold={0.22} luminanceSmoothing={0.3} intensity={0.75} mipmapBlur radius={0.6} />
+              </EffectComposer>
+            )}
           </Canvas>
         </div>
 
@@ -1727,7 +1753,7 @@ export default function TechStack() {
               <div className={`ide-sidebar ${active.mode === "terminal" || active.mode === "ls" ? "is-collapsed" : ""}`}>
                 <p className="ide-sidebar-caption">Explorer</p>
 
-                <div className="ide-sidebar-section">
+                <div className="ide-sidebar-section ide-sidebar-section-agents">
                   <p className="ide-sidebar-label">Open Agents</p>
                   <div className="ide-agent-cards">
                     {AGENT_CARDS.map((c) => (
@@ -1795,48 +1821,51 @@ export default function TechStack() {
                   </ul>
                 </div>
 
-                <div className="ide-right-divider" />
+                {/* Fake git/SCM flourish — decorative only, dropped on mobile to keep the panel to just the functional 01/02/03 nav. */}
+                <div className="ide-right-panel-extra">
+                  <div className="ide-right-divider" />
 
-                <p className="ide-right-panel-label">Changes</p>
-                <div className="ide-file-stats">
-                  {active.files.map((f) => (
-                    <div className="ide-file-stat-row" key={f.name}>
-                      <FileIcon name={f.name} />
-                      <span className="ide-file-stat-name">{f.name}</span>
-                      <span className="ide-file-stat-nums">
-                        {f.add > 0 && <span className="ide-stat-add">+{f.add}</span>}
-                        {f.del > 0 && <span className="ide-stat-del">-{f.del}</span>}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                  <p className="ide-right-panel-label">Changes</p>
+                  <div className="ide-file-stats">
+                    {active.files.map((f) => (
+                      <div className="ide-file-stat-row" key={f.name}>
+                        <FileIcon name={f.name} />
+                        <span className="ide-file-stat-name">{f.name}</span>
+                        <span className="ide-file-stat-nums">
+                          {f.add > 0 && <span className="ide-stat-add">+{f.add}</span>}
+                          {f.del > 0 && <span className="ide-stat-del">-{f.del}</span>}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
 
-                <div className="ide-right-divider" />
+                  <div className="ide-right-divider" />
 
-                <p className="ide-right-panel-label">Source Control</p>
-                <div className="ide-scm-commit-box">
-                  <textarea
-                    className="ide-scm-commit-input"
-                    placeholder='Message (Ctrl+Enter to commit on "main")'
-                    rows={1}
-                  />
-                  <button type="button" className="ide-scm-commit-btn">
-                    &#10003; Commit <span className="ide-scm-commit-caret">&#8964;</span>
-                  </button>
-                </div>
-                <div className="ide-scm-changes-head">
-                  <span>Changes</span>
-                  <span className="ide-scm-count">{SCM_FILES.length}</span>
-                </div>
-                <div className="ide-scm-file-list">
-                  {SCM_FILES.map((f) => (
-                    <div className="ide-scm-file-row" key={f.name}>
-                      <FileIcon name={f.name} />
-                      <span className="ide-scm-file-name">{f.name}</span>
-                      {f.path && <span className="ide-scm-file-path">{f.path}</span>}
-                      <span className={`ide-scm-status ide-scm-status-${f.status}`}>{f.status}</span>
-                    </div>
-                  ))}
+                  <p className="ide-right-panel-label">Source Control</p>
+                  <div className="ide-scm-commit-box">
+                    <textarea
+                      className="ide-scm-commit-input"
+                      placeholder='Message (Ctrl+Enter to commit on "main")'
+                      rows={1}
+                    />
+                    <button type="button" className="ide-scm-commit-btn">
+                      &#10003; Commit <span className="ide-scm-commit-caret">&#8964;</span>
+                    </button>
+                  </div>
+                  <div className="ide-scm-changes-head">
+                    <span>Changes</span>
+                    <span className="ide-scm-count">{SCM_FILES.length}</span>
+                  </div>
+                  <div className="ide-scm-file-list">
+                    {SCM_FILES.map((f) => (
+                      <div className="ide-scm-file-row" key={f.name}>
+                        <FileIcon name={f.name} />
+                        <span className="ide-scm-file-name">{f.name}</span>
+                        {f.path && <span className="ide-scm-file-path">{f.path}</span>}
+                        <span className={`ide-scm-status ide-scm-status-${f.status}`}>{f.status}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
