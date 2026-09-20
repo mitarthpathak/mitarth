@@ -104,23 +104,41 @@ export default function ParticleImageReveal({ src, children, duration = 1.6, par
           return;
         }
 
+        // The canvas is drawn much bigger than the image itself and centered
+        // over it, so scattered dust can drift well beyond the image's own
+        // edges. Without this the scatter gets clipped into a visible box.
+        const pad = 1.5;
+        const canvasW = w * (1 + pad * 2);
+        const canvasH = h * (1 + pad * 2);
+        const padX = w * pad;
+        const padY = h * pad;
+        const maxDist = (Math.min(canvasW, canvasH) / 2) * 0.94;
+
         const particles = base.map((p) => {
           const angle = Math.random() * Math.PI * 2;
-          const dist = Math.max(w, h) * (0.35 + Math.random() * 0.55);
+          const distT = 0.25 + Math.random() * 0.75;
+          const dist = maxDist * distT;
           return {
             ...p,
-            x: w / 2 + Math.cos(angle) * dist,
-            y: h / 2 + Math.sin(angle) * dist,
+            tx: p.tx + padX,
+            ty: p.ty + padY,
+            x: canvasW / 2 + Math.cos(angle) * dist,
+            y: canvasH / 2 + Math.sin(angle) * dist,
+            // Particles that start further out begin fainter, so the cloud
+            // thins out toward its edges instead of ending in a hard line.
+            scatterAlpha: 1 - distT * 0.8,
             delay: Math.random() * 0.4,
             size: particleGap * 1.1,
           };
         });
 
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = w * dpr;
-        canvas.height = h * dpr;
-        canvas.style.width = `${w}px`;
-        canvas.style.height = `${h}px`;
+        canvas.width = canvasW * dpr;
+        canvas.height = canvasH * dpr;
+        canvas.style.width = `${canvasW}px`;
+        canvas.style.height = `${canvasH}px`;
+        canvas.style.left = `${-padX}px`;
+        canvas.style.top = `${-padY}px`;
         const ctx = canvas.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -129,7 +147,7 @@ export default function ParticleImageReveal({ src, children, duration = 1.6, par
 
         function frame(now) {
           const elapsed = (now - start) / 1000;
-          ctx.clearRect(0, 0, w, h);
+          ctx.clearRect(0, 0, canvasW, canvasH);
           let done = true;
           for (const p of particles) {
             const t = Math.min(1, Math.max(0, (elapsed - p.delay) / Math.max(0.001, duration - p.delay)));
@@ -137,7 +155,8 @@ export default function ParticleImageReveal({ src, children, duration = 1.6, par
             const e = ease(t);
             const cx = p.x + (p.tx - p.x) * e;
             const cy = p.y + (p.ty - p.y) * e;
-            ctx.globalAlpha = p.a * (0.35 + 0.65 * e);
+            const alphaMix = p.scatterAlpha + (1 - p.scatterAlpha) * e;
+            ctx.globalAlpha = p.a * alphaMix;
             ctx.fillStyle = `rgb(${p.r}, ${p.g}, ${p.b})`;
             ctx.fillRect(cx, cy, p.size, p.size);
           }
@@ -164,7 +183,6 @@ export default function ParticleImageReveal({ src, children, duration = 1.6, par
         ref={canvasRef}
         style={{
           position: "absolute",
-          inset: 0,
           opacity: revealed ? 0 : 1,
           transition: "opacity 0.7s ease",
           pointerEvents: "none",
