@@ -1588,7 +1588,9 @@ function StatusBar({ langMode }) {
 export default function TechStack() {
   const wrapRef = useRef(null);
   const trackFillRef = useRef(null);
+  const edgeFillRef = useRef(null);
   const sceneRef = useRef(null);
+  const hintRef = useRef(null);
   const rafRef = useRef(null);
   const activeIndexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -1641,9 +1643,20 @@ export default function TechStack() {
         trackFillRef.current.style.transform = `scaleY(${progress})`;
       }
 
+      if (edgeFillRef.current) {
+        edgeFillRef.current.style.transform = `scaleY(${progress})`;
+      }
+
       if (sceneRef.current) {
         sceneRef.current.style.opacity = entrance;
         sceneRef.current.style.transform = `translateY(${(1 - entrance) * 64}px) scale(${0.92 + entrance * 0.08})`;
+      }
+
+      if (hintRef.current) {
+        // Nudges the visitor once the window has faded in, then gets out of
+        // the way as soon as they actually start scrolling through it.
+        const hintFade = Math.max(0, 1 - progress * 5);
+        hintRef.current.style.opacity = (entrance * hintFade).toFixed(3);
       }
 
       if (index !== activeIndexRef.current) {
@@ -1679,7 +1692,14 @@ export default function TechStack() {
     <section className="tech-stack-section" ref={wrapRef}>
       <div className="tech-stack-sticky">
         <div className="tech-stack-scene">
+          <div className="tech-scroll-hint" ref={hintRef}>
+            <span className="tech-scroll-hint-chevron">&#8595;</span>
+            Scroll to continue
+          </div>
           <div className="tech-window" ref={sceneRef}>
+            <div className="tech-window-edge-track">
+              <span className="tech-window-edge-fill" ref={edgeFillRef} />
+            </div>
             <div className="tech-window-titlebar">
               <div className="tech-dots">
                 <span className="tech-dot tech-dot-red" />

@@ -9,6 +9,8 @@ import SplitText from "./components/SplitText";
 import VariableProximity from "./components/VariableProximity";
 import TiltedCard from "./components/TiltedCard";
 import TechStack from "./components/TechStack";
+import ParticleImageReveal from "./components/ParticleImageReveal";
+import ScrollReveal from "./components/ScrollReveal";
 
 const projects = [
   {
@@ -460,21 +462,23 @@ export default function Home() {
             </div>
 
             <div className="footer-pixel-art">
-              <TiltedCard
-                imageSrc="/portrait.png"
-                altText="Portrait of Mitarth"
-                captionText="Mitarth Pathak"
-                containerHeight="clamp(430px, 62vh, 430px)"
-                containerWidth="fit-content"
-                imageHeight="clamp(430px, 62vh, 430px)"
-                imageWidth="auto"
-                rotateAmplitude={12}
-                scaleOnHover={1.05}
-                showMobileWarning={false}
-                showTooltip={true}
-                displayOverlayContent={false}
-                showImageGlow={true}
-              />
+              <ParticleImageReveal src="/portrait.png">
+                <TiltedCard
+                  imageSrc="/portrait.png"
+                  altText="Portrait of Mitarth"
+                  captionText="Mitarth Pathak"
+                  containerHeight="clamp(430px, 62vh, 430px)"
+                  containerWidth="fit-content"
+                  imageHeight="clamp(430px, 62vh, 430px)"
+                  imageWidth="auto"
+                  rotateAmplitude={12}
+                  scaleOnHover={1.05}
+                  showMobileWarning={false}
+                  showTooltip={true}
+                  displayOverlayContent={false}
+                  showImageGlow={true}
+                />
+              </ParticleImageReveal>
             </div>
 
             {/* Pixel art image placeholder — will be added later */}
@@ -484,14 +488,80 @@ export default function Home() {
             <div className="footer-bottom-bar">
               {/* Left — CTA */}
               <div className="footer-cta">
-                <p className="footer-cta-sub">Let&apos;s build something</p>
-                <p className="footer-cta-main">MEANINGFUL<br />AND MEMORABLE</p>
+                <SplitText
+                  text="Let's build something"
+                  tag="p"
+                  className="footer-cta-sub"
+                  delay={22}
+                  duration={0.7}
+                  ease="power3.out"
+                  splitType="words"
+                  from={{ opacity: 0, y: 14 }}
+                  to={{ opacity: 1, y: 0 }}
+                  threshold={0}
+                  rootMargin="0px"
+                  textAlign="left"
+                />
+                <SplitText
+                  text="MEANINGFUL"
+                  tag="p"
+                  className="footer-cta-main"
+                  delay={26}
+                  duration={0.85}
+                  ease="power4.out"
+                  splitType="chars"
+                  from={{ opacity: 0, y: 40, rotationX: -30 }}
+                  to={{ opacity: 1, y: 0, rotationX: 0 }}
+                  threshold={0}
+                  rootMargin="0px"
+                  textAlign="left"
+                />
+                <SplitText
+                  text="AND MEMORABLE"
+                  tag="p"
+                  className="footer-cta-main"
+                  delay={26}
+                  duration={0.85}
+                  ease="power4.out"
+                  splitType="chars"
+                  from={{ opacity: 0, y: 40, rotationX: -30 }}
+                  to={{ opacity: 1, y: 0, rotationX: 0 }}
+                  threshold={0}
+                  rootMargin="0px"
+                  textAlign="left"
+                  startDelay={180}
+                />
               </div>
 
               {/* Right — Reach out + social icons */}
               <div className="footer-social">
-                <p className="footer-social-label">Reach out</p>
-                <div className={`footer-social-icons ${isMailHovered ? "is-mail-active" : ""}`}>
+                <SplitText
+                  text="Reach out"
+                  tag="p"
+                  className="footer-social-label"
+                  delay={26}
+                  duration={0.75}
+                  ease="power3.out"
+                  splitType="chars"
+                  from={{ opacity: 0, y: 16 }}
+                  to={{ opacity: 1, y: 0 }}
+                  threshold={0}
+                  rootMargin="0px"
+                  textAlign="right"
+                />
+                <ScrollReveal
+                  as="div"
+                  className={`footer-social-icons ${isMailHovered ? "is-mail-active" : ""}`}
+                  selector=":scope > a, :scope > div"
+                  stagger={0.07}
+                  duration={0.6}
+                  ease="back.out(1.6)"
+                  from={{ opacity: 0, y: 18, scale: 0.8 }}
+                  to={{ opacity: 1, y: 0, scale: 1 }}
+                  threshold={0}
+                  rootMargin="0px"
+                  clearProps="opacity,transform"
+                >
                   {/* Instagram */}
                   <a
                     href="https://www.instagram.com/_mitarth"
@@ -588,7 +658,7 @@ export default function Home() {
                       </svg>
                     </button>
                   </div>
-                </div>
+                </ScrollReveal>
               </div>
             </div>
           </section>
