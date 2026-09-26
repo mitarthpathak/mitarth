@@ -4,217 +4,274 @@
       "id": "profile-summary",
       "title": "Mitarth Pathak — Profile",
       "text": "Mitarth Pathak is an AI and full-stack developer based in Jaipur, Rajasthan. He is studying for a B.Tech in Computer Science and Engineering at Arya College of Engineering & Technology (RTU Kota). He builds web apps with React and Next.js, backends with Spring Boot and Express, and AI features on top of LLM APIs such as Groq and Gemini. His projects are Swasthya-Neeti, Run-Neeti, DevTask and Yap-Render. He lives in Jaipur, Rajasthan, India. His stated focus areas are Backend development, Spring Security, API design.",
-      "url": "/"
+      "url": "/",
+      "keywords": "about bio who background"
     },
     {
       "id": "profile-experience",
       "title": "Mitarth Pathak — Experience",
       "text": "Mitarth Pathak's experience, as listed on his GitHub profile. Web Developer at Craftory Studio (Ongoing, Jaipur, India · Remote). Big Data Analyst (Intern) at IBM (Jun 2026 – Aug 2026 · 3 mos, Jaipur, India · Remote). Completed the IBM Big Data Analyst internship with a completion certificate, focused on large-scale data processing and large-scale data analysis. Education: B.Tech, Computer Science and Engineering at Arya College of Engineering & Technology (RTU Kota).",
-      "url": "https://github.com/mitarthpathak"
+      "url": "https://github.com/mitarthpathak",
+      "keywords": "experience work job internship company education college degree studying"
     },
     {
       "id": "profile-skills",
       "title": "Mitarth Pathak — Skills",
       "text": "Mitarth Pathak's skills, each with the projects that use it. Languages: Java (DevTask); JavaScript (Run-Neeti, Swasthya-Neeti, Yap-Render); TypeScript (Swasthya-Neeti, Run-Neeti, Yap-Render); Kotlin (Yap-Render); Python; C++. Frontend: React (Swasthya-Neeti, Run-Neeti, Yap-Render); Next.js (Yap-Render); Three.js / React Three Fiber (Yap-Render); D3 (Run-Neeti). Mobile: Jetpack Compose (Yap-Render). Backend: Spring Boot (DevTask); Spring Security + JWT (DevTask); Express (Swasthya-Neeti, Run-Neeti). Data: PostgreSQL (DevTask); MongoDB (Swasthya-Neeti, Run-Neeti). AI: Groq (Llama, Whisper) (Swasthya-Neeti, Run-Neeti); Gemini API (Yap-Render). Tools: Git; Vercel (Swasthya-Neeti, Run-Neeti, Yap-Render). Tools he uses: Spring Boot, PostgreSQL, React, Git, Next.js, Vite, Maven, Android Studio, Vercel.",
-      "url": "https://github.com/mitarthpathak"
+      "url": "https://github.com/mitarthpathak",
+      "keywords": "skills languages frameworks tools technologies stack"
     },
     {
       "id": "profile-contact",
       "title": "Mitarth Pathak — Contact",
       "text": "Mitarth Pathak can be contacted by email at mpathak6207@gmail.com, on LinkedIn at https://www.linkedin.com/in/mitarth-pathak and on GitHub at https://github.com/mitarthpathak. The terminal's contact command prints these links.",
-      "url": "/"
+      "url": "/",
+      "keywords": "contact email linkedin github reach hire"
     },
     {
       "id": "swasthya-neeti-problem",
       "title": "Swasthya-Neeti — Problem",
       "text": "Swasthya-Neeti (April 2026): A voice-first health assistant for rural families, in ten Indian languages. The problem: Families in villages often have a health question long before they can reach a clinic, and most health apps assume English, fast data and confident typing. I wanted the first conversation to work in the user's own language, by voice, on a modest phone. What it does: An AI chat assistant that gives families plain-language health guidance, takes questions by voice, answers in ten Indian languages and urges medical care when danger signs appear.",
-      "url": "/work/swasthya-neeti#problem"
+      "url": "/work/swasthya-neeti#problem",
+      "keywords": "problem why motivation goal need users"
     },
     {
       "id": "swasthya-neeti-role",
       "title": "Swasthya-Neeti — My role",
       "text": "Swasthya-Neeti (April 2026): A voice-first health assistant for rural families, in ten Indian languages. Mitarth's role: I built it on my own: the React interface, the Express API, the Groq integration, voice transcription, sign-in, saved chats and the Vercel deployment. Role: Solo build. Year: 2026. Stack: React 19, TypeScript, Vite, Express, Groq, MongoDB, Vercel. Status: Live.",
-      "url": "/work/swasthya-neeti#role"
+      "url": "/work/swasthya-neeti#role",
+      "keywords": "role team who built worked contribution collaborators responsibilities"
     },
     {
       "id": "swasthya-neeti-built",
       "title": "Swasthya-Neeti — What I built",
       "text": "Swasthya-Neeti (April 2026): A voice-first health assistant for rural families, in ten Indian languages. An AI chat assistant that gives families plain-language health guidance, takes questions by voice, answers in ten Indian languages and urges medical care when danger signs appear. Stack: React 19, TypeScript, Vite, Express, Groq, MongoDB, Vercel. Features: Chat with a health assistant in English, Hindi, Bengali, Marathi, Tamil, Telugu, Gujarati, Kannada, Punjabi or Malayalam. Speak instead of type: audio is recorded in the browser and transcribed on the server with Whisper large-v3-turbo on Groq. Three tappable suggested replies after every answer, so follow-ups need no typing. Accounts with saved conversations and a dashboard with personal health reminders. A health-updates panel that pulls public news from NIH, CDC and WHO sources. A separate low-resource chat view with a flatter, lighter interface.",
-      "url": "/work/swasthya-neeti#built"
+      "url": "/work/swasthya-neeti#built",
+      "keywords": "features what built does product"
     },
     {
       "id": "swasthya-neeti-ai",
       "title": "Swasthya-Neeti — How the AI works",
-      "text": "Swasthya-Neeti AI details. Model and approach: Chat replies come from Groq's Compound Mini model (configurable by environment variable) with a short system prompt, the last eight messages as history and a 500-token cap. Voice notes go to Whisper large-v3-turbo, and the server drops known Whisper filler phrases such as “thank you for watching”. Data: No custom training or fine-tuning. The model answers from its general knowledge plus the conversation. Interface text is translated per language by the model, with Google Translate as a fallback. Quality checks: Checked by hand while building: the prompt forces short answers and suggested replies are validated as JSON with a rule-based fallback. Limits: It gives general guidance only. It is not a diagnosis tool, it has no medical knowledge base behind it, and answers can be wrong. Safety guardrails: The system prompt tells the model never to claim to be a doctor, never to prescribe dosages and to urge medical attention for danger signs like chest pain or trouble breathing. The chat shows a notice that it is not a substitute for professional advice, and the dashboard's terms state it is not for emergencies.",
-      "url": "/work/swasthya-neeti#built"
+      "text": "Swasthya-Neeti AI details. Model and approach: Chat replies come from Groq's Compound Mini model (configurable by environment variable) with a short system prompt, the last eight messages as history and a 500-token cap. Voice notes go to Whisper large-v3-turbo, and the server drops known Whisper filler phrases such as “thank you for watching”. Data: No custom training or fine-tuning. The model answers from its general knowledge plus the conversation. Interface text is translated per language by the model, with Google Translate as a fallback.",
+      "url": "/work/swasthya-neeti#built",
+      "keywords": "ai model llm prompt data training approach"
+    },
+    {
+      "id": "swasthya-neeti-ai-limits",
+      "title": "Swasthya-Neeti — AI quality, limits and safety",
+      "text": "Swasthya-Neeti AI quality and limits. How quality was checked: Checked by hand while building: the prompt forces short answers and suggested replies are validated as JSON with a rule-based fallback. Limits: It gives general guidance only. It is not a diagnosis tool, it has no medical knowledge base behind it, and answers can be wrong. Safety guardrails: The system prompt tells the model never to claim to be a doctor, never to prescribe dosages and to urge medical attention for danger signs like chest pain or trouble breathing. The chat shows a notice that it is not a substitute for professional advice, and the dashboard's terms state it is not for emergencies.",
+      "url": "/work/swasthya-neeti#built",
+      "keywords": "quality evaluation tested checks limits limitations safety guardrails disclaimer"
     },
     {
       "id": "swasthya-neeti-architecture",
       "title": "Swasthya-Neeti — Architecture",
       "text": "Swasthya-Neeti (April 2026): A voice-first health assistant for rural families, in ten Indian languages. Architecture: A Vite + React client talks to an Express API. On Vercel the API runs as serverless functions under /api. Chat, transcription and translation go to Groq; users, chats and reminders are stored in MongoDB. Components: React client (Vite · voice recorder), Express API (Vercel functions), Groq (Chat + Whisper), MongoDB (Users · chats · reminders), Public feeds (NIH · CDC · WHO). Connections: React client to Express API via HTTPS / JSON; Express API to Groq via prompt · audio; Express API to MongoDB via Mongoose; Express API to Public feeds via fetch.",
-      "url": "/work/swasthya-neeti#architecture"
+      "url": "/work/swasthya-neeti#architecture",
+      "keywords": "architecture how it works components system design stack diagram"
     },
     {
       "id": "swasthya-neeti-decisions",
       "title": "Swasthya-Neeti — Key decisions",
       "text": "Swasthya-Neeti key decisions. Decision: Transcribe voice on the server with Whisper instead of the browser's speech API. Why: The browser API behaves differently across phones and languages; one server model gives the same result everywhere. Trade-off: Every voice note is an upload and an API call, so it is slower on weak networks. Decision: Translate the whole interface with the model, with Google Translate as a fallback. Why: Ten languages without writing and maintaining ten sets of UI copy by hand. Trade-off: Machine translation can be awkward and nobody has proofread it. Decision: Keep answers short and follow each one with three suggested replies. Why: Long medical paragraphs are hard to read on a phone; tapping a reply is easier than typing. Trade-off: Short answers leave out detail that some users would want.",
-      "url": "/work/swasthya-neeti#decisions"
+      "url": "/work/swasthya-neeti#decisions",
+      "keywords": "decisions choices why trade-offs tradeoffs"
     },
     {
       "id": "swasthya-neeti-results",
       "title": "Swasthya-Neeti — Results",
       "text": "Swasthya-Neeti (April 2026): A voice-first health assistant for rural families, in ten Indian languages. An AI chat assistant that gives families plain-language health guidance, takes questions by voice, answers in ten Indian languages and urges medical care when danger signs appear. Results: Deployed and publicly available at swasthya-neeti.vercel.app. Ten interface and answer languages, with voice input. Status: Live. Links: https://swasthya-neeti.vercel.app/, https://github.com/mitarthpathak/Swasthya-Neeti.",
-      "url": "/work/swasthya-neeti#results"
+      "url": "/work/swasthya-neeti#results",
+      "keywords": "results outcome impact status live deployed"
     },
     {
       "id": "swasthya-neeti-learned",
       "title": "Swasthya-Neeti — What I learned",
       "text": "Swasthya-Neeti (April 2026): A voice-first health assistant for rural families, in ten Indian languages. What Mitarth learned building Swasthya-Neeti: Safety in a health product is mostly about what the assistant refuses to do, and it has to be written down in the prompt and the UI. Speech-to-text models invent polite filler on silent audio, so the output needs cleaning before it reaches the chat. Running an Express app as Vercel functions needs care with routing and cold starts.",
-      "url": "/work/swasthya-neeti#learned"
+      "url": "/work/swasthya-neeti#learned",
+      "keywords": "learned lessons learnings takeaways next"
     },
     {
       "id": "run-neeti-problem",
       "title": "Run-Neeti — Problem",
       "text": "Run-Neeti (May 2026): Upload a PDF, get an interactive knowledge graph and a quiz. The problem: Long PDFs are hard to hold in your head: the relationships between ideas are spread across pages. I wanted a tool that turns a document into a map you can explore, then checks what you remember. What it does: A study tool that reads a PDF, asks an LLM for a hierarchical mind-map of its concepts, and draws it as an interactive force-directed graph with a summary and quiz.",
-      "url": "/work/run-neeti#problem"
+      "url": "/work/run-neeti#problem",
+      "keywords": "problem why motivation goal need users"
     },
     {
       "id": "run-neeti-role",
       "title": "Run-Neeti — My role",
       "text": "Run-Neeti (May 2026): Upload a PDF, get an interactive knowledge graph and a quiz. Mitarth's role: I built it on my own: the React and D3 front end, the Express upload pipeline, the prompts and the MongoDB cache. Role: Solo build. Year: 2026. Stack: React 19, TypeScript, D3-force, Express, Groq, MongoDB, Vercel. Status: Live.",
-      "url": "/work/run-neeti#role"
+      "url": "/work/run-neeti#role",
+      "keywords": "role team who built worked contribution collaborators responsibilities"
     },
     {
       "id": "run-neeti-built",
       "title": "Run-Neeti — What I built",
       "text": "Run-Neeti (May 2026): Upload a PDF, get an interactive knowledge graph and a quiz. A study tool that reads a PDF, asks an LLM for a hierarchical mind-map of its concepts, and draws it as an interactive force-directed graph with a summary and quiz. Stack: React 19, TypeScript, D3-force, Express, Groq, MongoDB, Vercel. Features: Drop a PDF and the server extracts its text with pdf-parse. An LLM returns a hierarchy: one core concept, three headers, two sub-topics each and 1–3 leaf concepts per sub-topic. The graph is drawn with D3-force, sized and placed by node type and importance. A generated summary with a difficulty score and a study roadmap. A quiz built from the graph's own nodes. Signed-in users can reopen their past graphs.",
-      "url": "/work/run-neeti#built"
+      "url": "/work/run-neeti#built",
+      "keywords": "features what built does product"
     },
     {
       "id": "run-neeti-ai",
       "title": "Run-Neeti — How the AI works",
-      "text": "Run-Neeti AI details. Model and approach: Groq's llama-3.1-8b-instant in JSON mode. The text is split into up to five overlapping 10,000-character chunks; each chunk becomes a partial graph, and the server merges nodes and edges. Data: Only the uploaded PDF. Results are cached in MongoDB under a SHA-256 hash of the text, so the same document is never analysed twice. Quality checks: Checked by hand on sample PDFs. The prompt fixes the tree shape so the output stays readable. Limits: Only about the first 50,000 characters are analysed. If the model fails after retries, a word-frequency fallback builds a much simpler graph titled “Content Analysis”.",
-      "url": "/work/run-neeti#built"
+      "text": "Run-Neeti AI details. Model and approach: Groq's llama-3.1-8b-instant in JSON mode. The text is split into up to five overlapping 10,000-character chunks; each chunk becomes a partial graph, and the server merges nodes and edges. Data: Only the uploaded PDF. Results are cached in MongoDB under a SHA-256 hash of the text, so the same document is never analysed twice.",
+      "url": "/work/run-neeti#built",
+      "keywords": "ai model llm prompt data training approach"
+    },
+    {
+      "id": "run-neeti-ai-limits",
+      "title": "Run-Neeti — AI quality, limits and safety",
+      "text": "Run-Neeti AI quality and limits. How quality was checked: Checked by hand on sample PDFs. The prompt fixes the tree shape so the output stays readable. Limits: Only about the first 50,000 characters are analysed. If the model fails after retries, a word-frequency fallback builds a much simpler graph titled “Content Analysis”.",
+      "url": "/work/run-neeti#built",
+      "keywords": "quality evaluation tested checks limits limitations safety guardrails disclaimer"
     },
     {
       "id": "run-neeti-architecture",
       "title": "Run-Neeti — Architecture",
       "text": "Run-Neeti (May 2026): Upload a PDF, get an interactive knowledge graph and a quiz. Architecture: The React client uploads a PDF to an Express API (wrapped as a Vercel function). The API extracts text, checks the MongoDB cache, queues chunked requests to Groq one at a time, merges the partial graphs and stores the result. Components: React + D3 (Upload · graph · quiz), Express API (pdf-parse · p-queue), Groq (llama-3.1-8b-instant), MongoDB (Cache by SHA-256). Connections: React + D3 to Express API via PDF upload; Express API to MongoDB via cache lookup; Express API to Groq via chunks → JSON.",
-      "url": "/work/run-neeti#architecture"
+      "url": "/work/run-neeti#architecture",
+      "keywords": "architecture how it works components system design stack diagram"
     },
     {
       "id": "run-neeti-decisions",
       "title": "Run-Neeti — Key decisions",
       "text": "Run-Neeti key decisions. Decision: Split the PDF into overlapping chunks and merge the graphs. Why: A whole document does not fit one prompt; a 1,000-character overlap keeps ideas that span a chunk boundary. Trade-off: Merging can duplicate or loosely connect concepts, and it caps coverage at five chunks. Decision: Send one request every five seconds through a queue, with long back-off on 429s. Why: It was built on a free-tier key with strict rate limits. Trade-off: Large documents take noticeably longer to process. Decision: Fall back to a word-frequency graph when the model fails. Why: The user always gets something back instead of an error screen. Trade-off: The fallback graph is shallow and clearly less useful.",
-      "url": "/work/run-neeti#decisions"
+      "url": "/work/run-neeti#decisions",
+      "keywords": "decisions choices why trade-offs tradeoffs"
     },
     {
       "id": "run-neeti-results",
       "title": "Run-Neeti — Results",
       "text": "Run-Neeti (May 2026): Upload a PDF, get an interactive knowledge graph and a quiz. A study tool that reads a PDF, asks an LLM for a hierarchical mind-map of its concepts, and draws it as an interactive force-directed graph with a summary and quiz. Results: Deployed and publicly available at run-neeti.vercel.app. Repeat uploads of the same document are served from the cache without calling the model. Status: Live. Links: https://run-neeti.vercel.app/, https://github.com/mitarthpathak/Run-Neeti.",
-      "url": "/work/run-neeti#results"
+      "url": "/work/run-neeti#results",
+      "keywords": "results outcome impact status live deployed"
     },
     {
       "id": "run-neeti-learned",
       "title": "Run-Neeti — What I learned",
       "text": "Run-Neeti (May 2026): Upload a PDF, get an interactive knowledge graph and a quiz. What Mitarth learned building Run-Neeti: Asking an LLM for a fixed JSON shape is only half the job; you still need to parse defensively and merge carefully. Caching by content hash is the cheapest way to cut model calls. Rate limits shape the architecture as much as the features do.",
-      "url": "/work/run-neeti#learned"
+      "url": "/work/run-neeti#learned",
+      "keywords": "learned lessons learnings takeaways next"
     },
     {
       "id": "devtask-problem",
       "title": "DevTask — Problem",
       "text": "DevTask (July 2026): A Spring Boot REST API where every user manages their own tasks behind JWT auth. The problem: I wanted to learn how a real Java backend handles authentication end to end: hashing passwords, issuing tokens, protecting routes and tying data to the user who owns it. What it does: A Spring Boot REST API with user registration, JWT login and task CRUD, backed by PostgreSQL through Spring Data JPA.",
-      "url": "/work/devtask#problem"
+      "url": "/work/devtask#problem",
+      "keywords": "problem why motivation goal need users"
     },
     {
       "id": "devtask-role",
       "title": "DevTask — My role",
       "text": "DevTask (July 2026): A Spring Boot REST API where every user manages their own tasks behind JWT auth. Mitarth's role: I wrote it on my own: the entities, repositories, services, controllers, the JWT filter and the security configuration. Role: Solo build. Year: 2026. Stack: Java 17, Spring Boot 3.3, Spring Security, JPA, PostgreSQL, JWT, Maven. Status: Code only.",
-      "url": "/work/devtask#role"
+      "url": "/work/devtask#role",
+      "keywords": "role team who built worked contribution collaborators responsibilities"
     },
     {
       "id": "devtask-built",
       "title": "DevTask — What I built",
       "text": "DevTask (July 2026): A Spring Boot REST API where every user manages their own tasks behind JWT auth. A Spring Boot REST API with user registration, JWT login and task CRUD, backed by PostgreSQL through Spring Data JPA. Stack: Java 17, Spring Boot 3.3, Spring Security, JPA, PostgreSQL, JWT, Maven. Features: POST /register creates a user; passwords are hashed with BCrypt (strength 12). POST /login returns a signed JWT that expires after 30 minutes. Every other route requires Authorization: Bearer <token>. Task CRUD: title, description, status and due date. Tasks belong to users through a many-to-one relation, and GET /tasks returns only the caller's tasks. A global exception handler returns JSON errors with status, message and timestamp.",
-      "url": "/work/devtask#built"
+      "url": "/work/devtask#built",
+      "keywords": "features what built does product"
     },
     {
       "id": "devtask-endpoints",
       "title": "DevTask — Endpoints",
       "text": "DevTask REST endpoints: POST /register (public): Create a user. POST /login (public): Returns a JWT. GET /tasks (needs a Bearer token): Your tasks. GET /tasks/{id} (needs a Bearer token): One task. POST /tasks (needs a Bearer token): Create a task. POST /tasks/{id} (needs a Bearer token): Update a task. DELETE /tasks/{id} (needs a Bearer token): Delete a task.",
-      "url": "/work/devtask#built"
+      "url": "/work/devtask#built",
+      "keywords": "api endpoints routes rest http methods"
     },
     {
       "id": "devtask-architecture",
       "title": "DevTask — Architecture",
       "text": "DevTask (July 2026): A Spring Boot REST API where every user manages their own tasks behind JWT auth. Architecture: A classic layered Spring Boot app. A JWT filter runs before Spring Security's username/password filter, then requests flow controller → service → repository → PostgreSQL. Sessions are stateless. Components: Client (curl · Postman), JwtFilter (Bearer token), Controllers (Auth · Tasks), Services (Task · User · JWT), PostgreSQL (JPA repositories). Connections: Client to JwtFilter via HTTP; JwtFilter to Controllers via authenticated; Controllers to Services via DTOs; Services to PostgreSQL via JPA.",
-      "url": "/work/devtask#architecture"
+      "url": "/work/devtask#architecture",
+      "keywords": "architecture how it works components system design stack diagram"
     },
     {
       "id": "devtask-decisions",
       "title": "DevTask — Key decisions",
       "text": "DevTask key decisions. Decision: Stateless JWT authentication instead of server sessions. Why: Any client can call the API with a header, and the server keeps no session state. Trade-off: A token stays valid until it expires; there is no logout or revocation. Decision: Separate request and response DTOs from the JPA entities. Why: The API never exposes internal fields, and the response carries the owner's username rather than the whole user object. Trade-off: More mapping code in the service layer. Decision: Tie each task to its owner with a many-to-one relation. Why: The task list can be filtered by the authenticated username in one repository query. Trade-off: Single-task routes need their own ownership check, which is still on my list.",
-      "url": "/work/devtask#decisions"
+      "url": "/work/devtask#decisions",
+      "keywords": "decisions choices why trade-offs tradeoffs"
     },
     {
       "id": "devtask-results",
       "title": "DevTask — Results",
       "text": "DevTask (July 2026): A Spring Boot REST API where every user manages their own tasks behind JWT auth. A Spring Boot REST API with user registration, JWT login and task CRUD, backed by PostgreSQL through Spring Data JPA. Results: Source code is public on GitHub with setup steps and an endpoint table. Status: Code only. Links: https://github.com/mitarthpathak/DevTask.",
-      "url": "/work/devtask#results"
+      "url": "/work/devtask#results",
+      "keywords": "results outcome impact status live deployed"
     },
     {
       "id": "devtask-learned",
       "title": "DevTask — What I learned",
       "text": "DevTask (July 2026): A Spring Boot REST API where every user manages their own tasks behind JWT auth. What Mitarth learned building DevTask: How Spring Security's filter chain works, and where a custom JWT filter belongs in it. Filtering the list by owner is not the same as authorising every route: get, update and delete by id should also check ownership. That is the next fix. Secrets belong in environment variables, not in application.properties.",
-      "url": "/work/devtask#learned"
+      "url": "/work/devtask#learned",
+      "keywords": "learned lessons learnings takeaways next"
     },
     {
       "id": "yap-render-problem",
       "title": "Yap-Render — Problem",
       "text": "Yap-Render (August 2026): Speech or text in, Indian Sign Language out, signed by a 3D avatar. The problem: Most conversations and online content are audio or text first, which shuts out people who rely on Indian Sign Language. The goal was to turn everyday speech into ISL signing, live, without needing an interpreter. What it does: A speech-to-Indian-Sign-Language translator for Smart India Hackathon 2026: a Next.js web app, a native Android app and a Chrome extension, all driving the same 3D signing avatar.",
-      "url": "/work/yap-render#problem"
+      "url": "/work/yap-render#problem",
+      "keywords": "problem why motivation goal need users"
     },
     {
       "id": "yap-render-role",
       "title": "Yap-Render — My role",
       "text": "Yap-Render (August 2026): Speech or text in, Indian Sign Language out, signed by a 3D avatar. Mitarth's role: One of a five-person team (Mitarth Pathak, Navneet Singh, Gaurav Soni, Deep Panchal, Nooren Qureshi) building for SIH 2026. The web app, the Android app and the extension all live under my GitHub account. Role: Team of five. Year: 2026. Stack: Next.js 16, React 19, TypeScript, Three.js / R3F, Gemini 2.5 Flash, Kotlin, Jetpack Compose, Chrome MV3. Status: Live.",
-      "url": "/work/yap-render#role"
+      "url": "/work/yap-render#role",
+      "keywords": "role team who built worked contribution collaborators responsibilities"
     },
     {
       "id": "yap-render-built",
       "title": "Yap-Render — What I built",
       "text": "Yap-Render (August 2026): Speech or text in, Indian Sign Language out, signed by a 3D avatar. js web app, a native Android app and a Chrome extension, all driving the same 3D signing avatar. 5 Flash, Kotlin, Jetpack Compose, Chrome MV3. Features: Speech or typed English/Hindi is converted into ISL gloss: time words first, subject–object–verb order, negation and question words at the end. The avatar can play 164 gloss tokens; unknown words and names are fingerspelled letter by letter. An offline rule-based gloss engine works with no API key and takes over if the online call fails. js, so it needs no server. Hotkeys in the extension to toggle, pause and mute signing. js avatar in the browser. Android app: A Kotlin and Jetpack Compose app using Android's SpeechRecognizer, the avatar inside a WebView, and saved projects in Room. Browser extension: A Manifest V3 extension that signs speech from the mic or from a tab's audio in an always-on-top Picture-in-Picture window, with on-device Whisper for tab audio.",
-      "url": "/work/yap-render#built"
+      "url": "/work/yap-render#built",
+      "keywords": "features what built does product"
     },
     {
       "id": "yap-render-ai",
       "title": "Yap-Render — How the AI works",
-      "text": "Yap-Render AI details. Model and approach: The web app sends text to Gemini 2.5 Flash with a system prompt that encodes ISL grammar and the exact list of signs the avatar knows, at temperature 0, with thinking disabled for speed and a JSON array response schema. Data: No training data. The model can only output tokens from the fixed 164-sign vocabulary, and the server drops anything else. Quality checks: Output is validated against the vocabulary; empty or malformed replies return an error and the client falls back to the rule-based engine. Limits: The vocabulary is small, so many words are fingerspelled, and gloss order is an approximation of real ISL grammar. Facial expression, a core part of ISL, is not modelled.",
-      "url": "/work/yap-render#built"
+      "text": "Yap-Render AI details. Model and approach: The web app sends text to Gemini 2.5 Flash with a system prompt that encodes ISL grammar and the exact list of signs the avatar knows, at temperature 0, with thinking disabled for speed and a JSON array response schema. Data: No training data. The model can only output tokens from the fixed 164-sign vocabulary, and the server drops anything else.",
+      "url": "/work/yap-render#built",
+      "keywords": "ai model llm prompt data training approach"
+    },
+    {
+      "id": "yap-render-ai-limits",
+      "title": "Yap-Render — AI quality, limits and safety",
+      "text": "Yap-Render AI quality and limits. How quality was checked: Output is validated against the vocabulary; empty or malformed replies return an error and the client falls back to the rule-based engine. Limits: The vocabulary is small, so many words are fingerspelled, and gloss order is an approximation of real ISL grammar. Facial expression, a core part of ISL, is not modelled.",
+      "url": "/work/yap-render#built",
+      "keywords": "quality evaluation tested checks limits limitations safety guardrails disclaimer"
     },
     {
       "id": "yap-render-architecture",
       "title": "Yap-Render — Architecture",
       "text": "Yap-Render (August 2026): Speech or text in, Indian Sign Language out, signed by a 3D avatar. Architecture: Three clients share one pipeline: speech to text, text to ISL gloss (Gemini online or a rule-based engine offline), then gloss to sign animations on a 3D avatar rig. Components: Speech / text (Web · Android · tab audio), Speech-to-text (Web Speech · SpeechRecognizer · Whisper), ISL gloss (Gemini 2.5 Flash · rule engine), 3D avatar (Three.js sign animations). Connections: Speech / text to Speech-to-text via audio; Speech-to-text to ISL gloss via text; ISL gloss to 3D avatar via tokens.",
-      "url": "/work/yap-render#architecture"
+      "url": "/work/yap-render#architecture",
+      "keywords": "architecture how it works components system design stack diagram"
     },
     {
       "id": "yap-render-decisions",
       "title": "Yap-Render — Key decisions",
       "text": "Yap-Render key decisions. Decision: Constrain the model to the avatar's exact sign vocabulary. Why: The avatar can only play signs that were animated; any other token would be a dead end. Trade-off: Out-of-vocabulary words have to be fingerspelled, which is slow to watch. Decision: Keep a deterministic offline gloss engine alongside the model. Why: It works with no key, no network and no rate limit, and it covers model failures. Trade-off: Two code paths to keep in step, and the rules are less flexible than the model. Decision: Run Whisper on the device for the extension's tab audio. Why: No server, no key and no audio leaves the machine. Trade-off: A model download of about 50 MB on first use, and captions lag a few seconds.",
-      "url": "/work/yap-render#decisions"
+      "url": "/work/yap-render#decisions",
+      "keywords": "decisions choices why trade-offs tradeoffs"
     },
     {
       "id": "yap-render-results",
       "title": "Yap-Render — Results",
       "text": "Yap-Render (August 2026): Speech or text in, Indian Sign Language out, signed by a 3D avatar. A speech-to-Indian-Sign-Language translator for Smart India Hackathon 2026: a Next.js web app, a native Android app and a Chrome extension, all driving the same 3D signing avatar. Results: The web app is deployed and publicly available at yap-render.vercel.app. One signing pipeline shipped on three platforms: web, Android and a Chrome/Edge extension. Status: Live. Links: https://yap-render.vercel.app/, https://github.com/mitarthpathak/yap-render, https://github.com/mitarthpathak/yap-render-APP, https://github.com/mitarthpathak/yap-render-extension.",
-      "url": "/work/yap-render#results"
+      "url": "/work/yap-render#results",
+      "keywords": "results outcome impact status live deployed"
     },
     {
       "id": "yap-render-learned",
       "title": "Yap-Render — What I learned",
       "text": "Yap-Render (August 2026): Speech or text in, Indian Sign Language out, signed by a 3D avatar. What Mitarth learned building Yap-Render: Sign languages have their own grammar; translating word by word does not work. Sharing one core (gloss engine, dictionary, avatar) across three platforms saved the most time. Browser extensions have hard limits, like CSP blocking import maps, that shape the build.",
-      "url": "/work/yap-render#learned"
+      "url": "/work/yap-render#learned",
+      "keywords": "learned lessons learnings takeaways next"
     }
   ]
 }

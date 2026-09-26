@@ -1,0 +1,141 @@
+/* /lab/ask — reuses the case-study frame (case-study.css); only the bits
+   that differ live here. */
+
+.lab-code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(36, 36, 36, 0.07);
+}
+
+.lab-body {
+  max-width: calc(70ch + 2 * var(--cs-pad));
+  margin: 0 auto;
+  padding: 96px var(--cs-pad) 32px;
+  font-size: 18px;
+  line-height: 1.65;
+  color: #2f2c29;
+}
+
+.lab-body p {
+  text-wrap: pretty;
+}
+
+.lab-body p + p {
+  margin-top: 16px;
+}
+
+.lab-body .cs-h2 {
+  margin-bottom: 24px;
+}
+
+.lab-rules {
+  list-style: none;
+  counter-reset: rule;
+  display: grid;
+  gap: 8px;
+}
+
+.lab-rules li {
+  counter-increment: rule;
+  position: relative;
+  padding: 16px 20px 16px 64px;
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  background: var(--cs-card);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.lab-rules li::before {
+  content: counter(rule, decimal-leading-zero);
+  position: absolute;
+  left: 20px;
+  top: 17px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.lab-meta {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.lab-callout {
+  margin-top: 16px;
+  padding: 14px 18px;
+  border-left: 3px solid var(--orange);
+  border-radius: 0 8px 8px 0;
+  background: rgba(255, 149, 0, 0.1);
+  font-size: 16px;
+  color: var(--dark);
+}
+
+.lab-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.lab-stats > div {
+  padding: 20px;
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  background: var(--cs-card);
+}
+
+.lab-stats dt {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.lab-stats dd {
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--dark);
+}
+
+.lab-stats dd span {
+  display: block;
+  margin-top: 10px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  letter-spacing: 0;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.lab-next {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 768px) {
+  .lab-body {
+    padding-top: 56px;
+    font-size: 17px;
+  }
+
+  .lab-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lab-rules li {
+    padding: 48px 16px 16px;
+  }
+
+  .lab-rules li::before {
+    left: 16px;
+    top: 16px;
+  }
+}

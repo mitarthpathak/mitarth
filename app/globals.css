@@ -3623,6 +3623,28 @@ body {
     row-gap: 10px;
   }
 }
+/* IDE pane 03: link down to the real terminal */
+.ide-terminal-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  margin-top: 14px;
+  padding: 0 14px;
+  border: 1px solid var(--yellow);
+  border-radius: 8px;
+  color: var(--yellow);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ide-terminal-cta:hover {
+  background: var(--yellow);
+  color: #0a0a0a;
+}
+
 /* ========== VIEW TRANSITIONS (card ↔ case-study morph) ========== */
 /* The shared image (and title) morph between the card and the case-study
    hero; the rest of the page cross-fades quickly on the same cream, so there

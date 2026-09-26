@@ -15,6 +15,8 @@ import TiltedCard from "./components/TiltedCard";
 import TechStack from "./components/TechStack";
 import ParticleImageReveal from "./components/ParticleImageReveal";
 import ScrollReveal from "./components/ScrollReveal";
+import LazyTerminal from "./components/terminal/LazyTerminal";
+import Link from "next/link";
 
 const emailId = "mpathak6207@gmail.com";
 
@@ -388,6 +390,21 @@ export default function Home() {
                 />
               ))}
             </div>
+          </section>
+
+          {/* ===== TERMINAL: real commands + "ask about my work" ===== */}
+          <section id="terminal" className="terminal-section" aria-labelledby="terminal-title">
+            <div className="terminal-intro">
+              <p className="terminal-label">Try it</p>
+              <h2 id="terminal-title">Ask the terminal</h2>
+              <p>Run real commands, or ask about my work. Answers come only from this site and cite their sources.</p>
+            </div>
+            <LazyTerminal />
+            <p className="terminal-foot">
+              <Link href="/lab/ask">
+                How it works <span aria-hidden="true">→</span>
+              </Link>
+            </p>
           </section>
 
           {/* ===== FOOTER REVEAL COLUMNS (brick staircase into yellow footer) ===== */}

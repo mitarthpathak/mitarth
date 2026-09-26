@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-26T19:36:13.333Z",
+  "mode": "retrieval-only",
+  "model": null,
+  "cases": {
+    "answerable": 15,
+    "unanswerable": 8,
+    "adversarial": 7
+  },
+  "retrieval": {
+    "recallAt5": 1,
+    "hits": 15,
+    "total": 15,
+    "medianMs": 0.452,
+    "misses": []
+  },
+  "answers": null,
+  "note": "No API key configured: only retrieval was evaluated. Set ASK_PROVIDER, ASK_MODEL and the provider key to run the full answer checks."
+}
