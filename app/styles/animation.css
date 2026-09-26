@@ -1,136 +1,146 @@
 /* ============================================================
-   MITARTH SIGNATURE ANIMATION
-   Separate animation stylesheet -- does NOT touch existing styles
+   MITARTH SIGNATURE — header mark + first-visit intro
+   <html data-intro> is set before first paint by the inline script in
+   app/layout.js: "play" | "skip" | "done". Only "play" animates.
    ============================================================ */
 
-/* ---- Layout / Structural ---- */
+/* ---- Resting state: the header mark at the top of the home page ---- */
 
 #sig-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100vh;
-  z-index: 9999;
-  background: transparent;
+  height: 0;
+  z-index: 60;
   pointer-events: none;
 }
 
 #sig-svg-wrap {
   position: absolute;
-  top: 50%;
+  top: 28px;
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: 45vmin;
-  height: 45vmin;
-  will-change: transform, top, width, height;
+  width: 22.5vmin;
+  height: 22.5vmin;
+  transform: translate(-50%, 0);
 }
 
 #sig-svg-wrap svg {
+  display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
 }
 
-/* Phase 2: Signature move & shrink to header logo size */
-@keyframes sig-shrink-move {
+/* Exact path lengths (measured once with getTotalLength) */
+.sig-stroke-m { --path-len: 1255; }
+.sig-stroke-p { --path-len: 1609; }
+.sig-stroke-athak { --path-len: 1651; }
+.sig-stroke-underline { --path-len: 399; }
+
+.sig-skip {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  #sig-svg-wrap { width: 28vmin; height: 28vmin; top: 16px; }
+}
+
+/* ---- Intro (≤ 1.2 s): draw large over the hero, then settle ---- */
+
+html[data-intro="play"] #sig-overlay {
+  position: fixed;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* A light veil keeps the orange strokes readable over the hero text
+   without ever hiding the content underneath. */
+html[data-intro="play"] #sig-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--cream);
+  animation: sig-veil 1.2s linear both;
+}
+
+html[data-intro="play"] #sig-svg-wrap {
+  animation: sig-settle 0.38s cubic-bezier(0.19, 1, 0.22, 1) 0.82s both;
+}
+
+html[data-intro="play"] .sig-stroke {
+  stroke-dasharray: var(--path-len);
+  stroke-dashoffset: var(--path-len);
+  animation: sig-draw 0.3s cubic-bezier(0.42, 0, 0.58, 1) both;
+}
+
+html[data-intro="play"] .sig-stroke-m { animation-duration: 0.26s; }
+html[data-intro="play"] .sig-stroke-p { animation-duration: 0.22s; animation-delay: 0.26s; }
+html[data-intro="play"] .sig-stroke-athak { animation-duration: 0.3s; animation-delay: 0.48s; }
+html[data-intro="play"] .sig-stroke-underline { animation-duration: 0.08s; animation-delay: 0.78s; }
+
+html[data-intro="play"] .sig-skip {
+  display: inline-flex;
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top));
+  right: 16px;
+  z-index: 2;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid rgba(36, 36, 36, 0.35);
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--dark);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+html[data-intro="play"] .sig-skip:hover {
+  background: var(--yellow);
+}
+
+@keyframes sig-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes sig-veil {
+  0%, 60% { opacity: 0.55; }
+  100% { opacity: 0; }
+}
+
+@keyframes sig-settle {
   from {
     top: 50%;
     width: 45vmin;
     height: 45vmin;
     transform: translate(-50%, -50%);
   }
-  to {
-    top: 28px;
-    width: 22.5vmin;
-    height: 22.5vmin;
-    transform: translate(-50%, 0);
-  }
-}
-
-/* Page content: hidden during phase 1 */
-#sig-page-content {
-  opacity: 0;
-  will-change: opacity;
-}
-
-/* ---- SVG Path Base States (all paths start hidden) ---- */
-
-#stroke-m,
-#stroke-p,
-#stroke-athak,
-#stroke-underline {
-  stroke-dashoffset: var(--path-len, 9999);
-  stroke-dasharray: var(--path-len, 9999);
-}
-
-/* ---- Phase 1: Stroke Drawing Animations ---- */
-
-@keyframes draw-stroke {
-  from { stroke-dashoffset: var(--path-len, 9999); }
-  to   { stroke-dashoffset: 0; }
-}
-
-#stroke-m {
-  animation: draw-stroke 1.2s cubic-bezier(0.42, 0, 0.58, 1) 0s forwards;
-}
-
-#stroke-p {
-  animation: draw-stroke 1.0s cubic-bezier(0.42, 0, 0.58, 1) 1.2s forwards;
-}
-
-#stroke-athak {
-  animation: draw-stroke 2.3s cubic-bezier(0.42, 0, 0.58, 1) 2.2s forwards;
-}
-
-#stroke-underline {
-  animation: draw-stroke 0.18s cubic-bezier(0.4, 0, 0.2, 1) 4.3s forwards;
-}
-
-#sig-svg-wrap {
-  animation: sig-shrink-move 1s ease-in-out 4.7s forwards;
-}
-
-/* ---- Phase 2: Page content fade-in (starts at 5s) ---- */
-
-@keyframes content-fadein {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-#sig-page-content {
-  animation: content-fadein 1s ease-in-out 4.7s forwards;
-}
-
-
-
-/* ---- Responsive sizing ---- */
-
-@media (min-width: 1024px) {
-  #sig-svg-wrap  { width: 45vmin; height: 45vmin; }
-  #sig-header-logo { width: 15vmin; top: 28px; }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  #sig-svg-wrap  { width: 50vmin; height: 50vmin; }
-  #sig-header-logo { width: 14vmin; top: 24px; }
 }
 
 @media (max-width: 767px) {
-  #sig-svg-wrap  { width: 56vmin; height: 56vmin; }
-  #sig-header-logo { width: 12vmin; top: 20px; }
+  @keyframes sig-settle {
+    from {
+      top: 50%;
+      width: 60vmin;
+      height: 60vmin;
+      transform: translate(-50%, -50%);
+    }
+  }
 }
 
+/* The layout script never sets "play" under reduced motion; this is a
+   second guard in case the preference changes mid-session. */
 @media (prefers-reduced-motion: reduce) {
-  #stroke-m, #stroke-p, #stroke-athak, #stroke-underline {
-    stroke-dashoffset: 0 !important;
-    stroke-dasharray: none !important;
-    animation: none !important;
-  }
-  #sig-page-content {
-    animation: content-fadein 0.01s linear 0.5s forwards !important;
-  }
-  #sig-svg-wrap {
-    animation: sig-shrink-move 0.01s linear 0.5s forwards !important;
+  html[data-intro="play"] #sig-overlay { position: absolute; height: 0; }
+  html[data-intro="play"] #sig-overlay::before { display: none; }
+  html[data-intro="play"] #sig-svg-wrap,
+  html[data-intro="play"] .sig-stroke {
+    animation: none;
+    stroke-dashoffset: 0;
   }
 }

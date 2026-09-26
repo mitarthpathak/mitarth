@@ -10,6 +10,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agent working files (cloned repos, QA scripts) are not part of the site
+    ".agent-work/**",
   ]),
 ]);
 

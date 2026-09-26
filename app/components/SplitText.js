@@ -23,11 +23,16 @@ const SplitText = ({
   tag = "p",
   startDelay = 0,
   onLetterAnimationComplete,
+  id,
 }) => {
   const ref = useRef(null);
   const animationCompletedRef = useRef(false);
   const onCompleteRef = useRef(onLetterAnimationComplete);
-  const [delayReady, setDelayReady] = useState(startDelay === 0);
+  // `delayReady` is derived: the timer records which (startDelay, text) pair
+  // it has waited for, so a new pair is automatically "not ready" again.
+  const delayKey = `${startDelay}|${text}`;
+  const [readyKey, setReadyKey] = useState(startDelay === 0 ? delayKey : null);
+  const delayReady = startDelay === 0 || readyKey === delayKey;
   const [fontsLoaded, setFontsLoaded] = useState(() => {
     if (typeof document === "undefined") return false;
     return document.fonts.status === "loaded";
@@ -39,18 +44,17 @@ const SplitText = ({
 
   useEffect(() => {
     animationCompletedRef.current = false;
-    setDelayReady(startDelay === 0);
 
     if (startDelay === 0) return;
 
     const timer = window.setTimeout(() => {
-      setDelayReady(true);
+      setReadyKey(delayKey);
     }, startDelay);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [startDelay, text]);
+  }, [startDelay, text, delayKey]);
 
   useEffect(() => {
     if (fontsLoaded) return;
@@ -67,7 +71,15 @@ const SplitText = ({
 
   useGSAP(
     () => {
-      if (!ref.current || !text || !fontsLoaded || !delayReady) return;
+      if (!ref.current || !text) return;
+
+      // Reduced motion: no reveal at all, the text is simply there.
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        ref.current.style.opacity = "1";
+        return;
+      }
+
+      if (!fontsLoaded || !delayReady) return;
       if (animationCompletedRef.current) return;
 
       const el = ref.current;
@@ -183,7 +195,7 @@ const SplitText = ({
   };
 
   return (
-    <Tag ref={ref} style={style} className={`split-parent ${className}`}>
+    <Tag ref={ref} id={id} style={style} className={`split-parent ${className}`}>
       {text}
     </Tag>
   );

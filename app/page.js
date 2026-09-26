@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import SignatureAnimation from "./components/SignatureAnimation";
+import ProjectCard from "./components/ProjectCard";
+import { projects } from "../content/projects";
 import CursorFollower from "./components/CursorFollower";
 import HeroText from "./components/HeroName";
 import DotCanvas from "./components/DotCanvas";
@@ -11,45 +15,6 @@ import TiltedCard from "./components/TiltedCard";
 import TechStack from "./components/TechStack";
 import ParticleImageReveal from "./components/ParticleImageReveal";
 import ScrollReveal from "./components/ScrollReveal";
-
-const projects = [
-  {
-    year: "April 2026",
-    title: "Swasthya-Neeti",
-    type: "AI Chatbot for Rural Healthcare Guidance",
-    mark: "S",
-    variant: "solid",
-    image: "/swasthya-neeti.png",
-    link: "https://swasthya-neeti.vercel.app/",
-  },
-  {
-    year: "May 2026",
-    title: "Run-Neeti",
-    type: "AI powered graph Synthesis",
-    mark: "*",
-    variant: "serif",
-    image: "/run-neeti.png",
-    link: "https://run-neeti.vercel.app/",
-  },
-  {
-    year: "July 2026",
-    title: "DevTask",
-    type: "JWT-secured Task Management REST API",
-    mark: "D",
-    variant: "solid",
-    image: "/devtask.png",
-    link: "https://github.com/mitarthpathak/DevTask",
-  },
-  {
-    year: "August 2026",
-    title: "Yap-Render",
-    type: "Speech/Text to Indian Sign Language Translator",
-    mark: "Y",
-    variant: "script",
-    image: "/yap-render.png",
-    link: "https://yap-render.vercel.app/",
-  },
-];
 
 const emailId = "mpathak6207@gmail.com";
 
@@ -84,6 +49,21 @@ export default function Home() {
     setMailCopied(true);
     window.setTimeout(() => setMailCopied(false), 1200);
   };
+
+  // The fixed guide lines would run straight through the card titles, so they
+  // step aside while the work section is on screen.
+  useEffect(() => {
+    const work = document.getElementById("work");
+    if (!work) return;
+    const io = new IntersectionObserver(([entry]) => {
+      document.documentElement.classList.toggle("guides-off", entry.isIntersecting);
+    });
+    io.observe(work);
+    return () => {
+      io.disconnect();
+      document.documentElement.classList.remove("guides-off");
+    };
+  }, []);
 
   useEffect(() => {
     let animationFrameId;
@@ -208,28 +188,35 @@ export default function Home() {
         mailCursorText={mailCopied ? "Copied" : "Copy ID"}
       />
       <ProjectImageCursor isActive={hoveredProject !== null} />
+      <SignatureAnimation />
       <div id="sig-page-content">
         {/* Vertical guide lines */}
         <div className="guide-line guide-line-left" />
         <div className="guide-line guide-line-right" />
 
-        <main style={{ position: "relative" }}>
+        <main id="main" style={{ position: "relative" }}>
           {/* ===== HERO SECTION ===== */}
-          <section className="hero-section">
+          <section className="hero-section" aria-labelledby="hero-title">
+            {/* The one h1 on the page; the big letters below are the visual version */}
+            <h1 id="hero-title" className="sr-only">
+              Mitarth Pathak — AI &amp; Full-Stack Developer
+            </h1>
+            <p className="sr-only">Based in Jaipur, Rajasthan.</p>
+
             {/* Grid background */}
             <div className="hero-grid" />
 
             {/* Top block (MITARTH) floating above */}
-            <div className="hero-name-container" style={{ paddingBottom: '2vh' }}>
+            <div className="hero-name-container" style={{ paddingBottom: '2vh' }} aria-hidden="true">
               <HeroText text="MITARTH" globalDelay={0} />
             </div>
 
-            <div className="hero-title-group">
+            <div className="hero-title-group" aria-hidden="true">
               {/* Side lines + subtitles */}
               <div className="hero-side-lines hero-side-lines-left">
                 <div className="hero-line-bar" />
                 <SplitText
-                  text="Visual Designer"
+                  text="AI & Full-Stack Developer"
                   tag="span"
                   className="hero-subtitle"
                   delay={35}
@@ -241,7 +228,6 @@ export default function Home() {
                   threshold={0.1}
                   rootMargin="0px"
                   textAlign="left"
-                  startDelay={5500}
                 />
               </div>
 
@@ -265,11 +251,15 @@ export default function Home() {
                   threshold={0.1}
                   rootMargin="0px"
                   textAlign="right"
-                  startDelay={5500}
                 />
                 <div className="hero-line-bar" />
               </div>
             </div>
+
+            {/* Phones: the side lines are hidden, so the role gets its own line */}
+            <p className="hero-mobile-role" aria-hidden="true">
+              AI &amp; Full-Stack Developer <span>·</span> Jaipur
+            </p>
           </section>
 
           {/* ===== REVEAL COLUMNS (Staircase transition) ===== */}
@@ -342,9 +332,12 @@ export default function Home() {
 
               {/* Portrait */}
               <div className="portrait-container">
-                <img
+                <Image
                   src="/portrait.png"
-                  alt="Mitarth The Great"
+                  alt="Portrait of Mitarth Pathak"
+                  width={1240}
+                  height={2098}
+                  sizes="(max-width: 768px) 80vw, 45vh"
                   className="portrait-img"
                 />
               </div>
@@ -354,11 +347,12 @@ export default function Home() {
 
           <TechStack />
 
-          <section id="projects-section" className="projects-section" aria-labelledby="projects-title">
+          <section id="work" className="projects-section" aria-labelledby="projects-title">
             <div className="projects-intro">
               <SplitText
+                id="projects-title"
                 text="CREATED PROJECTS"
-                tag="h1"
+                tag="h2"
                 className=""
                 delay={38}
                 duration={0.9}
@@ -371,12 +365,12 @@ export default function Home() {
                 textAlign="center"
               />
               <SplitText
-                text="The following are my projects which are deployed"
+                text="Things I built and shipped. Open one for the full case study."
                 tag="p"
                 delay={22}
                 duration={0.75}
                 ease="power3.out"
-                splitType="chars"
+                splitType="words"
                 from={{ opacity: 0, y: 20 }}
                 to={{ opacity: 1, y: 0 }}
                 threshold={0.15}
@@ -387,39 +381,11 @@ export default function Home() {
 
             <div className="projects-grid">
               {projects.map((project, index) => (
-                <article
-                  className="project-card"
-                  key={`${project.year}-${project.title}`}
-                  onMouseEnter={() => {
-                    setHoveredProject(index);
-                    document.body.style.cursor = 'none';
-                  }}
-                  onMouseLeave={() => {
-                    setHoveredProject(null);
-                    document.body.style.cursor = 'default';
-                  }}
-                  onClick={() => {
-                    if (project.link) window.open(project.link, "_blank", "noopener,noreferrer");
-                  }}
-                  style={{ cursor: project.link ? "none" : "default" }}
-                >
-                  <div className="project-bg">
-                    <div className="project-bg-vignette" />
-                    <img src={project.image} alt={project.title} />
-                  </div>
-
-                  <p className="project-year">{project.year}</p>
-
-                  <div className="project-identity">
-                    <span className={`project-mark project-mark-${project.variant}`}>
-                      {project.mark}
-                    </span>
-                    <h2>{project.title}</h2>
-                  </div>
-
-
-                  <p className="project-type">{project.type}</p>
-                </article>
+                <ProjectCard
+                  key={project.slug}
+                  project={project}
+                  onHoverChange={(hovering) => setHoveredProject(hovering ? index : null)}
+                />
               ))}
             </div>
           </section>

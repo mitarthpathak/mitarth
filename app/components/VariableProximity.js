@@ -166,7 +166,8 @@ const VariableProximity = forwardRef((props, ref) => {
                 }}
                 style={{
                   display: 'inline-block',
-                  fontVariationSettings: interpolatedSettingsRef.current[currentLetterIndex]
+                  // Live values are written straight to the DOM in the frame loop
+                  fontVariationSettings: fromFontVariationSettings
                 }}
                 aria-hidden="true"
               >
