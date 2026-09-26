@@ -3576,3 +3576,170 @@ body {
     row-gap: 10px;
   }
 }
+/* ========== VIEW TRANSITIONS (card ↔ case-study morph) ========== */
+/* The shared image (and title) morph between the card and the case-study
+   hero; the rest of the page cross-fades quickly on the same cream, so there
+   is never a white flash. The fixed Menu is excluded from the animation. */
+::view-transition {
+  /* never block clicks while a transition runs */
+  pointer-events: none;
+}
+
+::view-transition-group(root) {
+  animation-duration: 260ms;
+  animation-timing-function: ease;
+}
+
+::view-transition-group(.work-morph) {
+  animation-duration: 480ms;
+  animation-timing-function: var(--ease-out-quint);
+  z-index: 50;
+}
+
+::view-transition-group(.work-title) {
+  animation-duration: 420ms;
+  animation-timing-function: var(--ease-out-quint);
+  z-index: 51;
+}
+
+/* Keep the pixels crisp: cross-fade old/new images over the move instead of
+   stretching one snapshot. */
+::view-transition-old(.work-morph),
+::view-transition-new(.work-morph) {
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  animation-duration: 480ms;
+  animation-timing-function: var(--ease-out-quint);
+}
+
+::view-transition-group(site-menu) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(site-menu) {
+  display: none;
+}
+
+::view-transition-new(site-menu) {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
+/* ========== 404 ========== */
+.nf {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 96px clamp(20px, 8vw, 160px) var(--menu-safe);
+  overflow: hidden;
+}
+
+.nf-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(172, 172, 172, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(172, 172, 172, 0.15) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+  pointer-events: none;
+}
+
+.nf > * {
+  position: relative;
+}
+
+.nf-code {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.nf-title {
+  max-width: 14ch;
+  margin-top: 16px;
+  font-size: clamp(48px, 8vw, 120px);
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.nf-text {
+  max-width: 46ch;
+  margin-top: 24px;
+  font-size: 18px;
+  line-height: 1.55;
+  color: #3a3733;
+}
+
+.nf-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+  list-style: none;
+}
+
+.nf-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgba(36, 36, 36, 0.3);
+  border-radius: 999px;
+  color: var(--dark);
+  text-decoration: none;
+  transition: background 0.25s ease;
+}
+
+.nf-list a:hover {
+  background: var(--yellow);
+}
+
+.nf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 40px;
+}
+
+.nf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid var(--dark);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dark);
+  text-decoration: none;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.nf-btn:hover {
+  background: var(--yellow);
+  color: var(--dark);
+}
+
+.nf-btn-primary {
+  background: var(--dark);
+  color: var(--cream);
+}

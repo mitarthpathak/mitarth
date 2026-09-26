@@ -14,6 +14,7 @@ export const projects = [
     // Last commit in the repo; used for the sitemap's lastModified.
     updated: "2026-08-19",
     status: "Live",
+    roleShort: "Solo build",
     mark: "S",
     variant: "solid",
     cardType: "AI Chatbot for Rural Healthcare Guidance",
@@ -22,6 +23,8 @@ export const projects = [
       "An AI chat assistant that gives families plain-language health guidance, takes questions by voice, answers in ten Indian languages and urges medical care when danger signs appear.",
     problem:
       "Families in villages often have a health question long before they can reach a clinic, and most health apps assume English, fast data and confident typing. I wanted the first conversation to work in the user's own language, by voice, on a modest phone.",
+    // Phrase inside `problem` that gets the yellow highlight
+    highlight: "in the user's own language, by voice",
     myRole:
       "I built it on my own: the React interface, the Express API, the Groq integration, voice transcription, sign-in, saved chats and the Vercel deployment.",
     // TODO(mitarth): Was this a hackathon or course project, and was anyone else involved?
@@ -112,6 +115,7 @@ export const projects = [
     date: "May 2026",
     updated: "2026-07-01",
     status: "Live",
+    roleShort: "Solo build",
     mark: "*",
     variant: "serif",
     cardType: "AI powered graph Synthesis",
@@ -120,6 +124,8 @@ export const projects = [
       "A study tool that reads a PDF, asks an LLM for a hierarchical mind-map of its concepts, and draws it as an interactive force-directed graph with a summary and quiz.",
     problem:
       "Long PDFs are hard to hold in your head: the relationships between ideas are spread across pages. I wanted a tool that turns a document into a map you can explore, then checks what you remember.",
+    // Phrase inside `problem` that gets the yellow highlight
+    highlight: "a map you can explore",
     myRole:
       "I built it on my own: the React and D3 front end, the Express upload pipeline, the prompts and the MongoDB cache.",
     // TODO(mitarth): Was this a hackathon or course project, and was anyone else involved?
@@ -204,6 +210,7 @@ export const projects = [
     date: "July 2026",
     updated: "2026-09-25",
     status: "Code only",
+    roleShort: "Solo build",
     mark: "D",
     variant: "solid",
     cardType: "JWT-secured Task Management REST API",
@@ -212,6 +219,8 @@ export const projects = [
       "A Spring Boot REST API with user registration, JWT login and task CRUD, backed by PostgreSQL through Spring Data JPA.",
     problem:
       "I wanted to learn how a real Java backend handles authentication end to end: hashing passwords, issuing tokens, protecting routes and tying data to the user who owns it.",
+    // Phrase inside `problem` that gets the yellow highlight
+    highlight: "authentication end to end",
     myRole:
       "I wrote it on my own: the entities, repositories, services, controllers, the JWT filter and the security configuration.",
     stack: ["Java 17", "Spring Boot 3.3", "Spring Security", "JPA", "PostgreSQL", "JWT", "Maven"],
@@ -314,6 +323,7 @@ Content-Type: application/json
     date: "August 2026",
     updated: "2026-09-17",
     status: "Live",
+    roleShort: "Team of five",
     mark: "Y",
     variant: "script",
     cardType: "Speech/Text to Indian Sign Language Translator",
@@ -322,6 +332,8 @@ Content-Type: application/json
       "A speech-to-Indian-Sign-Language translator for Smart India Hackathon 2026: a Next.js web app, a native Android app and a Chrome extension, all driving the same 3D signing avatar.",
     problem:
       "Most conversations and online content are audio or text first, which shuts out people who rely on Indian Sign Language. The goal was to turn everyday speech into ISL signing, live, without needing an interpreter.",
+    // Phrase inside `problem` that gets the yellow highlight
+    highlight: "without needing an interpreter",
     myRole:
       "One of a five-person team (Mitarth Pathak, Navneet Singh, Gaurav Soni, Deep Panchal, Nooren Qureshi) building for SIH 2026. The web app, the Android app and the extension all live under my GitHub account.",
     // TODO(mitarth): Exactly which parts did you build, and how did the team split the work? What happened at SIH?
