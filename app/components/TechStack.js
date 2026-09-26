@@ -1377,8 +1377,8 @@ function PaneTerminal({ title, shell, cmd, children }) {
   );
 }
 
-// The first commands of the real terminal's `help`, straight from its command table.
-const HELP_PREVIEW = COMMANDS.filter((c) => ["whoami", "projects", "open", "ask"].includes(c.name));
+// The real terminal's command names, straight from its command table.
+const COMMAND_LIST = COMMANDS.map((c) => c.name);
 
 function FrameworkPane() {
   return (
@@ -1394,15 +1394,11 @@ function FrameworkPane() {
       </div>
       <div className="ide-agent-pane ide-agent-pane-cta">
         <PaneTerminal title="Real terminal" shell="zsh" cmd="help">
-          {HELP_PREVIEW.map((c) => (
-            <div className="term-line" key={c.name}>
-              <span className="term-out term-out-wrap">
-                <span className="term-help-usage">{c.usage}</span> {c.desc}
-              </span>
-            </div>
-          ))}
           <div className="term-line">
-            <span className="term-out term-out-wrap">…and more. This pane is a picture; the terminal below runs.</span>
+            <span className="term-out term-out-wrap term-help-usage">{COMMAND_LIST.join("  ")}</span>
+          </div>
+          <div className="term-line">
+            <span className="term-out term-out-wrap">This pane is a picture. The terminal below runs these.</span>
           </div>
           <a href="#terminal" className="ide-terminal-cta">
             Try the real terminal <span aria-hidden="true">↓</span>

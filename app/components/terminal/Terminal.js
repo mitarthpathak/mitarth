@@ -111,7 +111,9 @@ function RichText({ text, onRun }) {
   return text.split(/(`[^`\n]+`)/g).map((part, i) => {
     if (part.length > 2 && part.startsWith("`") && part.endsWith("`")) {
       const code = part.slice(1, -1);
-      if (COMMAND_NAMES.includes(parse(code)[0])) return <Cmd key={i} cmd={code} onRun={onRun} />;
+      const [cmd, arg] = parse(code);
+      // A bare `ask` does nothing on its own, so it stays plain code.
+      if (COMMAND_NAMES.includes(cmd) && (cmd !== "ask" || arg)) return <Cmd key={i} cmd={code} onRun={onRun} />;
       return (
         <code key={i} className="term-code">
           {code}
@@ -166,7 +168,17 @@ function Help() {
       {COMMANDS.map((c) => (
         <div key={c.name}>
           <dt>{c.usage}</dt>
-          <dd>{c.desc}</dd>
+          <dd>
+            {c.desc.split(/(--\w+)/).map((part, i) =>
+              i % 2 ? (
+                <span key={i} className="term-nowrap">
+                  {part}
+                </span>
+              ) : (
+                part
+              )
+            )}
+          </dd>
         </div>
       ))}
       <div>

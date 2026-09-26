@@ -227,7 +227,7 @@ export default function LabAskPage() {
               </div>
             )}
             <p className="cs-note">
-              These are {r.cases.answerable} hand-written questions for a small site, and a case passes when an expected
+              These are {r.cases.answerable}{" "}hand-written questions for a small site, and a case passes when an expected
               section is anywhere in the top 5. Read 100% as &ldquo;retrieval isn&apos;t the weak link here&rdquo;, not as a
               benchmark. Cases live in <code className="lab-code">evals/ask-cases.json</code> ({r.cases.answerable}{" "}
               answerable, {r.cases.unanswerable} unanswerable, {r.cases.adversarial} adversarial) and run with{" "}
