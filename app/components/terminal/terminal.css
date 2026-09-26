@@ -1,13 +1,13 @@
 /* ============================================================
-   PORTFOLIO TERMINAL — same chrome as the IDE panes (traffic-light
-   dots, title bar, Geist Mono, #0a0a0a panes). Every text colour on
-   the dark pane is ≥ 4.5:1.
+   PORTFOLIO TERMINAL — same chrome as the IDE's terminal panes
+   (#000 body, #0a0a0a title bar, hairline borders, Geist Mono).
+   Every text colour on the dark pane is ≥ 4.5:1.
    ============================================================ */
 
 .term {
-  --term-bg: #0a0a0a;
-  --term-bar: #141414;
-  --term-line: #262626;
+  --term-bg: #000;
+  --term-bar: #0a0a0a;
+  --term-line: rgba(255, 255, 255, 0.12);
   --term-text: #ebe6e1; /* 16:1 */
   --term-dim: #a9a39d; /* 7.9:1 */
   --term-link: #6cc3f0; /* 9.4:1 */
@@ -17,7 +17,7 @@
   display: flex;
   flex-direction: column;
   width: min(100%, 980px);
-  height: 540px;
+  height: 500px;
   margin: 0 auto;
   border-radius: 14px;
   overflow: hidden;
@@ -95,12 +95,20 @@
   outline-offset: -4px;
 }
 
+.term-output > :first-child {
+  margin-top: 0;
+}
+
 .term-output p + p {
   margin-top: 4px;
 }
 
-.term-welcome p {
-  max-width: 70ch;
+/* One reading width for prose in every output (tables use the full width) */
+.term-welcome p,
+.term-answer,
+.term-block > p,
+.term-list {
+  max-width: 76ch;
 }
 
 .term-welcome kbd,
@@ -136,8 +144,20 @@
   text-underline-offset: 3px;
 }
 
-.term-link:hover {
-  text-decoration-color: currentColor;
+@media (hover: hover) {
+  .term-link:hover {
+    color: #a5dcf7;
+    text-decoration-color: currentColor;
+  }
+}
+
+.term-nowrap {
+  white-space: nowrap;
+}
+
+.term-code {
+  font-family: inherit;
+  color: var(--term-accent);
 }
 
 .term :focus-visible {
@@ -152,19 +172,13 @@
   gap: 2px;
 }
 
+/* Help and key-value outputs share one first column, so their second
+   columns line up from one command to the next */
 .term-help > div,
 .term-kv > div {
   display: grid;
-  grid-template-columns: minmax(0, 14em) minmax(0, 1fr);
+  grid-template-columns: 20ch minmax(0, 1fr);
   gap: 16px;
-}
-
-.term-kv > div {
-  grid-template-columns: 7em minmax(0, 1fr);
-}
-
-.term-kv-wide > div {
-  grid-template-columns: 7em minmax(0, 1fr);
 }
 
 .term-help dt,
@@ -185,7 +199,8 @@
 
 .term-history {
   list-style: none;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .term-cmdlink {
@@ -198,6 +213,14 @@
   text-decoration-color: rgba(255, 232, 98, 0.4);
   text-underline-offset: 3px;
   cursor: pointer;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+@media (hover: hover) {
+  .term-cmdlink:hover {
+    color: #fff6b8;
+    text-decoration-color: currentColor;
+  }
 }
 
 .term-chips {
@@ -222,16 +245,35 @@
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-.term-chip:hover {
-  background: var(--yellow);
-  border-color: var(--yellow);
-  color: var(--dark);
+/* Hover only where there's a real pointer: on touch it would stick */
+@media (hover: hover) {
+  .term-chip:hover {
+    background: var(--yellow);
+    border-color: var(--yellow);
+    color: var(--dark);
+  }
+}
+
+.term-chip:active {
+  transform: scale(0.97);
 }
 
 /* Answer states */
 .term-answer {
   white-space: pre-wrap;
-  max-width: 72ch;
+}
+
+.term-stophint {
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.term-excerpt {
+  margin: 8px 0 0;
+  padding: 6px 0 6px 12px;
+  border-left: 1px solid var(--term-line);
+  color: var(--term-text);
+  max-width: 76ch;
 }
 
 .term-caret {
@@ -267,11 +309,18 @@
 }
 
 .term-sources {
-  list-style: none;
   margin-top: 10px;
   padding-top: 8px;
   border-top: 1px dashed var(--term-line);
   font-size: 13px;
+}
+
+.term-sources ol {
+  list-style: none;
+}
+
+.term-sources p + ol {
+  margin-top: 4px;
 }
 
 .term-sources li + li {
@@ -325,6 +374,12 @@
   background: var(--term-bg);
 }
 
+/* Focus reads like a shell, not a web form: the prompt line lights up */
+.term-inputrow:focus-within {
+  box-shadow: inset 0 2px 0 var(--term-accent);
+  background: #0a0a0a;
+}
+
 .term .term-inputrow .term-prompt {
   flex: 0 0 auto;
   white-space: nowrap;
@@ -348,15 +403,9 @@
   color: #8a847e; /* 5.5:1 */
 }
 
-.term-input:focus {
-  outline: none;
-  border-color: #333;
-  background: #111;
-}
-
+.term-input:focus,
 .term-input:focus-visible {
-  outline: 2px solid var(--term-accent);
-  outline-offset: 0;
+  outline: none;
 }
 
 .term-send {
@@ -373,14 +422,23 @@
   transition: background 0.2s ease, color 0.2s ease;
 }
 
-.term-send:hover {
-  background: var(--yellow);
-  color: var(--dark);
+@media (hover: hover) {
+  .term-send:hover {
+    background: var(--yellow);
+    color: var(--dark);
+  }
+
+  .term-send-stop:hover {
+    background: var(--term-warn);
+    color: var(--dark);
+  }
 }
 
-.term[data-busy] .term-send {
-  opacity: 0.6;
+.term-send-stop {
+  color: var(--term-warn);
+  font-size: 14px;
 }
+
 
 .term-placeholder .term-output {
   display: flex;
@@ -422,7 +480,7 @@
   letter-spacing: -0.02em;
 }
 
-.terminal-intro p:last-child {
+.terminal-intro > p:not(.terminal-label) {
   max-width: 52ch;
   margin: 20px auto 0;
   font-size: clamp(17px, 1.3vw, 20px);
@@ -431,17 +489,13 @@
   text-wrap: balance;
 }
 
-.terminal-foot {
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
-}
-
-.terminal-foot a {
+/* "How it works" sits under the intro line, never under the fixed Menu pill */
+.terminal-how {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 44px;
+  margin-top: 8px;
   padding: 0 16px;
   border-radius: 999px;
   font-family: var(--font-mono);
@@ -453,11 +507,11 @@
   transition: background 0.25s ease;
 }
 
-.terminal-foot a:hover {
+.terminal-how:hover {
   background: var(--yellow);
 }
 
-/* ---------- Phones ---------- */
+/* ---------- Tablets and phones ---------- */
 @media (max-width: 768px) {
   .terminal-section {
     margin: 0;
@@ -471,23 +525,6 @@
     height: min(78dvh, 640px);
     min-height: 340px;
     border-radius: 12px;
-    font-size: 13px;
-  }
-
-  .term-output {
-    padding: 12px 14px 8px;
-  }
-
-  .term-help > div,
-  .term-kv > div,
-  .term-kv-wide > div {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-  }
-
-  .term-help > div + div,
-  .term-kv > div + div {
-    margin-top: 6px;
   }
 
   .term-shell {
@@ -501,11 +538,19 @@
     padding: 8px 12px 0;
     border-top: 1px solid var(--term-line);
     overflow-x: auto;
+    scrollbar-width: none;
+    /* fades at the right edge: the row scrolls */
+    mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent);
+  }
+
+  .term-mobile-chips::-webkit-scrollbar {
+    display: none;
   }
 
   .term-mobile-chips .term-chips {
     flex-wrap: nowrap;
     margin: 0 0 8px;
+    padding-right: 28px;
   }
 
   .term-mobile-chips .term-chip {
@@ -518,13 +563,37 @@
     padding: 6px 8px 8px 12px;
     gap: 6px;
   }
+}
 
-  /* Short prompt on phones so the input keeps its width */
-  .term-inputrow .term-prompt > span[aria-hidden] {
+/* ---------- Phones ---------- */
+@media (max-width: 560px) {
+  .term {
+    font-size: 13px;
+  }
+
+  .term-output {
+    padding: 12px 14px 8px;
+  }
+
+  .term-help > div,
+  .term-kv > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .term-help > div + div,
+  .term-kv > div + div {
+    margin-top: 6px;
+  }
+
+  /* Short prompt on phones, in the input row and in echoed commands */
+  .term-inputrow .term-prompt > span[aria-hidden],
+  .term-line-cmd .term-ps {
     font-size: 0;
   }
 
-  .term-inputrow .term-prompt > span[aria-hidden]::after {
+  .term-inputrow .term-prompt > span[aria-hidden]::after,
+  .term-line-cmd .term-ps::after {
     content: "~$";
     font-size: 13px;
   }
@@ -537,12 +606,27 @@
     pointer-events: none;
     visibility: hidden;
   }
+
+  /* and the quick chips make room for the output above the keyboard */
+  .term-typing .term-mobile-chips {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .term-caret,
   .term-dots-anim {
     animation: none;
+  }
+
+  .term-chip,
+  .term-send,
+  .term-cmdlink {
+    transition: none;
+  }
+
+  .term-chip:active {
+    transform: none;
   }
 
   .term-dots-anim {

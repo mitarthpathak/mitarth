@@ -2,15 +2,17 @@
    that differ live here. */
 
 .lab-code {
+  margin: 0 1px;
   font-family: var(--font-mono);
   font-size: 0.88em;
   padding: 1px 6px;
   border-radius: 4px;
   background: rgba(36, 36, 36, 0.07);
+  white-space: nowrap;
 }
 
 .lab-body {
-  max-width: calc(70ch + 2 * var(--cs-pad));
+  max-width: calc(62ch + 2 * var(--cs-pad));
   margin: 0 auto;
   padding: 96px var(--cs-pad) 32px;
   font-size: 18px;
@@ -120,14 +122,47 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+.lab-table-wrap {
+  margin-top: 24px;
+  overflow-x: auto;
+}
+
+.lab-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.lab-table th,
+.lab-table td {
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--cs-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.lab-table th {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.lab-table td:last-child,
+.lab-table th:last-child {
+  width: 5ch;
+  padding-right: 0;
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
 @media (max-width: 768px) {
   .lab-body {
     padding-top: 56px;
     font-size: 17px;
-  }
-
-  .lab-stats {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .lab-rules li {
@@ -137,5 +172,11 @@
   .lab-rules li::before {
     left: 16px;
     top: 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .lab-stats {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

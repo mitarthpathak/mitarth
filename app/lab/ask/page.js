@@ -19,18 +19,18 @@ export const metadata = {
 
 const PIPELINE = {
   nodes: [
-    { id: "q", label: "Question", note: `${MIN_LEN}–${MAX_LEN} characters` },
-    { id: "guard", label: "Validation + guard", note: "injection & phone → fixed refusal" },
-    { id: "limit", label: "Rate limit", note: `${PER_IP_LIMIT} / 10 min · ${DAILY_LIMIT} / day` },
-    { id: "retrieve", label: "Retrieval", note: `BM25 over ${knowledge.chunks.length} passages · top 5` },
-    { id: "model", label: "Model", note: "numbered passages only · ≤ 120 words" },
-    { id: "sources", label: "Validated sources", note: "only ids it was given" },
+    { id: "q", label: "Question", note: `same-site JSON · ${MIN_LEN}–${MAX_LEN} characters` },
+    { id: "guard", label: "Validation + guard", note: "injection, role-play & phone → fixed refusal" },
+    { id: "retrieve", label: "Retrieval", note: `BM25 over ${knowledge.chunks.length} passages · top 5 · nothing close → "not covered"` },
+    { id: "limit", label: "Rate limit", note: `${PER_IP_LIMIT} / 10 min per visitor · ${DAILY_LIMIT} / day` },
+    { id: "model", label: "Model", note: "numbered passages only · stopped past 150 words" },
+    { id: "sources", label: "Validated sources", note: "only ids it was given · numbers masked" },
   ],
   edges: [
     ["q", "guard", "JSON"],
-    ["guard", "limit", "clean text"],
-    ["limit", "retrieve", "allowed"],
-    ["retrieve", "model", "5 passages + profile"],
+    ["guard", "retrieve", "clean text"],
+    ["retrieve", "limit", "relevant"],
+    ["limit", "model", "5 passages + profile"],
     ["model", "sources", "streamed answer"],
   ],
 };
@@ -44,6 +44,8 @@ const pct = (n) => `${(n * 100).toFixed(n === 1 ? 0 : 1)}%`;
 export default function LabAskPage() {
   const r = results;
   const a = r.answers;
+  const g = r.guard;
+  const totalCases = r.cases.answerable + r.cases.unanswerable + r.cases.adversarial;
 
   return (
     <div className="cs-page">
@@ -85,7 +87,12 @@ export default function LabAskPage() {
             </p>
             <p>
               No vector database and no extra infrastructure: at this size, keyword search (BM25) is fast, predictable and
-              easy to evaluate. Questions and IP addresses are not stored.
+              easy to evaluate.
+            </p>
+            <p>
+              Privacy: this site doesn&apos;t store or log questions or IP addresses. Rate limiting uses a salted hash of the
+              IP that changes every day. To write an answer, the question and the passages are sent to the AI provider,
+              whose own data policy applies.
             </p>
           </section>
 
@@ -96,8 +103,10 @@ export default function LabAskPage() {
             </h2>
             <ArchitectureDiagram title="Ask agent" nodes={PIPELINE.nodes} edges={PIPELINE.edges} />
             <p className="cs-note">
-              Without an API key the pipeline stops after the rate limit and says the AI is offline, with links to the
-              closest pages. Every other command keeps working.
+              Without an API key the pipeline stops before the rate limit (nothing can be spent): the terminal says the AI
+              is offline, quotes the closest passage and links the closest pages. Every other command keeps working. The
+              daily cap is shared across all servers when Upstash Redis is configured; without it, each server instance
+              counts on its own.
             </p>
           </section>
 
@@ -119,13 +128,14 @@ export default function LabAskPage() {
               Latest results
             </h2>
             <p className="lab-meta">
-              Run on {formatDate(r.date)} · {r.mode === "full" ? <>model {r.model}</> : <>retrieval only, no model</>} ·{" "}
-              {r.cases.answerable + r.cases.unanswerable + r.cases.adversarial} cases
+              Run on {formatDate(r.date)} ·{" "}
+              {r.mode === "full" ? <>model {r.model}</> : <>retrieval and guard only, no model</>} · {totalCases} cases
             </p>
             {r.mode !== "full" && (
               <p className="lab-callout">
-                Only retrieval was evaluated in this build: no API key was configured when the evals ran, so the answer checks
-                below haven&apos;t been run yet.
+                No API key was configured when these evals ran, so no answer has been checked yet: only retrieval (the{" "}
+                {r.cases.answerable} answerable questions) and the guard (all {totalCases}). The answer checks (citations,
+                &ldquo;don&apos;t know&rdquo;, rule-breaking) run as soon as a key is set.
               </p>
             )}
             <dl className="lab-stats">
@@ -145,6 +155,24 @@ export default function LabAskPage() {
                   <span>median per question</span>
                 </dd>
               </div>
+              {g && (
+                <>
+                  <div>
+                    <dt>Ordinary questions refused</dt>
+                    <dd>
+                      {g.ordinaryRefusedByGuard.length}/{g.ordinaryTotal}
+                      <span>answerable and unanswerable questions the guard wrongly stopped</span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Attacks stopped early</dt>
+                    <dd>
+                      {g.adversarialBlocked}/{g.adversarialTotal}
+                      <span>adversarial cases refused before the model; the rest face its rules</span>
+                    </dd>
+                  </div>
+                </>
+              )}
               {a && (
                 <>
                   <div>
@@ -177,9 +205,32 @@ export default function LabAskPage() {
                 </>
               )}
             </dl>
+            {r.retrieval.rows && (
+              <div className="lab-table-wrap">
+                <table className="lab-table">
+                  <caption className="sr-only">Retrieval rank of the first expected source, per question</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Question</th>
+                      <th scope="col">Rank</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {r.retrieval.rows.map((row) => (
+                      <tr key={row.id}>
+                        <td>{row.question}</td>
+                        <td>{row.rank ?? "miss"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
             <p className="cs-note">
-              Cases live in <code className="lab-code">evals/ask-cases.json</code> ({r.cases.answerable} answerable,{" "}
-              {r.cases.unanswerable} unanswerable, {r.cases.adversarial} adversarial) and run with{" "}
+              These are {r.cases.answerable} hand-written questions for a small site, and a case passes when an expected
+              section is anywhere in the top 5. Read 100% as &ldquo;retrieval isn&apos;t the weak link here&rdquo;, not as a
+              benchmark. Cases live in <code className="lab-code">evals/ask-cases.json</code> ({r.cases.answerable}{" "}
+              answerable, {r.cases.unanswerable} unanswerable, {r.cases.adversarial} adversarial) and run with{" "}
               <code className="lab-code">npm run eval:ask</code>. A failing case is fixed in the system, never by editing
               the case.
             </p>

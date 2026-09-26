@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+import { projects } from "../../../content/projects.js";
+import { profile } from "../../../content/profile.js";
 import "./terminal.css";
 
 // The terminal (and the content it bundles) is only fetched when its section
@@ -30,6 +32,40 @@ function TerminalPlaceholder() {
   );
 }
 
+// Without JavaScript the terminal can't run; the same things are one link away.
+function NoScript() {
+  return (
+    <noscript>
+      <style>{".term-placeholder{display:none}"}</style>
+      <div className="term">
+        <div className="term-output">
+          <p>The terminal needs JavaScript. The same information is on the site:</p>
+          <ul className="term-list" style={{ marginTop: 12 }}>
+            {projects.map((p) => (
+              <li key={p.slug}>
+                <a className="term-link" href={`/work/${p.slug}`}>
+                  {p.title}
+                </a>{" "}
+                <span className="term-dim">— {p.oneLiner}</span>
+              </li>
+            ))}
+            <li>
+              <a className="term-link" href="/lab/ask">
+                How the terminal answers questions
+              </a>
+            </li>
+            <li>
+              <a className="term-link" href={profile.links.email}>
+                {profile.links.emailAddress}
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </noscript>
+  );
+}
+
 export default function LazyTerminal() {
   const ref = useRef(null);
   const [near, setNear] = useState(false);
@@ -50,5 +86,10 @@ export default function LazyTerminal() {
     return () => io.disconnect();
   }, []);
 
-  return <div ref={ref}>{near ? <Terminal /> : <TerminalPlaceholder />}</div>;
+  return (
+    <div ref={ref}>
+      {near ? <Terminal /> : <TerminalPlaceholder />}
+      <NoScript />
+    </div>
+  );
 }

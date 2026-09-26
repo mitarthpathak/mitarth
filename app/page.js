@@ -399,14 +399,12 @@ export default function Home() {
             <div className="terminal-intro">
               <p className="terminal-label">Try it</p>
               <h2 id="terminal-title">Ask the terminal</h2>
-              <p>Run real commands, or ask about my work. Answers come only from this site and cite their sources.</p>
-            </div>
-            <LazyTerminal />
-            <p className="terminal-foot">
-              <Link href="/lab/ask">
+              <p>Type a command, or ask a question about my work. Answers are drawn from this site&apos;s pages and link to their sources.</p>
+              <Link href="/lab/ask" className="terminal-how">
                 How it works <span aria-hidden="true">→</span>
               </Link>
-            </p>
+            </div>
+            <LazyTerminal />
           </section>
 
           {/* ===== FOOTER REVEAL COLUMNS (brick staircase into yellow footer) ===== */}

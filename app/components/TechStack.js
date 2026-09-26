@@ -19,6 +19,7 @@ import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import useIsMobile from "../hooks/useIsMobile";
 import stackVersions from "../../lib/stack-versions.json";
 import { profile } from "../../content/profile.js";
+import { COMMANDS } from "./terminal/commands.js";
 
 const FILE_ICONS = {
   ts: { Icon: SiTypescript, color: "#3178C6" },
@@ -188,13 +189,14 @@ const AGENT_CARDS = [
 // actually installed, written to lib/stack-versions.json at build time by
 // scripts/build-knowledge.mjs; the tools list comes from content/profile.js.
 const STACK_LINES = [
-  `${stackVersions.name}@0.1.0`,
+  `${stackVersions.name}@${stackVersions.version}`,
   ...Object.entries(stackVersions.versions).map(
     ([name, version], i, all) => `${i === all.length - 1 ? "└──" : "├──"} ${name}@${version}`
   ),
 ];
 
-// This session's actual working-tree changes.
+// Illustrative source-control list for the IDE mock-up (decorative, like the
+// agent cards); pane 03's terminals are the parts that show real data.
 const SCM_FILES = [
   { name: "package-lock.json", path: "", status: "M" },
   { name: "package.json", path: "", status: "M" },
@@ -1375,6 +1377,9 @@ function PaneTerminal({ title, shell, cmd, children }) {
   );
 }
 
+// The first commands of the real terminal's `help`, straight from its command table.
+const HELP_PREVIEW = COMMANDS.filter((c) => ["whoami", "projects", "open", "ask"].includes(c.name));
+
 function FrameworkPane() {
   return (
     <div className="ide-agent-grid">
@@ -1387,10 +1392,17 @@ function FrameworkPane() {
           ))}
         </PaneTerminal>
       </div>
-      <div className="ide-agent-pane">
-        <PaneTerminal title="Real terminal" shell="zsh" cmd="ask &quot;what did he build?&quot;">
+      <div className="ide-agent-pane ide-agent-pane-cta">
+        <PaneTerminal title="Real terminal" shell="zsh" cmd="help">
+          {HELP_PREVIEW.map((c) => (
+            <div className="term-line" key={c.name}>
+              <span className="term-out term-out-wrap">
+                <span className="term-help-usage">{c.usage}</span> {c.desc}
+              </span>
+            </div>
+          ))}
           <div className="term-line">
-            <span className="term-out term-out-wrap">These panes are a picture. The terminal below is real: commands, and answers about the work with sources.</span>
+            <span className="term-out term-out-wrap">…and more. This pane is a picture; the terminal below runs.</span>
           </div>
           <a href="#terminal" className="ide-terminal-cta">
             Try the real terminal <span aria-hidden="true">↓</span>
@@ -1455,8 +1467,8 @@ function StatusBar({ langMode }) {
       </div>
       <div className="ide-status-right">
         <span className="ide-status-item">{langMode}</span>
-        <span className="ide-status-item">UTF-8</span>
-        <span className="ide-status-item">LF</span>
+        <span className="ide-status-item ide-status-optional">UTF-8</span>
+        <span className="ide-status-item ide-status-optional">LF</span>
         <span className="ide-status-item ide-status-live">&#9679; Go Live</span>
         <span className="ide-status-item">&#128276;</span>
       </div>
@@ -1698,7 +1710,7 @@ export default function TechStack() {
                   <div className="ide-scm-commit-box">
                     <textarea
                       className="ide-scm-commit-input"
-                      placeholder='Message (Ctrl+Enter to commit on "main")'
+                      placeholder="Commit message"
                       rows={1}
                     />
                     <button type="button" className="ide-scm-commit-btn">

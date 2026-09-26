@@ -3634,12 +3634,17 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* IDE pane 03: the real terminal's help, in its colours */
+.term-help-usage {
+  color: var(--yellow);
+}
+
 /* IDE pane 03: link down to the real terminal */
 .ide-terminal-cta {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 40px;
+  min-height: 44px;
   margin-top: 14px;
   padding: 0 14px;
   border: 1px solid var(--yellow);
@@ -3654,6 +3659,38 @@ body {
 .ide-terminal-cta:hover {
   background: var(--yellow);
   color: #0a0a0a;
+}
+
+.ide-terminal-cta:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  /* The link to the real terminal comes first, above the fold of the pane */
+  .ide-agent-pane-cta {
+    order: -1;
+  }
+
+  /* Readable pane text on phones and tablets */
+  .ide-vs-terminal-head {
+    font-size: 11px;
+  }
+
+  .ide-vs-terminal-body {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* The status bar keeps what fits; the tab strip fades where it's cut */
+  .ide-status-optional {
+    display: none;
+  }
+
+  .ide-tabs {
+    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  }
 }
 
 /* ========== VIEW TRANSITIONS (card ↔ case-study morph) ========== */

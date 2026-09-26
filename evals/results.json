@@ -1,19 +1,113 @@
 {
-  "date": "2026-09-26T19:36:13.333Z",
+  "date": "2026-09-26T20:35:28.298Z",
   "mode": "retrieval-only",
   "model": null,
   "cases": {
-    "answerable": 15,
-    "unanswerable": 8,
-    "adversarial": 7
+    "answerable": 17,
+    "unanswerable": 9,
+    "adversarial": 11
   },
   "retrieval": {
     "recallAt5": 1,
-    "hits": 15,
-    "total": 15,
-    "medianMs": 0.452,
+    "hits": 17,
+    "total": 17,
+    "medianMs": 0.549,
+    "rows": [
+      {
+        "id": "a01",
+        "question": "What did Mitarth build with Spring Boot?",
+        "rank": 1
+      },
+      {
+        "id": "a02",
+        "question": "How does DevTask handle authentication?",
+        "rank": 2
+      },
+      {
+        "id": "a03",
+        "question": "Which database does DevTask use?",
+        "rank": 2
+      },
+      {
+        "id": "a04",
+        "question": "How many languages does Swasthya-Neeti support?",
+        "rank": 1
+      },
+      {
+        "id": "a05",
+        "question": "Which model does Swasthya-Neeti use for voice transcription?",
+        "rank": 2
+      },
+      {
+        "id": "a06",
+        "question": "What safety guardrails does the health assistant have?",
+        "rank": 1
+      },
+      {
+        "id": "a07",
+        "question": "How does Run-Neeti turn a PDF into a knowledge graph?",
+        "rank": 1
+      },
+      {
+        "id": "a08",
+        "question": "Why does Run-Neeti split documents into overlapping chunks?",
+        "rank": 1
+      },
+      {
+        "id": "a09",
+        "question": "How does Run-Neeti avoid analysing the same document twice?",
+        "rank": 1
+      },
+      {
+        "id": "a10",
+        "question": "What are the three parts of Yap-Render?",
+        "rank": 4
+      },
+      {
+        "id": "a11",
+        "question": "How does Yap-Render translate text into Indian Sign Language gloss?",
+        "rank": 2
+      },
+      {
+        "id": "a12",
+        "question": "Who else worked on Yap-Render?",
+        "rank": 2
+      },
+      {
+        "id": "a13",
+        "question": "Where did Mitarth do his internship?",
+        "rank": 1
+      },
+      {
+        "id": "a14",
+        "question": "What is Mitarth studying and at which college?",
+        "rank": 1
+      },
+      {
+        "id": "a15",
+        "question": "What did Mitarth learn from building DevTask?",
+        "rank": 1
+      },
+      {
+        "id": "a16",
+        "question": "Does Yap-Render have a mobile app?",
+        "rank": 1
+      },
+      {
+        "id": "a17",
+        "question": "Does Swasthya-Neeti work on a phone?",
+        "rank": 1
+      }
+    ],
     "misses": []
   },
+  "guard": {
+    "answerableStopped": [],
+    "ordinaryRefusedByGuard": [],
+    "ordinaryTotal": 26,
+    "adversarialBlocked": 8,
+    "adversarialTotal": 11
+  },
   "answers": null,
-  "note": "No API key configured: only retrieval was evaluated. Set ASK_PROVIDER, ASK_MODEL and the provider key to run the full answer checks."
+  "note": "No API key configured: only retrieval and the guard were evaluated. Set ASK_PROVIDER, ASK_MODEL and the provider key to run the answer checks."
 }

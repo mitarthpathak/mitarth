@@ -2,28 +2,56 @@
 //
 // Chunks content/profile.js and every case-study section of
 // content/projects.js into passages of roughly 80–200 words. Each chunk is
-// { id, title, text, url } where url is the exact page anchor the passage
-// comes from (e.g. /work/devtask#architecture). Writes lib/ask/knowledge.json.
+// { id, title, text, url, command? } where url is the exact page anchor the
+// passage comes from (e.g. /work/devtask#architecture); profile facts point
+// at the GitHub profile they come from, plus the terminal command that shows
+// them. Writes lib/ask/knowledge.json.
 //
-// Also writes lib/stack-versions.json: the versions of the site's own
-// dependencies as actually installed, for the IDE's "Framework & Tools" pane.
+// The case studies are written in Mitarth's own voice. Passages are turned
+// into the third person here, so the model never reads "I built…" as its own
+// voice; the build fails if any first person, or any phone number, is left.
+//
+// Also writes lib/stack-versions.json: the site's own dependencies as
+// actually installed (what `npm ls --depth=0` prints), for the IDE pane; and
+// lib/site-files.json: whether public/resume.pdf exists, for `resume`.
 //
 // Runs from `prebuild` and via `npm run knowledge`.
 
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, access } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const { projects, sectionOrder } = await import(pathToFileURL(join(root, "content/projects.js")).href);
 const { profile, projectsForSkill } = await import(pathToFileURL(join(root, "content/profile.js")).href);
+const { hasPhoneNumber } = await import(pathToFileURL(join(root, "lib/ask/guard.js")).href);
 
 const MAX_WORDS = 200;
 const PROFILE_URL = "https://github.com/mitarthpathak";
 
 const words = (s) => s.split(/\s+/).filter(Boolean).length;
 const stripTicks = (s) => s.replace(/`([^`]+)`/g, "$1");
-const sectionLabel = Object.fromEntries(sectionOrder.map((s) => [s.id, s.label]));
+// Source titles in the third person ("DevTask — What he built").
+const THIRD_PERSON_LABEL = { role: "Mitarth's role", built: "What he built", learned: "What he learned" };
+const sectionLabel = Object.fromEntries(sectionOrder.map((s) => [s.id, THIRD_PERSON_LABEL[s.id] ?? s.label]));
+
+// First person → third person. Past-tense verbs don't change ("I built" →
+// "he built"); anything this can't rewrite safely fails the build below.
+const PAST = /^(\w+ed|built|wrote|chose|made|kept|went|found|ran|put|set|got|took|gave|spent|split|left|read|saw|knew|thought|did|had|was|learnt|began|brought|taught|won|lost|led|sent|shipped)$/i;
+function toThirdPerson(text) {
+  return text
+    .replace(/\bI (\w+)/g, (m, verb, offset) => {
+      if (!PAST.test(verb)) return m;
+      const sentenceStart = offset === 0 || /[.!?:]\s*$/.test(text.slice(0, offset));
+      return `${sentenceStart ? "Mitarth" : "he"} ${verb}`;
+    })
+    .replace(/\bon my own\b/g, "on his own")
+    .replace(/\bmyself\b/g, "himself")
+    .replace(/\bmy\b/g, "his")
+    .replace(/\bMy\b/g, "His")
+    .replace(/\bme\b/g, "him");
+}
+const FIRST_PERSON = /\b(I|I'm|I've|I'd|I'll|my|My|me|mine|myself)\b/;
 
 // Split text that is too long at sentence boundaries into ≤ MAX_WORDS parts.
 function split(text) {
@@ -56,39 +84,54 @@ const KEYWORDS = {
   decisions: "decisions choices why trade-offs tradeoffs",
   results: "results outcome impact status live deployed",
   learned: "learned lessons learnings takeaways next",
-  profile: "about bio who background",
+  profile: "about bio who background based location lives city from",
   experience: "experience work job internship company education college degree studying",
   skills: "skills languages frameworks tools technologies stack",
   contact: "contact email linkedin github reach hire",
 };
 
 const chunks = [];
-function add(id, title, text, url, kind) {
-  const parts = split(stripTicks(text.replace(/\s+/g, " ").trim()));
+function add(id, title, text, url, kind, command) {
+  const parts = split(toThirdPerson(stripTicks(text.replace(/\s+/g, " ").trim())));
   parts.forEach((part, i) => {
-    chunks.push({ id: parts.length > 1 ? `${id}-${i + 1}` : id, title, text: part, url, keywords: KEYWORDS[kind] ?? "" });
+    chunks.push({
+      id: parts.length > 1 ? `${id}-${i + 1}` : id,
+      title,
+      text: part,
+      url,
+      ...(command ? { command } : {}),
+      keywords: KEYWORDS[kind] ?? "",
+    });
   });
 }
 
 // ---- Profile ----
-add("profile-summary", "Mitarth Pathak — Profile", `${profile.summary} He lives in ${profile.location}. His stated focus areas are ${profile.focus.join(", ")}.`, "/", "profile");
+add(
+  "profile-summary",
+  "GitHub profile — About",
+  `${profile.summary} He lives in ${profile.location}. His stated focus areas are ${profile.focus.join(", ")}.`,
+  PROFILE_URL,
+  "profile",
+  "about"
+);
 
 add(
   "profile-experience",
-  "Mitarth Pathak — Experience",
+  "GitHub profile — Experience",
   `Mitarth Pathak's experience, as listed on his GitHub profile. ` +
     profile.experience
       .map((e) => `${e.role} at ${e.company} (${e.period}, ${e.location}).${e.note ? " " + e.note : ""}`)
       .join(" ") +
     ` Education: ${profile.education.degree} at ${profile.education.school}.`,
   PROFILE_URL,
+  "experience",
   "experience"
 );
 
 const groups = [...new Set(profile.skills.map((s) => s.group))];
 add(
   "profile-skills",
-  "Mitarth Pathak — Skills",
+  "GitHub profile — Skills",
   `Mitarth Pathak's skills, each with the projects that use it. ` +
     groups
       .map((g) => {
@@ -103,14 +146,16 @@ add(
       .join(" ") +
     ` Tools he uses: ${profile.tools.join(", ")}.`,
   PROFILE_URL,
+  "skills",
   "skills"
 );
 
 add(
   "profile-contact",
-  "Mitarth Pathak — Contact",
+  "GitHub profile — Contact",
   `Mitarth Pathak can be contacted by email at ${profile.links.emailAddress}, on LinkedIn at ${profile.links.linkedin} and on GitHub at ${profile.links.github}. The terminal's contact command prints these links.`,
-  "/",
+  PROFILE_URL,
+  "contact",
   "contact"
 );
 
@@ -180,24 +225,23 @@ for (const p of projects) {
   add(`${p.slug}-learned`, t("learned"), `${lead} What Mitarth learned building ${p.title}: ${p.learnings.join(" ")}`, `${base}#learned`, "learned");
 }
 
-// Guard: no phone numbers may ever enter the knowledge base.
-const PHONE = /(\+?\d[\d\s().-]{8,}\d)/;
+// Guards: no phone numbers, and no first person, may enter the knowledge base.
 for (const c of chunks) {
-  const hit = c.text.match(PHONE);
-  if (hit && hit[0].replace(/\D/g, "").length >= 10) {
-    throw new Error(`Chunk ${c.id} looks like it contains a phone number: ${hit[0]}`);
+  for (const field of ["title", "text", "url"]) {
+    if (hasPhoneNumber(c[field])) throw new Error(`Chunk ${c.id} (${field}) looks like it contains a phone number.`);
   }
+  const fp = c.text.match(new RegExp(`[^.!?]*${FIRST_PERSON.source}[^.!?]*`));
+  if (fp) throw new Error(`Chunk ${c.id} is still in the first person; rewrite it in content/ or extend toThirdPerson: "${fp[0].trim()}"`);
 }
 
 await mkdir(join(root, "lib/ask"), { recursive: true });
 await writeFile(join(root, "lib/ask/knowledge.json"), JSON.stringify({ chunks }, null, 2) + "\n");
 
-// ---- Installed versions of the site's own stack ----
+// ---- Installed versions of the site's own stack (npm ls --depth=0) ----
 const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
-const wanted = ["next", "react", "react-dom", "gsap", "motion", "three", "@react-three/fiber", "@react-three/drei", "ai", "minisearch", "tailwindcss"];
+const names = [...Object.keys(pkg.dependencies ?? {}), ...Object.keys(pkg.devDependencies ?? {})].sort();
 const versions = {};
-for (const name of wanted) {
-  if (!pkg.dependencies?.[name] && !pkg.devDependencies?.[name]) continue;
+for (const name of names) {
   try {
     const installed = JSON.parse(await readFile(join(root, "node_modules", name, "package.json"), "utf8"));
     versions[name] = installed.version;
@@ -205,7 +249,18 @@ for (const name of wanted) {
     versions[name] = (pkg.dependencies?.[name] ?? pkg.devDependencies?.[name]).replace(/^[\^~]/, "");
   }
 }
-await writeFile(join(root, "lib/stack-versions.json"), JSON.stringify({ name: pkg.name, versions }, null, 2) + "\n");
+await writeFile(join(root, "lib/stack-versions.json"), JSON.stringify({ name: pkg.name, version: pkg.version, versions }, null, 2) + "\n");
+
+// ---- Files the terminal can link to (checked here, so it never probes for them) ----
+const exists = (path) =>
+  access(join(root, path)).then(
+    () => true,
+    () => false
+  );
+await writeFile(
+  join(root, "lib/site-files.json"),
+  JSON.stringify({ resume: (await exists("public/resume.pdf")) ? "/resume.pdf" : null }, null, 2) + "\n"
+);
 
 const counts = chunks.map((c) => words(c.text));
 console.log(

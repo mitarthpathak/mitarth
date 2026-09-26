@@ -13,7 +13,7 @@ export const COMMANDS = [
   { name: "open", usage: "open <slug>", desc: "Open a case study, e.g. open devtask" },
   { name: "resume", usage: "resume", desc: "Open the résumé (PDF)" },
   { name: "contact", usage: "contact", desc: "Email, LinkedIn and GitHub" },
-  { name: "ask", usage: 'ask "<question>"', desc: "Ask the AI about his work; answers cite their sources" },
+  { name: "ask", usage: 'ask "<question>"', desc: "Ask the AI about his work (or just type a question); answers cite their sources" },
   { name: "sources", usage: "sources", desc: "Show the last answer's sources again" },
   { name: "how", usage: "how", desc: "How the ask agent works, with eval results" },
   { name: "history", usage: "history", desc: "Commands you've run" },
@@ -78,6 +78,18 @@ export function complete(input) {
   const matches = pool.filter((s) => s.startsWith(arg));
   if (matches.length === 1) return `${cmd} ${matches[0]}`;
   return null;
+}
+
+/** Citation numbers in the text that point past the passages that were sent. */
+export function invalidMarkers(text, passages) {
+  const bad = new Set();
+  for (const m of text.matchAll(/\[(\d+(?:\s*,\s*\d+)*)\]/g)) {
+    for (const raw of m[1].split(",")) {
+      const n = Number(raw.trim());
+      if (n < 1 || n > passages) bad.add(n);
+    }
+  }
+  return [...bad];
 }
 
 /** Removes citation markers the server reported as invalid. */
