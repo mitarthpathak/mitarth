@@ -222,6 +222,7 @@ export default function Terminal() {
   const nextId = useRef(1);
   const outRef = useRef(null);
   const inputRef = useRef(null);
+  const rootRef = useRef(null);
   const stickToBottom = useRef(true);
   const abortRef = useRef(null);
   const runRef = useRef(null);
@@ -250,6 +251,32 @@ export default function Terminal() {
   }, [entries]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  // Phones: when the on-screen keyboard opens, fit the terminal into the
+  // visible area (visualViewport) and keep its input just above the keyboard.
+  const fitToKeyboard = useCallback(() => {
+    const root = rootRef.current;
+    const vv = window.visualViewport;
+    if (!root || !vv || !window.matchMedia("(max-width: 768px)").matches) return;
+    const typing = document.activeElement === inputRef.current;
+    // The fixed Menu pill would sit on top of the input above the keyboard.
+    document.documentElement.classList.toggle("term-typing", typing);
+    if (!typing) {
+      root.style.height = "";
+      return;
+    }
+    root.style.height = `${Math.max(280, Math.min(640, Math.round(vv.height - 16)))}px`;
+    root.scrollIntoView({ block: "end" });
+  }, []);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    vv.addEventListener("resize", fitToKeyboard);
+    return () => {
+      vv.removeEventListener("resize", fitToKeyboard);
+      document.documentElement.classList.remove("term-typing");
+    };
+  }, [fitToKeyboard]);
 
   const openSlug = useCallback(
     (slug) => {
@@ -466,9 +493,11 @@ export default function Terminal() {
 
   const onSubmit = (e) => {
     e.preventDefault();
-    if (busy && value.trim().startsWith("ask")) return;
     stickToBottom.current = true;
-    run(value);
+    if (busy && parse(value)[0] === "ask") {
+      push({ kind: "cmd", text: value.trim() });
+      push({ kind: "error", node: <p>Still answering the last question — ask again in a moment.</p> });
+    } else run(value);
     setValue("");
   };
 
@@ -503,7 +532,7 @@ export default function Terminal() {
   };
 
   return (
-    <div className="term" data-busy={busy || undefined}>
+    <div ref={rootRef} className="term" data-busy={busy || undefined}>
       <div className="term-titlebar">
         <span className="term-dots" aria-hidden="true">
           <i className="term-dot term-dot-red" />
@@ -551,6 +580,8 @@ export default function Terminal() {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={onKeyDown}
+          onFocus={() => window.setTimeout(fitToKeyboard, 250)}
+          onBlur={() => window.setTimeout(fitToKeyboard, 0)}
           aria-describedby={hintId}
           autoComplete="off"
           autoCapitalize="off"

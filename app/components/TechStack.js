@@ -1382,7 +1382,7 @@ function FrameworkPane() {
         <PaneTerminal title="Tools I use" shell="zsh" cmd="cat ~/tools.txt">
           {profile.tools.map((tool) => (
             <div className="term-line" key={tool}>
-              <span className="term-out">{tool}</span>
+              <span className="term-out term-out-wrap">{tool}</span>
             </div>
           ))}
         </PaneTerminal>
@@ -1390,10 +1390,7 @@ function FrameworkPane() {
       <div className="ide-agent-pane">
         <PaneTerminal title="Real terminal" shell="zsh" cmd="ask &quot;what did he build?&quot;">
           <div className="term-line">
-            <span className="term-out">These panes are a picture. The terminal below is real:</span>
-          </div>
-          <div className="term-line">
-            <span className="term-out">commands, and answers about the work, with sources.</span>
+            <span className="term-out term-out-wrap">These panes are a picture. The terminal below is real: commands, and answers about the work with sources.</span>
           </div>
           <a href="#terminal" className="ide-terminal-cta">
             Try the real terminal <span aria-hidden="true">↓</span>

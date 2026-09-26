@@ -3483,9 +3483,14 @@ body {
   .ide-agent-grid {
     position: static;
     inset: auto;
-    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;
     height: auto;
+  }
+
+  .ide-agent-pane-tall {
+    grid-row: auto;
   }
 
   .ide-vs-terminal {
@@ -3623,6 +3628,12 @@ body {
     row-gap: 10px;
   }
 }
+/* IDE pane 03: prose lines wrap instead of running off the pane */
+.term-out.term-out-wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 /* IDE pane 03: link down to the real terminal */
 .ide-terminal-cta {
   display: inline-flex;

@@ -530,6 +530,15 @@
   }
 }
 
+/* While typing in the terminal on a phone, the Menu pill steps aside */
+@media (max-width: 768px) {
+  .term-typing .menu-wrapper {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .term-caret,
   .term-dots-anim {

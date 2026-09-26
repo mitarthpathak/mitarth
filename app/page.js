@@ -52,15 +52,17 @@ export default function Home() {
     window.setTimeout(() => setMailCopied(false), 1200);
   };
 
-  // The fixed guide lines would run straight through the card titles, so they
-  // step aside while the work section is on screen.
+  // The fixed guide lines would run straight through the card titles and the
+  // terminal, so they step aside while either section is on screen.
   useEffect(() => {
-    const work = document.getElementById("work");
-    if (!work) return;
-    const io = new IntersectionObserver(([entry]) => {
-      document.documentElement.classList.toggle("guides-off", entry.isIntersecting);
+    const targets = ["work", "terminal"].map((id) => document.getElementById(id)).filter(Boolean);
+    if (!targets.length) return;
+    const onScreen = new Set();
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => (e.isIntersecting ? onScreen.add(e.target) : onScreen.delete(e.target)));
+      document.documentElement.classList.toggle("guides-off", onScreen.size > 0);
     });
-    io.observe(work);
+    targets.forEach((t) => io.observe(t));
     return () => {
       io.disconnect();
       document.documentElement.classList.remove("guides-off");
