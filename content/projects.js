@@ -250,7 +250,7 @@ Content-Type: application/json
 {
   "title": "Write README",
   "description": "Document the endpoints",
-  "status": "TODO",
+  "status": "OPEN",
   "dueDate": "2026-08-01"
 }`,
       response: `200 OK
@@ -260,7 +260,7 @@ Content-Type: application/json
   "username": "mitarth",
   "title": "Write README",
   "description": "Document the endpoints",
-  "status": "TODO",
+  "status": "OPEN",
   "dueDate": "2026-08-01"
 }`,
     },
