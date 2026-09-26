@@ -154,7 +154,7 @@ export default async function CaseStudyPage({ params }) {
         </p>
       </header>
 
-      <main className="cs-frame">
+      <main id="main" className="cs-frame">
         <section className="cs-hero" aria-labelledby="cs-title">
           <p className="cs-label cs-eyebrow">Case study</p>
           <h1 id="cs-title" className="cs-title">

@@ -194,7 +194,7 @@ export default function Home() {
         <div className="guide-line guide-line-left" />
         <div className="guide-line guide-line-right" />
 
-        <main style={{ position: "relative" }}>
+        <main id="main" style={{ position: "relative" }}>
           {/* ===== HERO SECTION ===== */}
           <section className="hero-section" aria-labelledby="hero-title">
             {/* The one h1 on the page; the big letters below are the visual version */}

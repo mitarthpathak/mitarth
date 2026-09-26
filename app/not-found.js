@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function NotFound() {
   return (
-    <main className="nf">
+    <main id="main" className="nf">
       <div className="nf-grid" aria-hidden="true" />
       <p className="nf-code" aria-hidden="true">
         404

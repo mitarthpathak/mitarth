@@ -1200,6 +1200,10 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .cs-code pre {
+    font-size: 12px;
+  }
+
   .cs-decision dl {
     gap: 16px;
   }
