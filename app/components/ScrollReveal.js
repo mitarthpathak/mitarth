@@ -36,6 +36,8 @@ export default function ScrollReveal({
   useGSAP(
     () => {
       if (!ref.current) return;
+      // Reduced motion: leave every child in its final, visible state.
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       const targets = ref.current.querySelectorAll(selector);
       if (!targets.length) return;
 
