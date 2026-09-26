@@ -102,7 +102,7 @@ export const projects = [
     images: {
       hero: { src: "/work/swasthya-neeti/hero.webp", width: 1440, height: 900, alt: "Swasthya-Neeti landing page: “Listen. Diagnose. Heal.” next to a 3D medical kit." },
       gallery: [
-        { src: "/work/swasthya-neeti/chat.webp", width: 1440, height: 900, alt: "The chat page intro with voice-first triage cards", caption: "The chat entry page, before sign-in." },
+        { src: "/work/swasthya-neeti/chat.webp", width: 1440, height: 760, alt: "The chat page intro with voice-first triage cards", caption: "The chat entry page, before sign-in." },
         { src: "/work/swasthya-neeti/phone.webp", width: 780, height: 1688, alt: "Swasthya-Neeti landing page on a phone", caption: "The same landing page at 390 px.", phone: true },
         { src: "/work/swasthya-neeti/features.webp", width: 1440, height: 900, alt: "Feature snapshot section with health worker mode and medicine nudges", caption: "Feature section of the landing page." },
       ],

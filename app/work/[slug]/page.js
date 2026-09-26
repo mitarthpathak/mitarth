@@ -44,6 +44,12 @@ export async function generateMetadata({ params }) {
   };
 }
 
+// Renders `backtick` spans in content strings as <code>.
+function InlineCode({ text }) {
+  const parts = text.split(/`([^`]+)`/);
+  return parts.map((part, i) => (i % 2 ? <code key={i} className="cs-inline-code">{part}</code> : <Fragment key={i}>{part}</Fragment>));
+}
+
 // Wraps the `highlight` phrase of a sentence in a yellow <mark>.
 function Highlighted({ text, phrase }) {
   if (!phrase || !text.includes(phrase)) return text;
@@ -147,7 +153,7 @@ export default async function CaseStudyPage({ params }) {
           <span aria-hidden="true">←</span> All work
         </Link>
         <Link href="/" className="cs-sig" aria-label="Mitarth Pathak — home">
-          <SignatureSVG strokeWidth="9" />
+          <SignatureSVG strokeWidth="16" />
         </Link>
         <p className="cs-count" aria-hidden="true">
           {String(index).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
@@ -174,13 +180,11 @@ export default async function CaseStudyPage({ params }) {
             <div>
               <dt>Stack</dt>
               <dd>
-                {project.stack.slice(0, 3).map((item, i, list) => (
-                  <Fragment key={item}>
-                    <span className="cs-meta-item">{item}</span>
-                    {/* no-break space keeps "·" off the start of a line */}
-                    {i < list.length - 1 && "\u00a0· "}
-                  </Fragment>
-                ))}
+                <ul className="cs-meta-stack">
+                  {project.stack.slice(0, 3).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
               </dd>
             </div>
             <div>
@@ -255,7 +259,9 @@ export default async function CaseStudyPage({ params }) {
 
               <ul className="cs-features" data-reveal>
                 {project.features.map((f) => (
-                  <li key={f}>{f}</li>
+                  <li key={f}>
+                    <InlineCode text={f} />
+                  </li>
                 ))}
               </ul>
 
@@ -281,8 +287,8 @@ export default async function CaseStudyPage({ params }) {
                             <td>
                               <code>{e.path}</code>
                             </td>
-                            <td>{e.auth ? "Bearer" : "Public"}</td>
-                            <td>{e.note}</td>
+                            <td className="cs-td-auth">{e.auth ? "Bearer" : "Public"}</td>
+                            <td className="cs-td-note">{e.note}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -446,8 +452,8 @@ export default async function CaseStudyPage({ params }) {
       </main>
 
       <footer className="cs-footer">
-        <p>
-          Built by Mitarth Pathak ·{" "}
+        <p className="cs-footer-by">
+          <span>Built by Mitarth Pathak</span>
           <a href="mailto:mpathak6207@gmail.com">mpathak6207@gmail.com</a>
         </p>
         <Link href={`/#work-${project.slug}`} className="cs-back">

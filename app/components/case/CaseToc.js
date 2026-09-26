@@ -18,10 +18,19 @@ export default function CaseToc({ sections }) {
         const first = els.find((el) => visible.get(el.id));
         if (first) setActive(first.id);
       },
-      { rootMargin: "-20% 0px -55% 0px" }
+      { rootMargin: "-30% 0px -60% 0px" }
     );
     els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    // At the very end of the page the last section may never reach 30%.
+    const onScroll = () => {
+      const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+      if (atEnd && els.length) setActive(els[els.length - 1].id);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      io.disconnect();
+      window.removeEventListener("scroll", onScroll);
+    };
   }, [sections]);
 
   const list = (

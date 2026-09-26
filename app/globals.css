@@ -541,7 +541,8 @@ body {
   transition: width 0.7s var(--ease-site), height 0.7s var(--ease-site), background 0.7s var(--ease-site),
     color 0.7s var(--ease-site), border-radius 0.7s var(--ease-site), box-shadow 0.7s var(--ease-site);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  /* A dark edge keeps the pill visible on the yellow footer */
+  border: 1.5px solid rgba(36, 36, 36, 0.7);
   /* Stays put while pages morph (see ::view-transition rules) */
   view-transition-name: site-menu;
 }
@@ -652,6 +653,7 @@ body {
 }
 
 .contact-header {
+  text-wrap: balance;
   font-family: var(--font-display);
   font-size: 18px;
   font-weight: 500;
@@ -669,6 +671,8 @@ body {
 }
 
 .contact-list a {
+  border-radius: 6px;
+  outline-offset: 4px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2983,9 +2987,14 @@ body {
 
 /* HOVER STATES (mouse) — keyboard focus gets the same image preview */
 .project-card:hover .project-bg,
-.project-card:focus-within .project-bg,
-.project-card.is-returning .project-bg {
+.project-card:focus-within .project-bg {
   opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .project-card.is-returning .project-bg {
+    opacity: 1;
+  }
 }
 
 .project-card:hover .project-bg-image,
@@ -3634,15 +3643,24 @@ body {
   z-index: 50;
 }
 
-/* Keep the pixels crisp: cross-fade old/new images over the move instead of
-   stretching one snapshot. */
-::view-transition-old(.work-morph),
+/* One flying layer only: the new image scales from the old box (cropped to
+   it), with no cross-fade between two differently scaled copies. */
+::view-transition-old(.work-morph) {
+  display: none;
+}
+
 ::view-transition-new(.work-morph) {
   height: 100%;
   object-fit: cover;
   object-position: top center;
-  animation-duration: 480ms;
-  animation-timing-function: var(--ease-out-quint);
+  animation: none;
+}
+
+/* Phones have no visible card image to morph from or into: plain fade */
+@media (max-width: 768px), (hover: none) {
+  ::view-transition-group(.work-morph) {
+    animation-duration: 0s;
+  }
 }
 
 ::view-transition-group(site-menu) {
@@ -3732,6 +3750,8 @@ body {
   align-items: center;
   min-height: 44px;
   padding: 0 16px;
+  font-family: var(--font-mono);
+  font-size: 14px;
   border: 1px solid rgba(36, 36, 36, 0.3);
   border-radius: 999px;
   color: var(--dark);
