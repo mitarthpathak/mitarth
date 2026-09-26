@@ -2947,7 +2947,8 @@ body {
 
 /* HOVER STATES (mouse) — keyboard focus gets the same image preview */
 .project-card:hover .project-bg,
-.project-card:focus-within .project-bg {
+.project-card:focus-within .project-bg,
+.project-card.is-returning .project-bg {
   opacity: 1;
 }
 
@@ -3594,12 +3595,6 @@ body {
   animation-duration: 480ms;
   animation-timing-function: var(--ease-out-quint);
   z-index: 50;
-}
-
-::view-transition-group(.work-title) {
-  animation-duration: 420ms;
-  animation-timing-function: var(--ease-out-quint);
-  z-index: 51;
 }
 
 /* Keep the pixels crisp: cross-fade old/new images over the move instead of

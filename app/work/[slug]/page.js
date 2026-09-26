@@ -1,4 +1,4 @@
-import { ViewTransition } from "react";
+import { Fragment, ViewTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -143,7 +143,7 @@ export default async function CaseStudyPage({ params }) {
       <CaseReveal />
 
       <header className="cs-topbar">
-        <Link href="/#work" className="cs-back">
+        <Link href={`/#work-${project.slug}`} className="cs-back">
           <span aria-hidden="true">←</span> All work
         </Link>
         <Link href="/" className="cs-sig" aria-label="Mitarth Pathak — home">
@@ -157,11 +157,9 @@ export default async function CaseStudyPage({ params }) {
       <main className="cs-frame">
         <section className="cs-hero" aria-labelledby="cs-title">
           <p className="cs-label cs-eyebrow">Case study</p>
-          <ViewTransition name={`work-title-${project.slug}`} share="work-title">
-            <h1 id="cs-title" className="cs-title">
-              {project.title}
-            </h1>
-          </ViewTransition>
+          <h1 id="cs-title" className="cs-title">
+            {project.title}
+          </h1>
           <p className="cs-oneliner">{project.oneLiner}</p>
 
           <dl className="cs-meta">
@@ -177,10 +175,11 @@ export default async function CaseStudyPage({ params }) {
               <dt>Stack</dt>
               <dd>
                 {project.stack.slice(0, 3).map((item, i, list) => (
-                  <span key={item} className="cs-meta-item">
-                    {item}
-                    {i < list.length - 1 && " · "}
-                  </span>
+                  <Fragment key={item}>
+                    <span className="cs-meta-item">{item}</span>
+                    {/* no-break space keeps "·" off the start of a line */}
+                    {i < list.length - 1 && "\u00a0· "}
+                  </Fragment>
                 ))}
               </dd>
             </div>
@@ -205,7 +204,7 @@ export default async function CaseStudyPage({ params }) {
         </section>
 
         <figure className="cs-hero-media">
-          <ViewTransition name={`work-media-${project.slug}`} share="work-morph">
+          <ViewTransition name={`work-media-${project.slug}`} share="work-morph" enter="none" exit="none" default="none">
             <Image
               src={hero.src}
               alt={hero.alt}
@@ -432,7 +431,7 @@ export default async function CaseStudyPage({ params }) {
               <span className="cs-next-line">{next.oneLiner}</span>
             </span>
             <span className="cs-next-media" aria-hidden="true">
-              <ViewTransition name={`work-media-${next.slug}`} share="work-morph">
+              <ViewTransition name={`work-media-${next.slug}`} share="work-morph" enter="none" exit="none" default="none">
                 <Image
                   src={next.images.hero.src}
                   alt=""
@@ -451,7 +450,7 @@ export default async function CaseStudyPage({ params }) {
           Built by Mitarth Pathak ·{" "}
           <a href="mailto:mpathak6207@gmail.com">mpathak6207@gmail.com</a>
         </p>
-        <Link href="/#work" className="cs-back">
+        <Link href={`/#work-${project.slug}`} className="cs-back">
           <span aria-hidden="true">←</span> All work
         </Link>
       </footer>

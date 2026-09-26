@@ -1,6 +1,6 @@
 "use client";
 
-import { ViewTransition } from "react";
+import { ViewTransition, useEffect, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import useMediaQuery, { FINE_POINTER } from "../hooks/useMediaQuery";
@@ -10,9 +10,30 @@ import useMediaQuery, { FINE_POINTER } from "../hooks/useMediaQuery";
 // the small Live / Code links sit above that layer (anchors never nest).
 // The image shares a view-transition name with the case-study hero, which is
 // what makes the card morph into the page.
+function subscribeHash(onChange) {
+  window.addEventListener("hashchange", onChange);
+  return () => window.removeEventListener("hashchange", onChange);
+}
+
 export default function ProjectCard({ project, onHoverChange }) {
   const hasFinePointer = useMediaQuery(FINE_POINTER);
   const { slug, title, date, mark, variant, oneLiner, stack, links, images } = project;
+
+  // Coming back from this project's case study ("/#work-<slug>"): keep the
+  // image showing for a moment so the hero lands on something visible, then
+  // let it fade like a normal hover-out.
+  const isTarget = useSyncExternalStore(
+    subscribeHash,
+    () => window.location.hash === `#work-${slug}`,
+    () => false
+  );
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!isTarget) return;
+    const id = window.setTimeout(() => setSettled(true), 900);
+    return () => window.clearTimeout(id);
+  }, [isTarget]);
+  const returning = isTarget && !settled;
   const href = `/work/${slug}`;
   const codeHref = links.code[0]?.href;
 
@@ -24,9 +45,9 @@ export default function ProjectCard({ project, onHoverChange }) {
     : {};
 
   return (
-    <article className="project-card" {...hoverProps}>
+    <article id={`work-${slug}`} className={`project-card${returning ? " is-returning" : ""}`} {...hoverProps}>
       <div className="project-bg" aria-hidden="true">
-        <ViewTransition name={`work-media-${slug}`} share="work-morph">
+        <ViewTransition name={`work-media-${slug}`} share="work-morph" enter="none" exit="none" default="none">
           <Image
             src={images.hero.src}
             alt=""
