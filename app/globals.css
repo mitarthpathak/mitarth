@@ -2759,6 +2759,7 @@ body {
 }
 
 .project-card {
+  cursor: pointer;
   min-height: 56vh;
   display: grid;
   grid-template-rows: auto 1fr auto;

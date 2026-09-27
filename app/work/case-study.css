@@ -1368,3 +1368,67 @@
     font-size: 12px;
   }
 }
+
+/* ============================================================
+   MOTION (scroll effects live in app/components/case/CaseMotion.js)
+   ============================================================ */
+
+/* Reading progress along the top edge */
+.cs-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 70;
+  height: 3px;
+  background: var(--orange);
+  transform: scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+/* The next project's image moves inside a fixed frame */
+.cs-next-media {
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* Hero entrance: each piece arrives in turn, the title out of a mask */
+@media (prefers-reduced-motion: no-preference) {
+  .cs-hero .cs-eyebrow,
+  .cs-hero .cs-oneliner,
+  .cs-hero .cs-meta > div,
+  .cs-hero .cs-cta {
+    animation: cs-rise 0.8s var(--ease-site) both;
+  }
+
+  .cs-hero .cs-title {
+    animation: cs-title-in 1s cubic-bezier(0.19, 1, 0.22, 1) 0.08s both;
+  }
+
+  .cs-hero .cs-eyebrow { animation-delay: 0s; }
+  .cs-hero .cs-oneliner { animation-delay: 0.25s; }
+  .cs-hero .cs-meta > div:nth-child(1) { animation-delay: 0.35s; }
+  .cs-hero .cs-meta > div:nth-child(2) { animation-delay: 0.42s; }
+  .cs-hero .cs-meta > div:nth-child(3) { animation-delay: 0.49s; }
+  .cs-hero .cs-meta > div:nth-child(4) { animation-delay: 0.56s; }
+  .cs-hero .cs-cta { animation-delay: 0.62s; }
+}
+
+@keyframes cs-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+@keyframes cs-title-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(0.35em);
+  }
+  to {
+    clip-path: inset(0 0 -20% 0);
+    transform: none;
+  }
+}
