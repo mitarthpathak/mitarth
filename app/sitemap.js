@@ -8,6 +8,7 @@ export default function sitemap() {
   const latest = projects.map((p) => p.updated).sort().at(-1);
   return [
     { url: SITE_URL, lastModified: latest, changeFrequency: "monthly", priority: 1 },
+    { url: `${SITE_URL}/lab/ask`, lastModified: latest, changeFrequency: "monthly", priority: 0.5 },
     ...projects.map((p) => ({
       url: `${SITE_URL}/work/${p.slug}`,
       lastModified: p.updated,

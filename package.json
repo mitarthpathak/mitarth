@@ -4,17 +4,27 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "knowledge": "node --no-warnings scripts/build-knowledge.mjs",
+    "prebuild": "npm run knowledge",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "eval:ask": "node --no-warnings scripts/eval-ask.mjs"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.65",
+    "@ai-sdk/google": "^4.0.82",
+    "@ai-sdk/openai": "^4.0.78",
     "@gsap/react": "^2.1.2",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
     "@react-three/postprocessing": "^3.1.1",
+    "@upstash/ratelimit": "^2.2.0",
+    "@upstash/redis": "^1.39.0",
     "@vercel/speed-insights": "^2.0.0",
+    "ai": "^7.0.116",
     "gsap": "^3.15.0",
+    "minisearch": "^7.2.0",
     "motion": "^12.42.2",
     "next": "16.2.9",
     "postprocessing": "^6.39.5",
