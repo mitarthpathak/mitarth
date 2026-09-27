@@ -17,6 +17,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Line, Html, Stars } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import useIsMobile from "../hooks/useIsMobile";
+import LazyTerminal from "./terminal/LazyTerminal";
 
 const FILE_ICONS = {
   ts: { Icon: SiTypescript, color: "#3178C6" },
@@ -182,112 +183,8 @@ const AGENT_CARDS = [
   },
 ];
 
-const DOCKER_ASCII = [
-  "                    ##        .",
-  "              ## ## ##       ==",
-  "           ## ## ## ## ##   ===",
-  "       /\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\\___/ ===",
-  "  ~~~ {~~ ~~~~ ~~~~ ~~~ ~~~~ ~~~ ~ /  ===- ~~~",
-  "       \\______ o          __/",
-  "        \\    \\        __/",
-  "         \\____\\______/",
-].join("\n");
-
-const UBUNTU_ASCII = [
-  "            .-/+oossssoo+/-.",
-  "        `:+ssssssssssssssssss+:`",
-  "      -+ssssssssssssssssssyyssss+-",
-  "    .ossssssssssssssssssdMMMNysssso.",
-  "   /ssssssssssshdmmNNmmyNMMMMhssssss/",
-  "  +ssssssssshmydMMMMMMMNddddyssssssss+",
-  " /sssssssshNMMMyhhyyyyhmNMMMNhssssssss/",
-  ".ssssssssdMMMNhsssssssssshNMMMdssssssss.",
-  "+sssshhhyNMMNyssssssssssssyNMMMysssssss+",
-  "ossyNMMMNyMMhsssssssssssssshmmmhssssssso",
-  "ossyNMMMNyMMhsssssssssssssshmmmhssssssso",
-  "+sssshhhyNMMNyssssssssssssyNMMMysssssss+",
-  ".ssssssssdMMMNhsssssssssshNMMMdssssssss.",
-  " /sssssssshNMMMyhhyyyyhdNMMMNhssssssss/",
-  "  +sssssssssdmydMMMMMMMMddddyssssssss+",
-  "   /ssssssssssshdmNNNNmyNMMMMhssssss/",
-  "    .ossssssssssssssssssdMMMNysssso.",
-  "      -+sssssssssssssssssyyssss+-",
-  "        `:+ssssssssssssssssss+:`",
-  "            .-/+oossssoo+/-.",
-].join("\n");
-
-const UBUNTU_COLORBAR = [
-  "#2e3436", "#cc0000", "#4e9a06", "#c4a000",
-  "#3465a4", "#75507b", "#06989a", "#d3d7cf",
-];
-
-const TOOLS = [
-  {
-    kind: "fetch",
-    name: "React Three Fiber",
-    shell: "docker",
-    cmd: "docker info",
-    accent: "#2496ED",
-    ascii: DOCKER_ASCII,
-    info: [
-      ["Containers", "12 (3 running)"],
-      ["Images", "27"],
-      ["Server Version", "24.0.7"],
-      ["Storage Driver", "overlay2"],
-      ["Cgroup Driver", "systemd"],
-      ["Kernel Version", "6.4.0-generic"],
-      ["Operating System", "Ubuntu 22.04.3 LTS"],
-      ["Architecture", "x86_64"],
-      ["CPUs", "8"],
-      ["Total Memory", "15.6GiB"],
-    ],
-  },
-  {
-    kind: "cmd",
-    name: "Next.js",
-    shell: "npm",
-    cmd: "npm run dev",
-    lines: [
-      "> portfolio@0.1.0 dev",
-      "> next dev",
-      "",
-      "  ▲ Next.js 15.0.3",
-      "  - Local:        http://localhost:3000",
-      "",
-      " ✓ Starting...",
-      " ✓ Ready in 1284ms",
-    ],
-  },
-  {
-    kind: "fetch",
-    name: "WSL Ubuntu",
-    shell: "bash",
-    prefixLine: "ongubuntu@ubuntu-16-10-yakkety-yak:~/Downloads$ neofetch",
-    accent: "#E95420",
-    tall: true,
-    ascii: UBUNTU_ASCII,
-    info: [
-      ["OS", "Ubuntu 16.10 yakkety yak x86_64"],
-      ["Model", "VMware Virtual Platform None"],
-      ["Kernel", "4.4.0-34-generic"],
-      ["Uptime", "2 hours, 9 mins"],
-      ["Packages", "2097"],
-      ["Shell", "bash 4.3.46"],
-      ["Resolution", "1440x900"],
-      ["DE", "Unity"],
-      ["WM", "Compiz"],
-      ["Theme", "Ambiance [GTK2/3]"],
-      ["Icons", "Ubuntu-mono-dark [GTK2/3]"],
-      ["Terminal", "gnome-terminal"],
-      ["CPU", "Intel Core i5-2400S (1) @ 2.4GHz"],
-      ["GPU", "VMware SVGA II Adapter"],
-      ["Memory", "561MB / 983MB"],
-    ],
-    colorbar: UBUNTU_COLORBAR,
-  },
-];
-
-// This session's actual working-tree changes.
+// Illustrative source-control list for the IDE mock-up (decorative, like the
+// agent cards); pane 03's terminals are the parts that show real data.
 const SCM_FILES = [
   { name: "package-lock.json", path: "", status: "M" },
   { name: "package.json", path: "", status: "M" },
@@ -1430,129 +1327,12 @@ function BackendPane() {
   );
 }
 
-function focusTerminalInput(e) {
-  e.currentTarget.querySelector(".term-live-input")?.focus();
-}
-
-function TerminalActionBar({ shell }) {
-  return (
-    <div className="ide-vs-terminal-actions">
-      <span className="ide-vs-terminal-shell">{shell}</span>
-      <button type="button" className="ide-vs-terminal-icon" title="New Terminal">
-        +
-      </button>
-      <button type="button" className="ide-vs-terminal-icon" title="Split Terminal">
-        &#10697;
-      </button>
-      <button type="button" className="ide-vs-terminal-icon" title="Kill Terminal">
-        &#128465;
-      </button>
-      <button type="button" className="ide-vs-terminal-icon" title="More Actions">
-        &#8942;
-      </button>
-    </div>
-  );
-}
-
-function LivePrompt() {
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") e.preventDefault();
-  };
-
-  return (
-    <div className="term-line term-live-line">
-      <span className="term-ps-chevron">&#10095;</span>{" "}
-      <span className="term-ps-path">PS D:\code\PROJECTS\portfolio&gt;</span>
-      <input
-        type="text"
-        className="term-live-input"
-        spellCheck={false}
-        autoComplete="off"
-        autoCapitalize="off"
-        onKeyDown={handleKeyDown}
-        aria-label="terminal input"
-      />
-    </div>
-  );
-}
-
-function ToolTerminalPane({ tool }) {
-  return (
-    <div className="ide-vs-terminal">
-      <div className="ide-vs-terminal-head">
-        <span className="ide-vs-terminal-chevron">&#8964;</span>
-        <span className="ide-vs-terminal-title">{tool.name}</span>
-        <TerminalActionBar shell={tool.shell} />
-      </div>
-      <div className="ide-vs-terminal-body" onClick={focusTerminalInput}>
-        <div className="term-line">
-          <span className="term-prompt">$</span> <span className="term-cmd">{tool.cmd}</span>
-        </div>
-        {tool.lines.map((line, i) => (
-          <div className="term-line" key={i}>
-            <span className="term-out">{line || " "}</span>
-          </div>
-        ))}
-        <LivePrompt />
-      </div>
-    </div>
-  );
-}
-
-function FetchTerminalPane({ tool }) {
-  return (
-    <div className="ide-vs-terminal">
-      <div className="ide-vs-terminal-head">
-        <span className="ide-vs-terminal-chevron">&#8964;</span>
-        <span className="ide-vs-terminal-title">{tool.name}</span>
-        <TerminalActionBar shell={tool.shell} />
-      </div>
-      <div className="ide-vs-terminal-body ide-vs-terminal-body-fetch" onClick={focusTerminalInput}>
-        {tool.prefixLine ? (
-          <div className="term-line">
-            <span className="term-cmd">{tool.prefixLine}</span>
-          </div>
-        ) : (
-          <div className="term-line">
-            <span className="term-prompt">$</span> <span className="term-cmd">{tool.cmd}</span>
-          </div>
-        )}
-        <div className="fetch-row">
-          <pre className="fetch-ascii" style={{ color: tool.accent }}>
-            {tool.ascii}
-          </pre>
-          <div className="fetch-info">
-            {tool.info.map(([label, value]) => (
-              <div className="fetch-info-row" key={label}>
-                <span className="fetch-info-label" style={{ color: tool.accent }}>
-                  {label}
-                </span>
-                <span className="fetch-info-value">{value}</span>
-              </div>
-            ))}
-            {tool.colorbar && (
-              <div className="fetch-colorbar">
-                {tool.colorbar.map((c, i) => (
-                  <span key={i} style={{ background: c }} />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        <LivePrompt />
-      </div>
-    </div>
-  );
-}
-
+// Pane 03 is the real terminal: commands over the site's content, plus
+// `ask`, answered by the AI from the case studies with sources.
 function FrameworkPane() {
   return (
-    <div className="ide-agent-grid">
-      {TOOLS.map((t) => (
-        <div className={`ide-agent-pane ${t.tall ? "ide-agent-pane-tall" : ""}`} key={t.name}>
-          {t.kind === "fetch" ? <FetchTerminalPane tool={t} /> : <ToolTerminalPane tool={t} />}
-        </div>
-      ))}
+    <div className="ide-terminal-pane">
+      <LazyTerminal embedded />
     </div>
   );
 }
@@ -1602,8 +1382,8 @@ function StatusBar({ langMode }) {
       </div>
       <div className="ide-status-right">
         <span className="ide-status-item">{langMode}</span>
-        <span className="ide-status-item">UTF-8</span>
-        <span className="ide-status-item">LF</span>
+        <span className="ide-status-item ide-status-optional">UTF-8</span>
+        <span className="ide-status-item ide-status-optional">LF</span>
         <span className="ide-status-item ide-status-live">&#9679; Go Live</span>
         <span className="ide-status-item">&#128276;</span>
       </div>
@@ -1685,7 +1465,10 @@ export default function TechStack() {
         hintRef.current.style.opacity = (entrance * hintFade).toFixed(3);
       }
 
-      if (index !== activeIndexRef.current) {
+      // While the visitor is typing in the terminal (pane 03), the pane stays
+      // put: a phone keyboard or a stray scroll must not swap it away.
+      const typing = document.activeElement?.closest?.(".term");
+      if (index !== activeIndexRef.current && !typing) {
         activeIndexRef.current = index;
         setActiveIndex(index);
       }
@@ -1716,6 +1499,8 @@ export default function TechStack() {
 
   return (
     <section className="tech-stack-section" ref={wrapRef}>
+      {/* /#terminal scrolls to where pane 03 (the terminal) is showing */}
+      <span id="terminal" className="tech-terminal-anchor" aria-hidden="true" />
       <div className="tech-stack-sticky">
         <div className="tech-stack-scene">
           <div className="tech-scroll-hint" ref={hintRef}>
@@ -1750,7 +1535,11 @@ export default function TechStack() {
             </div>
 
             <div className="tech-window-body">
-              <div className={`ide-sidebar ${active.mode === "terminal" || active.mode === "ls" ? "is-collapsed" : ""}`}>
+              <div
+                className={`ide-sidebar ${active.mode === "terminal" || active.mode === "ls" ? "is-collapsed" : ""} ${
+                  active.mode === "grid" ? "is-collapsed-phone" : ""
+                }`}
+              >
                 <p className="ide-sidebar-caption">Explorer</p>
 
                 <div className="ide-sidebar-section ide-sidebar-section-agents">
@@ -1797,7 +1586,7 @@ export default function TechStack() {
                 </div>
               </div>
 
-              <div className="ide-main">
+              <div className={`ide-main${active.mode === "grid" ? " ide-main-terminal" : ""}`}>
                 {active.mode === "ls" && <LanguagesPane />}
                 {active.mode === "terminal" && <BackendPane />}
                 {active.mode === "grid" && <FrameworkPane />}
@@ -1845,7 +1634,7 @@ export default function TechStack() {
                   <div className="ide-scm-commit-box">
                     <textarea
                       className="ide-scm-commit-input"
-                      placeholder='Message (Ctrl+Enter to commit on "main")'
+                      placeholder="Commit message"
                       rows={1}
                     />
                     <button type="button" className="ide-scm-commit-btn">

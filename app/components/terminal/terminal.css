@@ -1,0 +1,634 @@
+/* ============================================================
+   PORTFOLIO TERMINAL — same chrome as the IDE's terminal panes
+   (#000 body, #0a0a0a title bar, hairline borders, Geist Mono).
+   Every text colour on the dark pane is ≥ 4.5:1.
+   ============================================================ */
+
+.term {
+  --term-bg: #000;
+  --term-bar: #0a0a0a;
+  --term-line: rgba(255, 255, 255, 0.12);
+  --term-text: #ebe6e1; /* 16:1 */
+  --term-dim: #a9a39d; /* 7.9:1 */
+  --term-link: #6cc3f0; /* 9.4:1 */
+  --term-accent: var(--yellow); /* 17:1 */
+  --term-warn: #ffb347; /* 11:1 */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 980px);
+  height: 500px;
+  margin: 0 auto;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--term-bg);
+  color: var(--term-text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+
+.term-titlebar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 40px;
+  padding: 0 16px;
+  background: var(--term-bar);
+  border-bottom: 1px solid var(--term-line);
+}
+
+.term-dots {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.term-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.term-dot-red { background: #ff5f57; }
+.term-dot-yellow { background: #febc2e; }
+.term-dot-green { background: #28c840; }
+
+.term-title {
+  flex: 1 1 auto;
+  text-align: center;
+  font-size: 13px;
+  color: var(--term-dim);
+}
+
+.term-shell {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #1f1f1f;
+  color: var(--term-dim);
+}
+
+/* Output scrolls inside the terminal; the box never changes size */
+.term-output {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 20px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3a transparent;
+}
+
+.term-output::-webkit-scrollbar {
+  width: 8px;
+}
+
+.term-output::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 8px;
+}
+
+.term-output:focus-visible {
+  outline: 2px solid var(--term-accent);
+  outline-offset: -4px;
+}
+
+.term-output > :first-child {
+  margin-top: 0;
+}
+
+.term-output p + p {
+  margin-top: 4px;
+}
+
+/* One reading width for prose in every output (tables use the full width) */
+.term-welcome p,
+.term-answer,
+.term-block > p,
+.term-list {
+  max-width: 76ch;
+}
+
+.term-welcome kbd,
+.term kbd {
+  font-family: inherit;
+  color: var(--term-accent);
+}
+
+.term-line-cmd {
+  margin-top: 14px;
+  color: var(--term-text);
+  overflow-wrap: anywhere;
+}
+
+.term .term-ps,
+.term .term-prompt {
+  color: var(--term-accent);
+}
+
+.term-block {
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+
+/* Screen-reader-only labels stay out of copied text */
+.term-nocopy {
+  user-select: none;
+}
+
+.term-dim {
+  color: var(--term-dim);
+}
+
+.term-link {
+  color: var(--term-link);
+  text-decoration: underline;
+  text-decoration-color: rgba(108, 195, 240, 0.4);
+  text-underline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .term-link:hover {
+    color: #a5dcf7;
+    text-decoration-color: currentColor;
+  }
+}
+
+.term-nowrap {
+  white-space: nowrap;
+}
+
+.term-code {
+  font-family: inherit;
+  color: var(--term-accent);
+}
+
+.term :focus-visible {
+  outline: 2px solid var(--term-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.term-help,
+.term-kv {
+  display: grid;
+  gap: 2px;
+}
+
+/* Help and key-value outputs share one first column, so their second
+   columns line up from one command to the next */
+.term-help > div,
+.term-kv > div {
+  display: grid;
+  grid-template-columns: 20ch minmax(0, 1fr);
+  gap: 16px;
+}
+
+.term-help dt,
+.term-kv dt {
+  color: var(--term-accent);
+}
+
+.term-list {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.term-list strong {
+  font-weight: 600;
+  color: var(--term-text);
+}
+
+.term-history {
+  list-style: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.term-cmdlink {
+  font: inherit;
+  color: var(--term-accent);
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 232, 98, 0.4);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+@media (hover: hover) {
+  .term-cmdlink:hover {
+    color: #fff6b8;
+    text-decoration-color: currentColor;
+  }
+}
+
+.term-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.term-chip {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: #151515;
+  color: var(--term-text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Hover only where there's a real pointer: on touch it would stick */
+@media (hover: hover) {
+  .term-chip:hover {
+    background: var(--yellow);
+    border-color: var(--yellow);
+    color: var(--dark);
+  }
+}
+
+.term-chip:active {
+  transform: scale(0.97);
+}
+
+/* Answer states */
+.term-answer {
+  white-space: pre-wrap;
+}
+
+.term-stophint {
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.term-excerpt {
+  margin: 8px 0 0;
+  padding: 6px 0 6px 12px;
+  border-left: 1px solid var(--term-line);
+  color: var(--term-text);
+  max-width: 76ch;
+}
+
+.term-caret {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--term-text);
+  animation: term-blink 1s steps(1) infinite;
+}
+
+@keyframes term-blink {
+  50% { opacity: 0; }
+}
+
+.term-thinking {
+  color: var(--term-dim);
+}
+
+.term-dots-anim {
+  display: inline-block;
+  width: 3ch;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: bottom;
+  animation: term-ellipsis 1.2s steps(4, jump-none) infinite;
+}
+
+@keyframes term-ellipsis {
+  from { width: 0; }
+  to { width: 3ch; }
+}
+
+.term-sources {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--term-line);
+  font-size: 13px;
+}
+
+.term-sources ol {
+  list-style: none;
+}
+
+.term-sources p + ol {
+  margin-top: 4px;
+}
+
+.term-sources li + li {
+  margin-top: 2px;
+}
+
+.term-source-n {
+  color: var(--term-dim);
+}
+
+/* Errors are distinct but calm: a warm left rule and a small badge */
+.term-error,
+.term-notice {
+  padding-left: 12px;
+  border-left: 2px solid var(--term-warn);
+}
+
+.term-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: rgba(255, 179, 71, 0.16);
+  color: var(--term-warn);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.term-notice-offline {
+  border-left-color: var(--term-link);
+}
+
+.term-notice-offline .term-badge {
+  background: rgba(108, 195, 240, 0.16);
+  color: var(--term-link);
+}
+
+/* Input row */
+.term-mobile-chips {
+  display: none;
+}
+
+.term-inputrow {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 10px 20px;
+  border-top: 1px solid var(--term-line);
+  background: var(--term-bg);
+}
+
+/* Focus reads like a shell, not a web form: the prompt line lights up */
+.term-inputrow:focus-within {
+  box-shadow: inset 0 2px 0 var(--term-accent);
+  background: #0a0a0a;
+}
+
+.term .term-inputrow .term-prompt {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.term-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--term-text);
+  font: inherit;
+  font-size: 16px; /* ≥ 16px: no iOS zoom */
+  caret-color: var(--term-accent);
+}
+
+.term-input::placeholder {
+  color: #8a847e; /* 5.5:1 */
+}
+
+.term-input:focus,
+.term-input:focus-visible {
+  outline: none;
+}
+
+.term-send {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 10px;
+  background: #151515;
+  color: var(--term-accent);
+  font: inherit;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+@media (hover: hover) {
+  .term-send:hover {
+    background: var(--yellow);
+    color: var(--dark);
+  }
+
+  .term-send-stop:hover {
+    background: var(--term-warn);
+    color: var(--dark);
+  }
+}
+
+.term-send-stop {
+  color: var(--term-warn);
+  font-size: 14px;
+}
+
+
+.term-placeholder .term-output {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* ---------- Inside the IDE (pane 03) ---------- */
+/* Fills the pane edge to edge; the IDE window is the frame */
+.term-embedded {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.term-embedded .term-titlebar {
+  height: 34px;
+}
+
+.term-embedded .term-dots {
+  display: none;
+}
+
+.term-embedded .term-title {
+  text-align: left;
+  font-size: 12px;
+}
+
+.term-howlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--term-dim);
+  text-decoration: none;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+@media (hover: hover) {
+  .term-howlink:hover {
+    color: var(--term-text);
+    background: #1a1a1a;
+  }
+}
+
+/* ---------- Tablets and phones ---------- */
+@media (max-width: 768px) {
+  .term {
+    height: min(78dvh, 640px);
+    min-height: 340px;
+    border-radius: 12px;
+  }
+
+  .term-embedded {
+    height: 100%;
+    min-height: 0;
+    border-radius: 0;
+  }
+
+  .term-shell {
+    display: none;
+  }
+
+  /* Chips above the input: typing on phones is painful */
+  .term-mobile-chips {
+    display: block;
+    flex: 0 0 auto;
+    padding: 8px 12px 0;
+    border-top: 1px solid var(--term-line);
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* fades at the right edge: the row scrolls */
+    mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent);
+  }
+
+  .term-mobile-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .term-mobile-chips .term-chips {
+    flex-wrap: nowrap;
+    margin: 0 0 8px;
+    padding-right: 28px;
+  }
+
+  .term-mobile-chips .term-chip {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .term-inputrow {
+    border-top: 0;
+    padding: 6px 8px 8px 12px;
+    gap: 6px;
+  }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 560px) {
+  .term {
+    font-size: 13px;
+  }
+
+  .term-output {
+    padding: 12px 14px 8px;
+  }
+
+  .term-help > div,
+  .term-kv > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .term-help > div + div,
+  .term-kv > div + div {
+    margin-top: 6px;
+  }
+
+  /* Short prompt on phones, in the input row and in echoed commands */
+  .term-inputrow .term-prompt > span[aria-hidden],
+  .term-line-cmd .term-ps {
+    font-size: 0;
+  }
+
+  .term-inputrow .term-prompt > span[aria-hidden]::after,
+  .term-line-cmd .term-ps::after {
+    content: "~$";
+    font-size: 13px;
+  }
+}
+
+/* While typing in the terminal on a phone, the Menu pill steps aside */
+@media (max-width: 768px) {
+  .term-typing .menu-wrapper {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  /* In the IDE, the terminal lifts over the page while typing, sized to
+     the visible area above the keyboard (Terminal.js sets the variables).
+     The IDE window's entrance transform would trap a fixed layer, so it's
+     dropped while typing (the window is fully in by then anyway). */
+  .term-typing .tech-window {
+    transform: none !important;
+    will-change: auto;
+  }
+
+  .term-typing .term-embedded {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: var(--term-vv-top, 0px);
+    height: var(--term-vv-h, 100dvh);
+    z-index: 2000;
+  }
+
+  /* and the quick chips make room for the output above the keyboard */
+  .term-typing .term-mobile-chips {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .term-caret,
+  .term-dots-anim {
+    animation: none;
+  }
+
+  .term-chip,
+  .term-send,
+  .term-cmdlink {
+    transition: none;
+  }
+
+  .term-chip:active {
+    transform: none;
+  }
+
+  .term-dots-anim {
+    width: auto;
+  }
+}
