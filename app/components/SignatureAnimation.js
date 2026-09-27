@@ -5,12 +5,12 @@
  * home page, plus its intro.
  *
  * The inline script in the root layout sets <html data-intro> before first
- * paint. With "play" (first home visit of the session, motion allowed) the
- * signature draws itself large over the already-visible hero, then settles
- * into the header mark — about 1.2 s in total. It can be skipped with the
- * Skip button, Esc, or a click anywhere (see the script in app/layout.js).
- * With "skip" or "done" the mark is simply drawn in place. Page content is
- * never hidden.
+ * paint. With "play" (a full load of the home page, motion allowed) the
+ * original intro runs: the signature draws itself stroke by stroke in the
+ * middle of the screen (m, P, athak, underline), then at 4.7 s shrinks into
+ * the header mark while the page fades in — about 6 s in total. The Skip
+ * button or Esc end it early (see the script in app/layout.js). With "skip"
+ * or "done" the mark is simply drawn in place and the page is visible.
  */
 
 import { finishIntro } from "../hooks/finishIntro";
