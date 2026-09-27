@@ -788,7 +788,7 @@ function Entry({ entry, onRun, onStop }) {
           <span className="term-ps" aria-hidden="true">
             {PROMPT}
           </span>{" "}
-          <span className="sr-only">You ran: </span>
+          <span className="sr-only term-nocopy">You ran: </span>
           {entry.text}
         </p>
       );

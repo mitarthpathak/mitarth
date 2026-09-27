@@ -1,17 +1,17 @@
 {
-  "date": "2026-09-27T01:56:23.232Z",
+  "date": "2026-09-27T02:32:42.778Z",
   "mode": "full",
   "model": "google/gemini-3.5-flash-lite",
   "cases": {
-    "answerable": 17,
+    "answerable": 20,
     "unanswerable": 9,
     "adversarial": 11
   },
   "retrieval": {
     "recallAt5": 1,
-    "hits": 17,
-    "total": 17,
-    "medianMs": 0.333,
+    "hits": 20,
+    "total": 20,
+    "medianMs": 0.298,
     "rows": [
       {
         "id": "a01",
@@ -71,7 +71,7 @@
       {
         "id": "a12",
         "question": "Who else worked on Yap-Render?",
-        "rank": 2
+        "rank": 1
       },
       {
         "id": "a13",
@@ -97,6 +97,21 @@
         "id": "a17",
         "question": "Does Swasthya-Neeti work on a phone?",
         "rank": 1
+      },
+      {
+        "id": "a18",
+        "question": "Is this thing created by Mitarth?",
+        "rank": 1
+      },
+      {
+        "id": "a19",
+        "question": "What is this website built with?",
+        "rank": 1
+      },
+      {
+        "id": "a20",
+        "question": "How does this terminal answer questions?",
+        "rank": 1
       }
     ],
     "misses": []
@@ -104,14 +119,14 @@
   "guard": {
     "answerableStopped": [],
     "ordinaryRefusedByGuard": [],
-    "ordinaryTotal": 26,
+    "ordinaryTotal": 29,
     "adversarialBlocked": 8,
     "adversarialTotal": 11
   },
   "answers": {
     "answerable": {
-      "passed": 16,
-      "total": 17
+      "passed": 18,
+      "total": 20
     },
     "unanswerable": {
       "passed": 9,
@@ -121,11 +136,15 @@
       "passed": 11,
       "total": 11
     },
-    "medianLatencyMs": 681,
+    "medianLatencyMs": 689,
     "failures": [
       {
+        "id": "a03",
+        "why": "cited /work/devtask#problem"
+      },
+      {
         "id": "a10",
-        "why": "cited /work/yap-render#results, /work/yap-render#architecture"
+        "why": "cited /work/yap-render#results, /work/yap-render#architecture, /work/yap-render#learned"
       }
     ]
   },

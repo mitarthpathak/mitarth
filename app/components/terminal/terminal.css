@@ -133,6 +133,11 @@
   overflow-wrap: anywhere;
 }
 
+/* Screen-reader-only labels stay out of copied text */
+.term-nocopy {
+  user-select: none;
+}
+
 .term-dim {
   color: var(--term-dim);
 }

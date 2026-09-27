@@ -33,6 +33,21 @@
       "keywords": "contact email linkedin github reach hire"
     },
     {
+      "id": "site-about",
+      "title": "This site — Who built it",
+      "text": "Yes: this portfolio site, including the terminal, was designed and built by Mitarth Pathak himself. He's a bit of a geek like that, so of course he eventually built his own. It shows his projects as case studies, an IDE-style tour of his tech stack, and this terminal. It's deployed on Vercel. This site is built with Next.js 16.2.9, React 19.2.4, GSAP 3.15.0, Three.js 0.186.0, React Three Fiber 9.7.0, Motion 12.42.2, Tailwind CSS 4.3.1, the Vercel AI SDK 7.0.116, MiniSearch 7.2.0.",
+      "url": "/",
+      "keywords": "this site website portfolio page terminal thing app created made built designed who owner behind code stack framework"
+    },
+    {
+      "id": "site-terminal",
+      "title": "This site — How the terminal works",
+      "text": "The terminal lives in the IDE's Framework & Tools pane. It runs real commands (help, whoami, projects, open, contact and more) and answers questions about Mitarth's work. An AI model writes each answer from passages of this site only, found with keyword search (BM25), and has to cite them; the links under an answer are those sources. Questions and IP addresses aren't stored. The full story, with eval results, is on the how-it-works page.",
+      "url": "/lab/ask",
+      "command": "help",
+      "keywords": "this site website portfolio page terminal thing app created made built designed who owner behind code stack framework"
+    },
+    {
       "id": "swasthya-neeti-problem",
       "title": "Swasthya-Neeti — Problem",
       "text": "Swasthya-Neeti (April 2026): A voice-first health assistant for rural families, in ten Indian languages. The problem: Families in villages often have a health question long before they can reach a clinic, and most health apps assume English, fast data and confident typing. Mitarth wanted the first conversation to work in the user's own language, by voice, on a modest phone. What it does: An AI chat assistant that gives families plain-language health guidance, takes questions by voice, answers in ten Indian languages and urges medical care when danger signs appear.",

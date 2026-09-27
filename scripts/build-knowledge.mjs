@@ -13,7 +13,7 @@
 //
 // Also writes lib/site-files.json: whether public/resume.pdf exists, for `resume`.
 
-import { writeFile, mkdir, access } from "node:fs/promises";
+import { readFile, writeFile, mkdir, access } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -84,6 +84,7 @@ const KEYWORDS = {
   experience: "experience work job internship company education college degree studying",
   skills: "skills languages frameworks tools technologies stack",
   contact: "contact email linkedin github reach hire",
+  site: "this site website portfolio page terminal thing app created made built designed who owner behind code stack framework",
 };
 
 const chunks = [];
@@ -154,6 +155,41 @@ add(
   "contact",
   "contact"
 );
+
+// ---- This site and its terminal ----
+const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+const installed = async (name) => {
+  try {
+    return JSON.parse(await readFile(join(root, "node_modules", name, "package.json"), "utf8")).version;
+  } catch {
+    return null;
+  }
+};
+const STACK = [
+  ["Next.js", "next"],
+  ["React", "react"],
+  ["GSAP", "gsap"],
+  ["Three.js", "three"],
+  ["React Three Fiber", "@react-three/fiber"],
+  ["Motion", "motion"],
+  ["Tailwind CSS", "tailwindcss"],
+  ["the Vercel AI SDK", "ai"],
+  ["MiniSearch", "minisearch"],
+];
+const siteStack = [];
+for (const [label, name] of STACK) {
+  if (!pkg.dependencies?.[name] && !pkg.devDependencies?.[name]) continue;
+  const v = await installed(name);
+  siteStack.push(v ? `${label} ${v}` : label);
+}
+add(
+  "site-about",
+  "This site — Who built it",
+  `${profile.site.about} This site is built with ${siteStack.join(", ")}.`,
+  "/",
+  "site"
+);
+add("site-terminal", "This site — How the terminal works", profile.site.terminal, "/lab/ask", "site", "help");
 
 // ---- Case studies, one or more chunks per section ----
 for (const p of projects) {

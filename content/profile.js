@@ -75,6 +75,15 @@ export const profile = {
   // his repos use. Shown in the IDE's "Framework & Tools" pane.
   tools: ["Spring Boot", "PostgreSQL", "React", "Git", "Next.js", "Vite", "Maven", "Android Studio", "Vercel"],
 
+  // About this site itself, so "who made this?" has an answer. The playful
+  // line is Mitarth's own framing, as requested for the terminal's tone.
+  site: {
+    about:
+      "Yes: this portfolio site, including the terminal, was designed and built by Mitarth Pathak himself. He's a bit of a geek like that, so of course he eventually built his own. It shows his projects as case studies, an IDE-style tour of his tech stack, and this terminal. It's deployed on Vercel.",
+    terminal:
+      "The terminal lives in the IDE's Framework & Tools pane. It runs real commands (help, whoami, projects, open, contact and more) and answers questions about Mitarth's work. An AI model writes each answer from passages of this site only, found with keyword search (BM25), and has to cite them; the links under an answer are those sources. Questions and IP addresses aren't stored. The full story, with eval results, is on the how-it-works page.",
+  },
+
   links: {
     email: "mailto:mpathak6207@gmail.com",
     emailAddress: "mpathak6207@gmail.com",
