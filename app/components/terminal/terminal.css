@@ -445,86 +445,62 @@
   align-items: flex-start;
 }
 
-/* ---------- Section on the home page ---------- */
-.terminal-section {
-  position: relative;
-  z-index: 20;
-  margin: 0 3vw;
-  padding: clamp(72px, 12vh, 128px) clamp(16px, 4vw, 48px) clamp(72px, 12vh, 128px);
-  background: var(--cream);
-  border-left: 1px solid var(--gray-line);
-  border-right: 1px solid var(--gray-line);
-  border-bottom: 1px solid var(--gray-line);
+/* ---------- Inside the IDE (pane 03) ---------- */
+/* Fills the pane edge to edge; the IDE window is the frame */
+.term-embedded {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
-.terminal-intro {
-  max-width: 980px;
-  margin: 0 auto 40px;
-  text-align: center;
+.term-embedded .term-titlebar {
+  height: 34px;
 }
 
-.terminal-label {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
+.term-embedded .term-dots {
+  display: none;
 }
 
-.terminal-intro h2 {
-  margin-top: 12px;
-  font-family: var(--font-body);
-  font-size: clamp(40px, 5vw, 72px);
-  font-weight: 600;
-  line-height: 0.95;
-  letter-spacing: -0.02em;
+.term-embedded .term-title {
+  text-align: left;
+  font-size: 12px;
 }
 
-.terminal-intro > p:not(.terminal-label) {
-  max-width: 52ch;
-  margin: 20px auto 0;
-  font-size: clamp(17px, 1.3vw, 20px);
-  line-height: 1.45;
-  color: #2f2c29;
-  text-wrap: balance;
-}
-
-/* "How it works" sits under the intro line, never under the fixed Menu pill */
-.terminal-how {
+.term-howlink {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  margin-top: 8px;
-  padding: 0 16px;
-  border-radius: 999px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--dark);
+  gap: 4px;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--term-dim);
   text-decoration: none;
-  transition: background 0.25s ease;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
-.terminal-how:hover {
-  background: var(--yellow);
+@media (hover: hover) {
+  .term-howlink:hover {
+    color: var(--term-text);
+    background: #1a1a1a;
+  }
 }
 
 /* ---------- Tablets and phones ---------- */
 @media (max-width: 768px) {
-  .terminal-section {
-    margin: 0;
-    padding-left: 12px;
-    padding-right: 12px;
-    border-left: 0;
-    border-right: 0;
-  }
-
   .term {
     height: min(78dvh, 640px);
     min-height: 340px;
     border-radius: 12px;
+  }
+
+  .term-embedded {
+    height: 100%;
+    min-height: 0;
+    border-radius: 0;
   }
 
   .term-shell {
@@ -605,6 +581,24 @@
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
+  }
+
+  /* In the IDE, the terminal lifts over the page while typing, sized to
+     the visible area above the keyboard (Terminal.js sets the variables).
+     The IDE window's entrance transform would trap a fixed layer, so it's
+     dropped while typing (the window is fully in by then anyway). */
+  .term-typing .tech-window {
+    transform: none !important;
+    will-change: auto;
+  }
+
+  .term-typing .term-embedded {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: var(--term-vv-top, 0px);
+    height: var(--term-vv-h, 100dvh);
+    z-index: 2000;
   }
 
   /* and the quick chips make room for the output above the keyboard */

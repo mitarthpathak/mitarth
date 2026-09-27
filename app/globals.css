@@ -3634,52 +3634,43 @@ body {
   overflow-wrap: anywhere;
 }
 
-/* IDE pane 03: the real terminal's help, in its colours */
-.term-help-usage {
-  color: var(--yellow);
+/* IDE pane 03 is the real terminal (app/components/terminal): it fills the
+   pane edge to edge, like the IDE's other panes */
+.ide-terminal-pane {
+  position: absolute;
+  inset: 0;
+  display: flex;
 }
 
-/* IDE pane 03: link down to the real terminal */
-.ide-terminal-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  margin-top: 14px;
-  padding: 0 14px;
-  border: 1px solid var(--yellow);
-  border-radius: 8px;
-  color: var(--yellow);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  text-decoration: none;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-.ide-terminal-cta:hover {
-  background: var(--yellow);
-  color: #0a0a0a;
-}
-
-.ide-terminal-cta:focus-visible {
-  outline: 2px solid var(--yellow);
-  outline-offset: 3px;
+.ide-terminal-pane .term-embed-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
 }
 
 @media (max-width: 768px) {
-  /* The link to the real terminal comes first, above the fold of the pane */
-  .ide-agent-pane-cta {
-    order: -1;
+  /* On phones the terminal gets the room: the Explorer steps aside in pane 03 */
+  .ide-sidebar.is-collapsed-phone {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom-color: transparent;
   }
 
-  /* Readable pane text on phones and tablets */
-  .ide-vs-terminal-head {
-    font-size: 11px;
+  .ide-main.ide-main-terminal {
+    flex: 1 0 auto;
+    min-height: min(60dvh, 520px);
   }
+}
 
-  .ide-vs-terminal-body {
-    font-size: 12px;
-  }
+/* /#terminal lands where pane 03 is showing (the last third of the scroll) */
+.tech-terminal-anchor {
+  position: absolute;
+  left: 0;
+  top: calc((100% - 100vh) * 0.84);
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
 }
 
 @media (max-width: 480px) {

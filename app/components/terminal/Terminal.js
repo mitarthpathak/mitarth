@@ -380,7 +380,7 @@ const VIEWS = {
 };
 
 // ---------- the terminal ----------
-export default function Terminal() {
+export default function Terminal({ embedded = false }) {
   const router = useRouter();
   const hintId = useId();
   const inputId = useId();
@@ -444,6 +444,15 @@ export default function Terminal() {
     const typing = window.matchMedia("(max-width: 768px)").matches && document.activeElement === inputRef.current;
     // The fixed Menu pill would sit on top of the input above the keyboard.
     document.documentElement.classList.toggle("term-typing", typing);
+    // Inside the IDE (a sticky, scroll-driven section) the keyboard would
+    // push the input off-screen, so on phones the terminal lifts into a
+    // layer that exactly covers the visible area while typing (see
+    // terminal.css), and drops back into its pane when the keyboard closes.
+    if (embedded) {
+      root.style.setProperty("--term-vv-top", `${Math.round(vv.offsetTop)}px`);
+      root.style.setProperty("--term-vv-h", `${Math.round(vv.height)}px`);
+      return;
+    }
     if (!typing) {
       root.style.height = "";
       lastFit.current = 0;
@@ -454,13 +463,15 @@ export default function Terminal() {
     lastFit.current = height;
     root.style.height = `${height}px`;
     root.scrollIntoView({ block: "end" });
-  }, []);
+  }, [embedded]);
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
     vv.addEventListener("resize", fitToKeyboard);
+    vv.addEventListener("scroll", fitToKeyboard);
     return () => {
       vv.removeEventListener("resize", fitToKeyboard);
+      vv.removeEventListener("scroll", fitToKeyboard);
       document.documentElement.classList.remove("term-typing");
     };
   }, [fitToKeyboard]);
@@ -685,7 +696,7 @@ export default function Terminal() {
   const quickChips = offline ? MOBILE_CHIPS.filter((c) => !c.startsWith("ask")) : MOBILE_CHIPS;
 
   return (
-    <div ref={rootRef} className="term" data-busy={busy || undefined}>
+    <div ref={rootRef} className={`term${embedded ? " term-embedded" : ""}`} data-busy={busy || undefined}>
       <div className="term-titlebar">
         <span className="term-dots" aria-hidden="true">
           <i className="term-dot term-dot-red" />
@@ -693,9 +704,15 @@ export default function Terminal() {
           <i className="term-dot term-dot-green" />
         </span>
         <span className="term-title">mitarth@portfolio: ~</span>
-        <span className="term-shell" aria-hidden="true">
-          zsh
-        </span>
+        {embedded ? (
+          <Link href="/lab/ask" className="term-howlink">
+            how it works <span aria-hidden="true">↗</span>
+          </Link>
+        ) : (
+          <span className="term-shell" aria-hidden="true">
+            zsh
+          </span>
+        )}
       </div>
 
       <div

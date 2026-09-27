@@ -14,9 +14,9 @@ const Terminal = dynamic(() => import("./Terminal.js"), {
   loading: () => <TerminalPlaceholder />,
 });
 
-function TerminalPlaceholder() {
+function TerminalPlaceholder({ embedded = false }) {
   return (
-    <div className="term term-placeholder" aria-hidden="true">
+    <div className={`term term-placeholder${embedded ? " term-embedded" : ""}`} aria-hidden="true">
       <div className="term-titlebar">
         <span className="term-dots">
           <i className="term-dot term-dot-red" />
@@ -66,7 +66,7 @@ function NoScript() {
   );
 }
 
-export default function LazyTerminal() {
+export default function LazyTerminal({ embedded = false }) {
   const ref = useRef(null);
   const [near, setNear] = useState(false);
 
@@ -87,8 +87,8 @@ export default function LazyTerminal() {
   }, []);
 
   return (
-    <div ref={ref}>
-      {near ? <Terminal /> : <TerminalPlaceholder />}
+    <div ref={ref} className={embedded ? "term-embed-wrap" : undefined}>
+      {near ? <Terminal embedded={embedded} /> : <TerminalPlaceholder embedded={embedded} />}
       <NoScript />
     </div>
   );

@@ -15,8 +15,6 @@ import TiltedCard from "./components/TiltedCard";
 import TechStack from "./components/TechStack";
 import ParticleImageReveal from "./components/ParticleImageReveal";
 import ScrollReveal from "./components/ScrollReveal";
-import LazyTerminal from "./components/terminal/LazyTerminal";
-import Link from "next/link";
 
 const emailId = "mpathak6207@gmail.com";
 
@@ -52,10 +50,10 @@ export default function Home() {
     window.setTimeout(() => setMailCopied(false), 1200);
   };
 
-  // The fixed guide lines would run straight through the card titles and the
-  // terminal, so they step aside while either section is on screen.
+  // The fixed guide lines would run straight through the card titles, so
+  // they step aside while the work section is on screen.
   useEffect(() => {
-    const targets = ["work", "terminal"].map((id) => document.getElementById(id)).filter(Boolean);
+    const targets = ["work"].map((id) => document.getElementById(id)).filter(Boolean);
     if (!targets.length) return;
     const onScreen = new Set();
     const io = new IntersectionObserver((entries) => {
@@ -392,19 +390,6 @@ export default function Home() {
                 />
               ))}
             </div>
-          </section>
-
-          {/* ===== TERMINAL: real commands + "ask about my work" ===== */}
-          <section id="terminal" className="terminal-section" aria-labelledby="terminal-title">
-            <div className="terminal-intro">
-              <p className="terminal-label">Try it</p>
-              <h2 id="terminal-title">Ask the terminal</h2>
-              <p>Type a command, or ask a question about my work. Answers are drawn from this site&apos;s pages and link to their sources.</p>
-              <Link href="/lab/ask" className="terminal-how">
-                How it works <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-            <LazyTerminal />
           </section>
 
           {/* ===== FOOTER REVEAL COLUMNS (brick staircase into yellow footer) ===== */}

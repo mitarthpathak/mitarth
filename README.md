@@ -19,14 +19,14 @@ Content lives in `content/projects.js` (case studies) and `content/profile.js` (
 
 ## Ask the terminal: setup
 
-The home page has a working terminal (`#terminal`). Every command works without any setup. `ask "<question>"` (or just typing a question) needs an AI provider; without one it replies "AI is offline in this build", quotes the closest passage and links the closest pages.
+The home page's IDE section has a working terminal in its third pane ("Framework & Tools", `/#terminal`). Every command works without any setup. `ask "<question>"` (or just typing a question) needs an AI provider; without one it replies "AI is offline in this build", quotes the closest passage and links the closest pages.
 
 1. Copy `.env.example` to `.env.local` (git-ignored) and fill in:
 
    | Variable | What |
    |---|---|
    | `ASK_PROVIDER` | `openai`, `anthropic` or `google` |
-   | `ASK_MODEL` | the provider's model id (for `anthropic` it defaults to `claude-haiku-4-5`) |
+   | `ASK_MODEL` | the provider's model id (defaults: `anthropic` → `claude-haiku-4-5`, `google` → `gemini-3.5-flash-lite`; avoid Gemini "flash" models, which spend the output budget on thinking) |
    | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GOOGLE_GENERATIVE_AI_API_KEY` | the key for the provider you chose |
    | `ASK_DAILY_LIMIT` | optional, global answers per day (default 300) |
    | `ASK_HASH_SALT` | recommended: a long random string, used to hash visitor IPs for rate limiting (hashes rotate daily). Without it, the Upstash token or a per-instance random value is used |

@@ -11,13 +11,9 @@
 // into the third person here, so the model never reads "I built…" as its own
 // voice; the build fails if any first person, or any phone number, is left.
 //
-// Also writes lib/stack-versions.json: the site's own dependencies as
-// actually installed (what `npm ls --depth=0` prints), for the IDE pane; and
-// lib/site-files.json: whether public/resume.pdf exists, for `resume`.
-//
-// Runs from `prebuild` and via `npm run knowledge`.
+// Also writes lib/site-files.json: whether public/resume.pdf exists, for `resume`.
 
-import { readFile, writeFile, mkdir, access } from "node:fs/promises";
+import { writeFile, mkdir, access } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -236,20 +232,6 @@ for (const c of chunks) {
 
 await mkdir(join(root, "lib/ask"), { recursive: true });
 await writeFile(join(root, "lib/ask/knowledge.json"), JSON.stringify({ chunks }, null, 2) + "\n");
-
-// ---- Installed versions of the site's own stack (npm ls --depth=0) ----
-const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
-const names = [...Object.keys(pkg.dependencies ?? {}), ...Object.keys(pkg.devDependencies ?? {})].sort();
-const versions = {};
-for (const name of names) {
-  try {
-    const installed = JSON.parse(await readFile(join(root, "node_modules", name, "package.json"), "utf8"));
-    versions[name] = installed.version;
-  } catch {
-    versions[name] = (pkg.dependencies?.[name] ?? pkg.devDependencies?.[name]).replace(/^[\^~]/, "");
-  }
-}
-await writeFile(join(root, "lib/stack-versions.json"), JSON.stringify({ name: pkg.name, version: pkg.version, versions }, null, 2) + "\n");
 
 // ---- Files the terminal can link to (checked here, so it never probes for them) ----
 const exists = (path) =>

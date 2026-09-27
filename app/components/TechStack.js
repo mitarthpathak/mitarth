@@ -17,9 +17,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Line, Html, Stars } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import useIsMobile from "../hooks/useIsMobile";
-import stackVersions from "../../lib/stack-versions.json";
-import { profile } from "../../content/profile.js";
-import { COMMANDS } from "./terminal/commands.js";
+import LazyTerminal from "./terminal/LazyTerminal";
 
 const FILE_ICONS = {
   ts: { Icon: SiTypescript, color: "#3178C6" },
@@ -183,16 +181,6 @@ const AGENT_CARDS = [
     icon: "claude",
     activityIcon: "claude",
   },
-];
-
-// "Framework & Tools" pane: real information only. Versions are the ones
-// actually installed, written to lib/stack-versions.json at build time by
-// scripts/build-knowledge.mjs; the tools list comes from content/profile.js.
-const STACK_LINES = [
-  `${stackVersions.name}@${stackVersions.version}`,
-  ...Object.entries(stackVersions.versions).map(
-    ([name, version], i, all) => `${i === all.length - 1 ? "└──" : "├──"} ${name}@${version}`
-  ),
 ];
 
 // Illustrative source-control list for the IDE mock-up (decorative, like the
@@ -1339,81 +1327,12 @@ function BackendPane() {
   );
 }
 
-function TerminalActionBar({ shell }) {
-  return (
-    <div className="ide-vs-terminal-actions">
-      <span className="ide-vs-terminal-shell">{shell}</span>
-      <button type="button" className="ide-vs-terminal-icon" title="New Terminal">
-        +
-      </button>
-      <button type="button" className="ide-vs-terminal-icon" title="Split Terminal">
-        &#10697;
-      </button>
-      <button type="button" className="ide-vs-terminal-icon" title="Kill Terminal">
-        &#128465;
-      </button>
-      <button type="button" className="ide-vs-terminal-icon" title="More Actions">
-        &#8942;
-      </button>
-    </div>
-  );
-}
-
-function PaneTerminal({ title, shell, cmd, children }) {
-  return (
-    <div className="ide-vs-terminal">
-      <div className="ide-vs-terminal-head">
-        <span className="ide-vs-terminal-chevron">&#8964;</span>
-        <span className="ide-vs-terminal-title">{title}</span>
-        <TerminalActionBar shell={shell} />
-      </div>
-      <div className="ide-vs-terminal-body">
-        <div className="term-line">
-          <span className="term-prompt">$</span> <span className="term-cmd">{cmd}</span>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// The real terminal's command names, straight from its command table.
-const COMMAND_LIST = COMMANDS.map((c) => c.name);
-
+// Pane 03 is the real terminal: commands over the site's content, plus
+// `ask`, answered by the AI from the case studies with sources.
 function FrameworkPane() {
   return (
-    <div className="ide-agent-grid">
-      <div className="ide-agent-pane">
-        <PaneTerminal title="Tools I use" shell="zsh" cmd="cat ~/tools.txt">
-          {profile.tools.map((tool) => (
-            <div className="term-line" key={tool}>
-              <span className="term-out term-out-wrap">{tool}</span>
-            </div>
-          ))}
-        </PaneTerminal>
-      </div>
-      <div className="ide-agent-pane ide-agent-pane-cta">
-        <PaneTerminal title="Real terminal" shell="zsh" cmd="help">
-          <div className="term-line">
-            <span className="term-out term-out-wrap term-help-usage">{COMMAND_LIST.join("  ")}</span>
-          </div>
-          <div className="term-line">
-            <span className="term-out term-out-wrap">This pane is a picture. The terminal below runs these.</span>
-          </div>
-          <a href="#terminal" className="ide-terminal-cta">
-            Try the real terminal <span aria-hidden="true">↓</span>
-          </a>
-        </PaneTerminal>
-      </div>
-      <div className="ide-agent-pane ide-agent-pane-tall">
-        <PaneTerminal title="This site" shell="npm" cmd="npm ls --depth=0">
-          {STACK_LINES.map((line) => (
-            <div className="term-line" key={line}>
-              <span className="term-out">{line}</span>
-            </div>
-          ))}
-        </PaneTerminal>
-      </div>
+    <div className="ide-terminal-pane">
+      <LazyTerminal embedded />
     </div>
   );
 }
@@ -1546,7 +1465,10 @@ export default function TechStack() {
         hintRef.current.style.opacity = (entrance * hintFade).toFixed(3);
       }
 
-      if (index !== activeIndexRef.current) {
+      // While the visitor is typing in the terminal (pane 03), the pane stays
+      // put: a phone keyboard or a stray scroll must not swap it away.
+      const typing = document.activeElement?.closest?.(".term");
+      if (index !== activeIndexRef.current && !typing) {
         activeIndexRef.current = index;
         setActiveIndex(index);
       }
@@ -1577,6 +1499,8 @@ export default function TechStack() {
 
   return (
     <section className="tech-stack-section" ref={wrapRef}>
+      {/* /#terminal scrolls to where pane 03 (the terminal) is showing */}
+      <span id="terminal" className="tech-terminal-anchor" aria-hidden="true" />
       <div className="tech-stack-sticky">
         <div className="tech-stack-scene">
           <div className="tech-scroll-hint" ref={hintRef}>
@@ -1611,7 +1535,11 @@ export default function TechStack() {
             </div>
 
             <div className="tech-window-body">
-              <div className={`ide-sidebar ${active.mode === "terminal" || active.mode === "ls" ? "is-collapsed" : ""}`}>
+              <div
+                className={`ide-sidebar ${active.mode === "terminal" || active.mode === "ls" ? "is-collapsed" : ""} ${
+                  active.mode === "grid" ? "is-collapsed-phone" : ""
+                }`}
+              >
                 <p className="ide-sidebar-caption">Explorer</p>
 
                 <div className="ide-sidebar-section ide-sidebar-section-agents">
@@ -1658,7 +1586,7 @@ export default function TechStack() {
                 </div>
               </div>
 
-              <div className="ide-main">
+              <div className={`ide-main${active.mode === "grid" ? " ide-main-terminal" : ""}`}>
                 {active.mode === "ls" && <LanguagesPane />}
                 {active.mode === "terminal" && <BackendPane />}
                 {active.mode === "grid" && <FrameworkPane />}

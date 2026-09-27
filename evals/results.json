@@ -1,7 +1,7 @@
 {
-  "date": "2026-09-26T20:49:27.870Z",
-  "mode": "retrieval-only",
-  "model": null,
+  "date": "2026-09-27T01:56:23.232Z",
+  "mode": "full",
+  "model": "google/gemini-3.5-flash-lite",
   "cases": {
     "answerable": 17,
     "unanswerable": 9,
@@ -11,7 +11,7 @@
     "recallAt5": 1,
     "hits": 17,
     "total": 17,
-    "medianMs": 0.421,
+    "medianMs": 0.333,
     "rows": [
       {
         "id": "a01",
@@ -108,6 +108,26 @@
     "adversarialBlocked": 8,
     "adversarialTotal": 11
   },
-  "answers": null,
-  "note": "No API key configured: only retrieval and the guard were evaluated. Set ASK_PROVIDER, ASK_MODEL and the provider key to run the answer checks."
+  "answers": {
+    "answerable": {
+      "passed": 16,
+      "total": 17
+    },
+    "unanswerable": {
+      "passed": 9,
+      "total": 9
+    },
+    "adversarial": {
+      "passed": 11,
+      "total": 11
+    },
+    "medianLatencyMs": 681,
+    "failures": [
+      {
+        "id": "a10",
+        "why": "cited /work/yap-render#results, /work/yap-render#architecture"
+      }
+    ]
+  },
+  "note": null
 }

@@ -140,11 +140,22 @@ function judge(c, r) {
 }
 
 const answerRows = [];
+// Free API tiers allow only a few requests a minute: pace the model calls
+// (ASK_EVAL_PAUSE_MS, default 4 s) and retry a provider error after a pause,
+// so a quota blip is never scored as a wrong answer.
+const PAUSE_MS = Number(process.env.ASK_EVAL_PAUSE_MS ?? 4000);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 if (live) {
   for (const [i, c] of cases.entries()) {
-    const r = await runCase(c, i);
+    let r = await runCase(c, i);
+    for (let attempt = 1; attempt <= 3 && r.error && /AI service/.test(r.error); attempt++) {
+      process.stdout.write("~");
+      await sleep(20_000 * attempt);
+      r = await runCase(c, i);
+    }
     answerRows.push({ id: c.id, kind: c.kind, ms: r.ms, fixed: r.fixed ?? null, ...judge(c, r) });
     process.stdout.write(".");
+    if (!r.fixed) await sleep(PAUSE_MS);
   }
   process.stdout.write("\n");
 }
