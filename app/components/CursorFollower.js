@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import useIsMobile from "../hooks/useIsMobile";
+import useMediaQuery, { FINE_POINTER } from "../hooks/useMediaQuery";
 
 export default function CursorFollower({
   isHoveringProject = false,
   isHoveringMail = false,
   mailCursorText = "Copy ID",
 }) {
-  const isMobile = useIsMobile();
+  const hasFinePointer = useMediaQuery(FINE_POINTER);
   const followerRef = useRef(null);
   const [text, setText] = useState("");
   const [isVisible, setIsVisible] = useState(true);
@@ -167,10 +167,10 @@ export default function CursorFollower({
 
   const isActionHover = isHoveringProject || isHoveringMail;
 
-  // Always show cursor on action hovers, regardless of fade state
-  // A mouse-follow cursor makes no sense on a touch screen — there is no
-  // hover, so it would just sit frozen typing its greeting over the content.
-  if (isMobile) return null;
+  // A mouse-follow cursor only makes sense with a real mouse: on touch
+  // screens there is no hover, so it would sit frozen over the content.
+  // It never replaces the system cursor, it only follows it.
+  if (!hasFinePointer) return null;
 
   if (!isVisible && !isActionHover) return null;
 
