@@ -3153,8 +3153,7 @@ body {
 /* Pixel art portrait — centered, sitting just above the bottom bar */
 .footer-pixel-art {
   position: absolute;
-  /* lifted by the space the bottom bar reserves for the Menu pill */
-  top: calc(50% - (var(--menu-safe) - 36px) / 2);
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -44%);
   z-index: 12;
@@ -3168,7 +3167,7 @@ body {
 .footer-pixel-art .tilted-card-img {
   position: relative;
   height: clamp(360px, 62vh, 690px);
-  max-height: calc(100vh - 130px - var(--menu-safe));
+  max-height: calc(100vh - 130px);
   width: auto;
   image-rendering: pixelated;
   filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.18));
@@ -3183,7 +3182,9 @@ body {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 28px 40px var(--menu-safe) 40px;
+  /* the original spacing; on desktop the centred Menu pill sits between
+     the CTA and the icons, so nothing is covered (phones reserve room below) */
+  padding: 28px 40px 36px 40px;
   border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
 
