@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import useIntroDone from "../hooks/useIntroDone";
 
 export default function HeroText({ text, size, globalDelay = 0 }) {
   const isSmall = size === "small";
@@ -15,6 +16,7 @@ export default function HeroText({ text, size, globalDelay = 0 }) {
           return (
             <span
               key={index}
+              className="hero-letter-in"
               style={{
                 fontFamily: "var(--font-display)",
                 fontSize: currentFontSize,
@@ -28,14 +30,12 @@ export default function HeroText({ text, size, globalDelay = 0 }) {
           );
         }
 
+        // The outer span is what the entrance animates (HeroEntrance.js);
+        // the inner one keeps its own hover transform.
         return (
-          <HeroLetter 
-            key={index} 
-            letter={letter} 
-            fontSize={currentFontSize} 
-            index={index}
-            globalDelay={globalDelay}
-          />
+          <span key={index} className="hero-letter-in" style={{ display: "inline-block" }}>
+            <HeroLetter letter={letter} fontSize={currentFontSize} index={index} globalDelay={globalDelay} />
+          </span>
         );
       })}
     </div>
@@ -44,8 +44,11 @@ export default function HeroText({ text, size, globalDelay = 0 }) {
 
 function HeroLetter({ letter, fontSize, index, globalDelay }) {
   const [hovered, setHovered] = useState(false);
+  const introDone = useIntroDone();
 
   useEffect(() => {
+    // The ripple follows the hero's entrance, after the signature intro.
+    if (!introDone) return;
     // Initial auto-hover ripple effect on load
     const triggerTimer = setTimeout(() => {
       setHovered(true);
@@ -53,10 +56,10 @@ function HeroLetter({ letter, fontSize, index, globalDelay }) {
       setTimeout(() => {
         setHovered(false);
       }, 300);
-    }, globalDelay + (index * 60)); // 60ms between letters for a fast ripple
-    
+    }, 1600 + globalDelay + (index * 60)); // 60ms between letters for a fast ripple
+
     return () => clearTimeout(triggerTimer);
-  }, [index, globalDelay]);
+  }, [index, globalDelay, introDone]);
 
   return (
     <span

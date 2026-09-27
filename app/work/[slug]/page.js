@@ -6,7 +6,7 @@ import { projects, getProject, getNextProject, sectionOrder } from "../../../con
 import SignatureSVG from "../../components/SignatureSVG";
 import ArchitectureDiagram from "../../components/case/ArchitectureDiagram";
 import CaseToc from "../../components/case/CaseToc";
-import CaseReveal from "../../components/case/CaseReveal";
+import CaseMotion from "../../components/case/CaseMotion";
 import "../case-study.css";
 
 const SITE_URL = "https://mitarth.vercel.app";
@@ -146,7 +146,8 @@ export default async function CaseStudyPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <CaseReveal />
+      <CaseMotion />
+      <div className="cs-progress" aria-hidden="true" />
 
       <header className="cs-topbar">
         <Link href={`/#work-${project.slug}`} className="cs-back">
@@ -230,16 +231,16 @@ export default async function CaseStudyPage({ params }) {
           <CaseToc sections={sectionOrder} />
 
           <article className="cs-content">
-            <section id="problem" className="cs-section" aria-labelledby="problem-title" data-reveal>
+            <section id="problem" className="cs-section" aria-labelledby="problem-title">
               <SectionHead index={1} id="problem" label="Problem" title={titles.problem} />
               <p className="cs-lead">
                 <Highlighted text={project.problem} phrase={project.highlight} />
               </p>
             </section>
 
-            <section id="role" className="cs-section" aria-labelledby="role-title" data-reveal>
+            <section id="role" className="cs-section" aria-labelledby="role-title">
               <SectionHead index={2} id="role" label="My role" title={titles.role} />
-              <p>{project.myRole}</p>
+              <p className="cs-lead-soft">{project.myRole}</p>
             </section>
 
             <section id="built" className="cs-section" aria-labelledby="built-title">
@@ -247,7 +248,7 @@ export default async function CaseStudyPage({ params }) {
               <p data-reveal>{project.summary}</p>
 
               {project.products && (
-                <ul className="cs-products" data-reveal>
+                <ul className="cs-products">
                   {project.products.map((p) => (
                     <li key={p.name}>
                       <h3 className="cs-h3">{p.name}</h3>
@@ -257,7 +258,7 @@ export default async function CaseStudyPage({ params }) {
                 </ul>
               )}
 
-              <ul className="cs-features" data-reveal>
+              <ul className="cs-features">
                 {project.features.map((f) => (
                   <li key={f}>
                     <InlineCode text={f} />
@@ -345,7 +346,7 @@ export default async function CaseStudyPage({ params }) {
               )}
 
               {gallery.length > 0 && (
-                <div className="cs-gallery" data-reveal>
+                <div className="cs-gallery">
                   <h3 className="cs-h3">Screens</h3>
                   <div className="cs-gallery-grid">
                     {galleryRows(gallery).map((row) => (
@@ -374,7 +375,7 @@ export default async function CaseStudyPage({ params }) {
             <section id="architecture" className="cs-section" aria-labelledby="architecture-title">
               <SectionHead index={4} id="architecture" label="Architecture" title={titles.architecture} />
               <p data-reveal>{project.architecture.text}</p>
-              <div data-reveal>
+              <div>
                 <ArchitectureDiagram
                   title={project.title}
                   nodes={project.architecture.nodes}
@@ -387,7 +388,7 @@ export default async function CaseStudyPage({ params }) {
               <SectionHead index={5} id="decisions" label="Key decisions" title={titles.decisions} />
               <ol className="cs-decisions">
                 {project.decisions.map((d, i) => (
-                  <li key={d.decision} className="cs-decision" data-reveal>
+                  <li key={d.decision} className="cs-decision">
                     <span className="cs-decision-index" aria-hidden="true">
                       {String(i + 1).padStart(2, "0")}
                     </span>
@@ -407,7 +408,7 @@ export default async function CaseStudyPage({ params }) {
               </ol>
             </section>
 
-            <section id="results" className="cs-section" aria-labelledby="results-title" data-reveal>
+            <section id="results" className="cs-section" aria-labelledby="results-title">
               <SectionHead index={6} id="results" label="Results" title={titles.results} />
               <ul className="cs-results">
                 {project.results.map((r) => (
@@ -416,7 +417,7 @@ export default async function CaseStudyPage({ params }) {
               </ul>
             </section>
 
-            <section id="learned" className="cs-section" aria-labelledby="learned-title" data-reveal>
+            <section id="learned" className="cs-section" aria-labelledby="learned-title">
               <SectionHead index={7} id="learned" label="What I learned" title={titles.learned} />
               <ul className="cs-learned">
                 {project.learnings.map((l) => (

@@ -76,6 +76,15 @@ html[data-intro="play"] .sig-stroke-underline {
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* The hero's pieces wait for their own entrance (HeroEntrance.js), which
+   starts when the intro ends */
+html[data-intro="play"] .hero-in-name,
+html[data-intro="play"] .hero-in-great,
+html[data-intro="play"] .hero-in-left,
+html[data-intro="play"] .hero-in-right {
+  opacity: 0;
+}
+
 /* The cursor bubble waits for the page too */
 html[data-intro="play"] .cursor-follower {
   opacity: 0 !important;

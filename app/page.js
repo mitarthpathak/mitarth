@@ -7,6 +7,7 @@ import ProjectCard from "./components/ProjectCard";
 import { projects } from "../content/projects";
 import CursorFollower from "./components/CursorFollower";
 import HeroText from "./components/HeroName";
+import HeroEntrance from "./components/HeroEntrance";
 import DotCanvas from "./components/DotCanvas";
 import ProjectImageCursor from "./components/ProjectImageCursor";
 import SplitText from "./components/SplitText";
@@ -205,55 +206,36 @@ export default function Home() {
             </h1>
             <p className="sr-only">Based in Jaipur, Rajasthan.</p>
 
+            {/* Each hero piece enters on its own once the signature intro ends */}
+            <HeroEntrance />
+
             {/* Grid background */}
             <div className="hero-grid" />
 
             {/* Top block (MITARTH) floating above */}
-            <div className="hero-name-container" style={{ paddingBottom: '2vh' }} aria-hidden="true">
+            <div className="hero-name-container hero-in-name" style={{ paddingBottom: '2vh' }} aria-hidden="true">
               <HeroText text="MITARTH" globalDelay={0} />
             </div>
 
             <div className="hero-title-group" aria-hidden="true">
               {/* Side lines + subtitles */}
-              <div className="hero-side-lines hero-side-lines-left">
+              <div className="hero-side-lines hero-side-lines-left hero-in-left">
                 <div className="hero-line-bar" />
-                <SplitText
-                  text="AI & Full-Stack Developer"
-                  tag="span"
-                  className="hero-subtitle"
-                  delay={35}
-                  duration={0.7}
-                  ease="power3.out"
-                  splitType="chars"
-                  from={{ opacity: 0, y: 18 }}
-                  to={{ opacity: 1, y: 0 }}
-                  threshold={0.1}
-                  rootMargin="0px"
-                  textAlign="left"
-                />
+                <span className="hero-subtitle" style={{ textAlign: "left" }}>
+                  AI &amp; Full-Stack Developer
+                </span>
               </div>
 
               {/* Bottom block (THE GREAT) nested between lines */}
-              <div className="hero-name-container" style={{ padding: '0 3vw' }}>
+              <div className="hero-name-container hero-in-great" style={{ padding: '0 3vw' }}>
                 <HeroText text="THE GREAT" size="small" globalDelay={1000} />
               </div>
 
               {/* Right side */}
-              <div className="hero-side-lines hero-side-lines-right">
-                <SplitText
-                  text="Based in Jaipur, Rajasthan"
-                  tag="span"
-                  className="hero-subtitle"
-                  delay={28}
-                  duration={0.7}
-                  ease="power3.out"
-                  splitType="chars"
-                  from={{ opacity: 0, y: 18 }}
-                  to={{ opacity: 1, y: 0 }}
-                  threshold={0.1}
-                  rootMargin="0px"
-                  textAlign="right"
-                />
+              <div className="hero-side-lines hero-side-lines-right hero-in-right">
+                <span className="hero-subtitle" style={{ textAlign: "right" }}>
+                  Based in Jaipur, Rajasthan
+                </span>
                 <div className="hero-line-bar" />
               </div>
             </div>

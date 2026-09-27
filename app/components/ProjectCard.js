@@ -3,11 +3,12 @@
 import { ViewTransition, useEffect, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import useMediaQuery, { FINE_POINTER } from "../hooks/useMediaQuery";
 
-// One card on the home page. The title is the real link to the case study;
-// its ::after stretches over the whole card so the card is clickable, while
-// the small Live / Code links sit above that layer (anchors never nest).
+// One card on the home page. The title is the real link to the case study
+// (keyboard, screen readers, middle-click); a click anywhere else on the card
+// opens it too, while the small Live / Code links keep their own targets.
 // The image shares a view-transition name with the case-study hero, which is
 // what makes the card morph into the page.
 function subscribeHash(onChange) {
@@ -37,6 +38,19 @@ export default function ProjectCard({ project, onHoverChange }) {
   const href = `/work/${slug}`;
   const codeHref = links.code[0]?.href;
 
+  const router = useRouter();
+  const openCase = (e) => {
+    // Links inside the card (title, Live, Code) handle themselves, and a
+    // text selection isn't a click.
+    if (e.defaultPrevented || e.target.closest("a, button")) return;
+    if (window.getSelection()?.toString()) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) {
+      window.open(href, "_blank", "noopener");
+      return;
+    }
+    router.push(href);
+  };
+
   const hoverProps = hasFinePointer
     ? {
         onMouseEnter: () => onHoverChange(true),
@@ -45,7 +59,12 @@ export default function ProjectCard({ project, onHoverChange }) {
     : {};
 
   return (
-    <article id={`work-${slug}`} className={`project-card${returning ? " is-returning" : ""}`} {...hoverProps}>
+    <article
+      id={`work-${slug}`}
+      className={`project-card${returning ? " is-returning" : ""}`}
+      onClick={openCase}
+      {...hoverProps}
+    >
       <div className="project-bg" aria-hidden="true">
         <ViewTransition name={`work-media-${slug}`} share="work-morph" enter="none" exit="none" default="none">
           <Image
