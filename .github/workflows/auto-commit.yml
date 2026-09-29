@@ -22,8 +22,8 @@ jobs:
 
       - name: Commit and Push
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "chore: daily update" || echo "Nothing to commit"
-          git push
+        git config user.name "mitarthpathak"
+        git config user.email "97668137+mitarthpathak@users.noreply.github.com"
+        git add .
+        git commit -m "chore: daily update" || echo "Nothing to commit"
+        git push
