@@ -1,29 +1,29 @@
-name: Auto Commit
+# name: Auto Commit
 
-on:
-  schedule:
-    - cron: "30 16 * * *"   # 10:00 PM IST
-  workflow_dispatch:
+# on:
+#   schedule:
+#     - cron: "30 16 * * *"   # 10:00 PM IST
+#   workflow_dispatch:
 
-permissions:
-  contents: write
+# permissions:
+#   contents: write
 
-jobs:
-  commit:
-    runs-on: ubuntu-latest
+# jobs:
+#   commit:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
 
-      - name: Make a change
-        run: |
-          echo "$(date)" >> auto-commit.txt
+#       - name: Make a change
+#         run: |
+#           echo "$(date)" >> auto-commit.txt
 
-      - name: Commit and Push
-        run: |
-          git config user.name "mitarthpathak"
-          git config user.email "97668137+mitarthpathak@users.noreply.github.com"
-          git add .
-          git commit -m "chore: daily update" || echo "Nothing to commit"
-          git push
+#       - name: Commit and Push
+#         run: |
+#           git config user.name "mitarthpathak"
+#           git config user.email "97668137+mitarthpathak@users.noreply.github.com"
+#           git add .
+#           git commit -m "chore: daily update" || echo "Nothing to commit"
+#           git push
