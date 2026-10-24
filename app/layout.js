@@ -5,7 +5,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 const SITE_URL = "https://mitarth.vercel.app";
 const TITLE = "Mitarth Pathak — AI & Full-Stack Developer";
 const DESCRIPTION =
-  "Portfolio of Mitarth Pathak, an AI and full-stack developer based in Jaipur. Case studies of Swasthya-Neeti, Run-Neeti, DevTask and Yap-Render.";
+  "Portfolio of Mitarth Pathak, an AI and full-stack developer based in Jaipur. Case studies of Swasthya-Neeti, Run-Neeti, DevTask, Yap-Render, CitySync and Doxentra.";
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),

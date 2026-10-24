@@ -13,7 +13,7 @@ export const profile = {
 
   // Short bio; every clause maps to a source above.
   summary:
-    "Mitarth Pathak is an AI and full-stack developer based in Jaipur, Rajasthan. He is studying for a B.Tech in Computer Science and Engineering at Arya College of Engineering & Technology (RTU Kota). He builds web apps with React and Next.js, backends with Spring Boot and Express, and AI features on top of LLM APIs such as Groq and Gemini. His projects are Swasthya-Neeti, Run-Neeti, DevTask and Yap-Render.",
+    "Mitarth Pathak is an AI and full-stack developer based in Jaipur, Rajasthan. He is studying for a B.Tech in Computer Science and Engineering at Arya College of Engineering & Technology (RTU Kota). He builds web apps with React and Next.js, backends with Spring Boot and Express, and AI features on top of LLM APIs such as Groq and Gemini. His projects are Swasthya-Neeti, Run-Neeti, DevTask, Yap-Render, CitySync and Doxentra.",
 
   education: {
     degree: "B.Tech, Computer Science and Engineering",
@@ -50,25 +50,28 @@ export const profile = {
   // Each skill is tied to the projects that use it (slugs from projects.js).
   skills: [
     { name: "Java", group: "Languages", projects: ["devtask"] },
-    { name: "JavaScript", group: "Languages", projects: ["run-neeti", "swasthya-neeti", "yap-render"] },
-    { name: "TypeScript", group: "Languages", projects: ["swasthya-neeti", "run-neeti", "yap-render"] },
+    { name: "JavaScript", group: "Languages", projects: ["run-neeti", "swasthya-neeti", "yap-render", "citysync"] },
+    { name: "TypeScript", group: "Languages", projects: ["swasthya-neeti", "run-neeti", "yap-render", "doxentra"] },
     { name: "Kotlin", group: "Languages", projects: ["yap-render"] },
     { name: "Python", group: "Languages", projects: [] },
     { name: "C++", group: "Languages", projects: [] },
-    { name: "React", group: "Frontend", projects: ["swasthya-neeti", "run-neeti", "yap-render"] },
+    { name: "React", group: "Frontend", projects: ["swasthya-neeti", "run-neeti", "yap-render", "citysync", "doxentra"] },
     { name: "Next.js", group: "Frontend", projects: ["yap-render"] },
-    { name: "Three.js / React Three Fiber", group: "Frontend", projects: ["yap-render"] },
-    { name: "D3", group: "Frontend", projects: ["run-neeti"] },
+    { name: "Three.js / React Three Fiber", group: "Frontend", projects: ["yap-render", "citysync"] },
+    { name: "D3", group: "Frontend", projects: ["run-neeti", "doxentra"] },
+    { name: "Leaflet", group: "Frontend", projects: ["citysync"] },
     { name: "Jetpack Compose", group: "Mobile", projects: ["yap-render"] },
     { name: "Spring Boot", group: "Backend", projects: ["devtask"] },
     { name: "Spring Security + JWT", group: "Backend", projects: ["devtask"] },
-    { name: "Express", group: "Backend", projects: ["swasthya-neeti", "run-neeti"] },
+    { name: "Express", group: "Backend", projects: ["swasthya-neeti", "run-neeti", "citysync", "doxentra"] },
     { name: "PostgreSQL", group: "Data", projects: ["devtask"] },
-    { name: "MongoDB", group: "Data", projects: ["swasthya-neeti", "run-neeti"] },
+    { name: "MongoDB", group: "Data", projects: ["swasthya-neeti", "run-neeti", "doxentra"] },
+    { name: "Supabase", group: "Data", projects: ["doxentra"] },
     { name: "Groq (Llama, Whisper)", group: "AI", projects: ["swasthya-neeti", "run-neeti"] },
-    { name: "Gemini API", group: "AI", projects: ["yap-render"] },
+    { name: "Gemini API", group: "AI", projects: ["yap-render", "doxentra"] },
+    { name: "OCR (Tesseract, PaddleOCR)", group: "AI", projects: ["doxentra"] },
     { name: "Git", group: "Tools", projects: [] },
-    { name: "Vercel", group: "Tools", projects: ["swasthya-neeti", "run-neeti", "yap-render"] },
+    { name: "Vercel", group: "Tools", projects: ["swasthya-neeti", "run-neeti", "yap-render", "doxentra"] },
   ],
 
   // Tools he names in the whoami card as daily ones, plus the build tools
