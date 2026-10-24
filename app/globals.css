@@ -1617,12 +1617,11 @@ body {
   position: relative;
   perspective: 1000px;
   cursor: zoom-in;
-  /* Deep space: a faint violet nebula with teal and rose edges behind the 3D scene. */
+  /* Night sky over the code city: a cool glow rising off the grid. */
   background:
-    radial-gradient(ellipse 55% 50% at 50% 50%, rgba(91, 76, 255, 0.16), transparent 70%),
-    radial-gradient(ellipse 38% 32% at 66% 36%, rgba(46, 211, 198, 0.07), transparent 70%),
-    radial-gradient(ellipse 40% 36% at 34% 66%, rgba(255, 90, 138, 0.06), transparent 70%),
-    #06070c;
+    radial-gradient(ellipse 85% 50% at 50% 100%, rgba(77, 141, 255, 0.13), transparent 70%),
+    radial-gradient(ellipse 60% 35% at 50% 0%, rgba(140, 140, 255, 0.05), transparent 70%),
+    #05060a;
 }
 
 /* Name tags in the 3D language graph. --c is the node's own color. */
@@ -1669,6 +1668,16 @@ body {
   letter-spacing: 0.02em;
   color: color-mix(in srgb, var(--c) 40%, #fff);
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.95);
+}
+
+/* A tiny repo glyph, like the book icon GitHub puts next to repo names. */
+.lg3d-label-repo::before {
+  content: "";
+  width: 7px;
+  height: 8px;
+  border: 1.5px solid var(--c);
+  border-radius: 1.5px;
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--c) 60%, transparent);
 }
 
 .lg3d-label-repo b {
@@ -3584,6 +3593,16 @@ body {
   .lang-graph-sidebar,
   .lang-graph-detail {
     display: none;
+  }
+
+  /* The city is small on a phone: district tags keep just the language name. */
+  .lg3d-label-lang b {
+    display: none;
+  }
+
+  .lg3d-label-lang {
+    padding: 2px 7px 2px 6px;
+    font-size: 10.5px;
   }
 
   .lang-graph-filters,
