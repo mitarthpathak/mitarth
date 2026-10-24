@@ -49,6 +49,9 @@ const LANG_COLORS = {
   rs: "#FF8EC7",
 };
 
+// Lots and buildings that have no language (the README-only profile repo).
+const README_COLOR = "#8b93a7";
+
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
@@ -195,51 +198,6 @@ const SCM_FILES = [
   { name: "devtask.png", path: "public", status: "U" },
   { name: "yap-render.png", path: "public", status: "U" },
 ];
-
-function TerminalChrome({ name, children, draggable, titlebarProps, bodyClassName, cardClassName }) {
-  return (
-    <div className={`ide-terminal-card ${draggable ? "is-draggable" : ""} ${cardClassName || ""}`}>
-      <div className="ide-terminal-titlebar" {...titlebarProps}>
-        <span className="tech-dot tech-dot-red" />
-        <span className="tech-dot tech-dot-yellow" />
-        <span className="tech-dot tech-dot-green" />
-        <span className="ide-terminal-name">{name}</span>
-      </div>
-      <div className={`ide-terminal-body ${bodyClassName || ""}`}>{children}</div>
-    </div>
-  );
-}
-
-function TermLine({ line }) {
-  if (line.cmd) {
-    return (
-      <div className="term-line">
-        <span className="term-prompt">$</span> <span className="term-cmd">{line.cmd}</span>
-      </div>
-    );
-  }
-  if (line.ls) {
-    return (
-      <div className="term-line">
-        <div className="ls-row">
-          {line.ls.map((f) => {
-            const color = FILE_ICONS[extOf(f)]?.color || "rgba(255,255,255,0.55)";
-            return (
-              <span className="ls-file" style={{ color }} key={f}>
-                {f}
-              </span>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className="term-line">
-      <span className="term-out">{line.text}</span>
-    </div>
-  );
-}
 
 // Real data pulled from github.com/mitarthpathak — one repo missed here is one
 // missed in the graph, so this lists every public repo on the profile (the
@@ -410,11 +368,12 @@ PROJECT_NODES.forEach((p) => {
   let y = 0;
   p.floors = p.shares.map(([key, share]) => {
     const h = Math.max(share * height, 0.07);
-    const floor = { key, y: round2(y + h / 2), h: round2(h - 0.03) };
+    const floor = { key, color: LANG_COLORS[key], y: round2(y + h / 2), h: round2(h - 0.03) };
     y += h;
     return floor;
   });
   p.height = round2(y || height);
+  p.roofColor = LANG_COLORS[p.dominant] || README_COLOR;
 });
 
 // One district per language that is some repo's main language, plus a lot
@@ -425,6 +384,11 @@ const DISTRICTS = [
 ].filter((d) => d.repos.length);
 
 DISTRICTS.forEach((d) => {
+  const count = d.repos.length;
+  d.color = d.lang ? LANG_COLORS[d.key] : README_COLOR;
+  d.title = d.lang ? d.lang.name : "README";
+  d.meta = `${d.lang ? `${d.lang.pctLabel} · ` : ""}${count} repo${count === 1 ? "" : "s"}`;
+  d.interactive = !!d.lang;
   d.repos.sort((a, b) => b.height - a.height);
   d.cols = Math.ceil(Math.sqrt(d.repos.length));
   d.rows = Math.ceil(d.repos.length / d.cols);
@@ -494,6 +458,7 @@ function beamPoints(from, to, segments = 32) {
 }
 
 GRAPH_EDGES.forEach((e) => {
+  e.color = LANG_COLORS[e.key];
   e.width = round2(logScale(e.bytes, EDGE_MIN, EDGE_MAX, 0.8, 2.6));
   const project = PROJECT_BY_NAME[e.project];
   const district = LANG_BY_KEY[e.key].district;
@@ -506,25 +471,28 @@ GRAPH_EDGES.forEach((e) => {
 
 const BEAM_EDGES = GRAPH_EDGES.filter((e) => e.points);
 
-// A beam with a dashed "data flow" running from the repo to the language.
-function Beam3D({ edge }) {
+// A beam between a building and what it's connected to. A focused beam
+// carries a dashed "data flow"; resting ones are faint static threads, and
+// the rest fade almost out while something else is in focus.
+function Beam3D({ edge, state = "focus" }) {
   const lineRef = useRef(null);
+  const flowing = state === "focus";
 
   useFrame((_, delta) => {
     const material = lineRef.current?.material;
-    if (material) material.dashOffset -= delta * 1.4;
+    if (flowing && material) material.dashOffset -= delta * 1.4;
   });
 
   return (
     <Line
       ref={lineRef}
       points={edge.points}
-      color={LANG_COLORS[edge.key]}
+      color={edge.color}
       transparent
-      opacity={0.95}
+      opacity={flowing ? 0.95 : state === "rest" ? 0.22 : 0.04}
       depthWrite={false}
-      lineWidth={edge.width}
-      dashed
+      lineWidth={flowing ? edge.width : Math.max(0.7, edge.width * 0.6)}
+      dashed={flowing}
       dashSize={0.2}
       gapSize={0.12}
     />
@@ -535,14 +503,14 @@ function Beam3D({ edge }) {
 // OrbitControls on touch devices so there's nothing here to capture a
 // finger swipe that's actually meant to scroll the page. It stops for good,
 // right where it is, once the visitor taps the graph.
-function AutoOrbitCamera({ enabled, radius = 22, height = 13, speed = 0.12 }) {
+function AutoOrbitCamera({ enabled, target, radius = 22, height = 13, speed = 0.12 }) {
   useFrame(({ camera, clock }) => {
     if (!enabled) return;
     const t = clock.elapsedTime * speed;
     camera.position.x = Math.sin(t) * radius;
     camera.position.z = Math.cos(t) * radius;
     camera.position.y = height;
-    camera.lookAt(0, 0.7, 0);
+    camera.lookAt(target[0], target[1], target[2]);
   });
   return null;
 }
@@ -589,13 +557,10 @@ function pointerHandlers(onHover, onLeave, onSelect) {
   };
 }
 
-const README_COLOR = "#8b93a7";
-
-// A language's district: a glowing lot on the city grid, named at its front.
+// A district: a glowing lot on the city grid, named at its edge.
 function District3D({ district, isActive, isFocus, onHover, onLeave, onSelect }) {
-  const color = district.lang ? LANG_COLORS[district.key] : README_COLOR;
-  const handlers = district.lang ? pointerHandlers(onHover, onLeave, onSelect) : {};
-  const count = district.repos.length;
+  const { color } = district;
+  const handlers = district.interactive ? pointerHandlers(onHover, onLeave, onSelect) : {};
 
   return (
     <group position={[district.x, 0, district.z]}>
@@ -613,46 +578,42 @@ function District3D({ district, isActive, isFocus, onHover, onLeave, onSelect })
       </mesh>
       <NodeLabel
         anchor={[district.x, 0, district.z]}
-        offset={[0, 0.02, district.d / 2 + 0.3]}
+        offset={district.labelOffset || [0, 0.02, district.d / 2 + 0.3]}
         variant="lang"
         color={color}
         dim={!isActive}
         focus={isFocus}
       >
-        {district.lang ? district.lang.name : "README"}
-        <b>
-          {district.lang ? `${district.lang.pctLabel} · ` : ""}
-          {count} repo{count === 1 ? "" : "s"}
-        </b>
+        {district.title}
+        <b>{district.meta}</b>
       </NodeLabel>
     </group>
   );
 }
 
-// A repo: a tower of language floors with neon edges, like a stack of blocks.
-function Building3D({ node, isActive, isFocus, focusLang, showLabel, onHover, onLeave, onSelect }) {
+// A repo: a tower of floors with neon edges, like a stack of blocks. A floor
+// lights up when it's in focus itself (focusKey) or its whole building is.
+function Building3D({ node, isActive, isFocus, focusKey, showLabel, onHover, onLeave, onSelect }) {
   const fade = isActive ? 1 : 0.12;
-  const roofColor = LANG_COLORS[node.dominant] || README_COLOR;
 
   return (
     <group position={[node.x, 0, node.z]} {...pointerHandlers(onHover, onLeave, onSelect)}>
       {node.floors.length ? (
         node.floors.map((f) => {
-          const color = LANG_COLORS[f.key];
-          const lit = isFocus || focusLang === f.key;
+          const lit = isFocus || focusKey === f.key;
           return (
             <mesh key={f.key} position={[0, f.y, 0]}>
               <boxGeometry args={[node.size, f.h, node.size]} />
               <meshStandardMaterial
-                color={darken(color, 0.55)}
-                emissive={color}
+                color={darken(f.color, 0.55)}
+                emissive={f.color}
                 emissiveIntensity={lit ? 0.75 : 0.2}
                 roughness={0.45}
                 metalness={0.25}
                 transparent
                 opacity={0.92 * fade}
               />
-              <Edges color={lit ? lighten(color, 0.35) : color} lineWidth={lit ? 1.8 : 1} transparent opacity={fade} />
+              <Edges color={lit ? lighten(f.color, 0.35) : f.color} lineWidth={lit ? 1.8 : 1} transparent opacity={fade} />
             </mesh>
           );
         })
@@ -668,7 +629,7 @@ function Building3D({ node, isActive, isFocus, focusLang, showLabel, onHover, on
           anchor={[node.x, node.height, node.z]}
           offset={[0, node.height + 0.26, 0]}
           variant="repo"
-          color={roofColor}
+          color={node.roofColor}
           dim={!isActive}
           focus={isFocus}
         >
@@ -677,6 +638,80 @@ function Building3D({ node, isActive, isFocus, focusLang, showLabel, onHover, on
         </NodeLabel>
       )}
     </group>
+  );
+}
+
+// The stage both city panes share: the night grid, lights and stars, the
+// camera controls and the bloom that makes the neon edges glow.
+function CityScene({
+  isMobile,
+  spinning,
+  onStopSpinning,
+  onMissed,
+  camera,
+  target = [0, 0.7, 0],
+  fog = [18, 36],
+  mobileOrbit,
+  children,
+}) {
+  return (
+    <Canvas
+      camera={{ position: camera, fov: 38 }}
+      gl={{ alpha: true, antialias: !isMobile }}
+      dpr={isMobile ? 1 : [1, 2]}
+      onPointerMissed={onMissed}
+    >
+      <fog attach="fog" args={["#05060a", ...fog]} />
+      <ambientLight intensity={0.35} />
+      <directionalLight position={[6, 12, 8]} intensity={0.8} />
+      <pointLight position={[-8, 4, -6]} intensity={0.5} color="#5b7cff" />
+      <pointLight position={[7, 3, 7]} intensity={0.3} color="#ff9d5b" />
+
+      <Stars radius={45} depth={25} count={isMobile ? 400 : 1200} factor={2} saturation={0} fade speed={0.3} />
+      <Grid
+        position={[0, -0.001, 0]}
+        args={[40, 40]}
+        cellSize={CELL / 2}
+        cellThickness={0.6}
+        cellColor="#131a2a"
+        sectionSize={CELL * 2}
+        sectionThickness={1}
+        sectionColor="#24304d"
+        fadeDistance={26}
+        fadeStrength={1.6}
+        infiniteGrid
+      />
+
+      {children}
+
+      {isMobile ? (
+        // A drag-to-orbit control would fight the page's own vertical
+        // swipe-to-scroll on a touchscreen, so mobile gets a purely
+        // cosmetic auto-orbit instead — no pointer capture at all.
+        <AutoOrbitCamera enabled={spinning} target={target} {...mobileOrbit} />
+      ) : (
+        <OrbitControls
+          target={target}
+          enablePan={false}
+          minDistance={7}
+          maxDistance={30}
+          minPolarAngle={0.3}
+          maxPolarAngle={1.32}
+          rotateSpeed={0.6}
+          zoomSpeed={0.8}
+          autoRotate={spinning}
+          autoRotateSpeed={0.5}
+          onStart={onStopSpinning}
+          makeDefault
+        />
+      )}
+
+      {!isMobile && (
+        <EffectComposer multisampling={0}>
+          <Bloom luminanceThreshold={0.25} luminanceSmoothing={0.3} intensity={0.7} mipmapBlur radius={0.6} />
+        </EffectComposer>
+      )}
+    </Canvas>
   );
 }
 
@@ -870,33 +905,14 @@ function LanguagesPane() {
         </div>
 
         <div className="lang-graph-canvas" style={{ cursor: isMobile ? "default" : "grab" }}>
-          <Canvas
-            camera={{ position: [10, 9.5, 13], fov: 38 }}
-            gl={{ alpha: true, antialias: !isMobile }}
-            dpr={isMobile ? 1 : [1, 2]}
-            onPointerMissed={() => setPinned(null)}
+          <CityScene
+            isMobile={isMobile}
+            spinning={spinning}
+            onStopSpinning={stopSpinning}
+            onMissed={() => setPinned(null)}
+            camera={[10, 9.5, 13]}
+            mobileOrbit={{ radius: 22, height: 13 }}
           >
-            <fog attach="fog" args={["#05060a", 18, 36]} />
-            <ambientLight intensity={0.35} />
-            <directionalLight position={[6, 12, 8]} intensity={0.8} />
-            <pointLight position={[-8, 4, -6]} intensity={0.5} color="#5b7cff" />
-            <pointLight position={[7, 3, 7]} intensity={0.3} color="#ff9d5b" />
-
-            <Stars radius={45} depth={25} count={isMobile ? 400 : 1200} factor={2} saturation={0} fade speed={0.3} />
-            <Grid
-              position={[0, -0.001, 0]}
-              args={[40, 40]}
-              cellSize={CELL / 2}
-              cellThickness={0.6}
-              cellColor="#131a2a"
-              sectionSize={CELL * 2}
-              sectionThickness={1}
-              sectionColor="#24304d"
-              fadeDistance={26}
-              fadeStrength={1.6}
-              infiniteGrid
-            />
-
             {DISTRICTS.map((d) => (
               <District3D
                 key={d.key ?? "readme"}
@@ -915,7 +931,7 @@ function LanguagesPane() {
                 node={p}
                 isActive={projectActive(p.name)}
                 isFocus={active?.type === "project" && active.name === p.name}
-                focusLang={active?.type === "lang" ? active.key : null}
+                focusKey={active?.type === "lang" ? active.key : null}
                 showLabel={p.big || (active?.type === "project" && active.name === p.name)}
                 onHover={() => hoverProject(p.name)}
                 onLeave={clearHover}
@@ -926,35 +942,7 @@ function LanguagesPane() {
             {BEAM_EDGES.filter(edgeFocused).map((edge) => (
               <Beam3D key={`${edge.project}-${edge.key}`} edge={edge} />
             ))}
-
-            {isMobile ? (
-              // A drag-to-orbit control would fight the page's own vertical
-              // swipe-to-scroll on a touchscreen, so mobile gets a purely
-              // cosmetic auto-orbit instead — no pointer capture at all.
-              <AutoOrbitCamera enabled={spinning} />
-            ) : (
-              <OrbitControls
-                target={[0, 0.7, 0]}
-                enablePan={false}
-                minDistance={7}
-                maxDistance={30}
-                minPolarAngle={0.3}
-                maxPolarAngle={1.32}
-                rotateSpeed={0.6}
-                zoomSpeed={0.8}
-                autoRotate={spinning}
-                autoRotateSpeed={0.5}
-                onStart={stopSpinning}
-                makeDefault
-              />
-            )}
-
-            {!isMobile && (
-              <EffectComposer multisampling={0}>
-                <Bloom luminanceThreshold={0.25} luminanceSmoothing={0.3} intensity={0.7} mipmapBlur radius={0.6} />
-              </EffectComposer>
-            )}
-          </Canvas>
+          </CityScene>
         </div>
 
         <div className="lang-graph-detail">
@@ -988,245 +976,534 @@ function LanguagesPane() {
   );
 }
 
-const SAKILA_TABLES = [
-  "actor", "address", "category", "city", "country", "customer", "film",
-  "film_actor", "film_actor2", "film_category", "inventory", "language",
-  "payment", "rental", "staff", "store", "test",
+// Pane 02 reads the same code city for backend and data. Every public repo
+// with a server or a database is a building in the district of its backend,
+// and its floors are its stack: the data layer at the bottom (one floor per
+// database, in that database's color), then the framework, then auth. The
+// databases stand as silos in the middle, wired to the buildings that use
+// them. Found by reading each repo's manifests (package.json, pom.xml,
+// Gradle, Cargo) and the code that imports them, October 2026; `bytes` is
+// the size of each repo's backend source only.
+const BACKENDS = {
+  express: { name: "Express", note: "Node.js", color: "#E6EAF2" },
+  spring: { name: "Spring Boot", note: "Java", color: "#6DB33F" },
+  nextapi: { name: "Next.js API", note: "Route handlers", color: "#A78BFA" },
+  hono: { name: "Hono", note: "Node.js", color: "#FF7A45" },
+  soroban: { name: "Soroban", note: "Stellar smart contract", color: "#FDE047" },
+  device: { name: "On-device", note: "No server", color: "#94A3B8" },
+};
+
+const DATABASES = {
+  mongodb: { name: "MongoDB", type: "Document database", color: "#00ED64" },
+  postgres: { name: "PostgreSQL", type: "Relational database", color: "#4D6BFF" },
+  h2: { name: "H2", type: "In-memory SQL", color: "#7DD3FC" },
+  supabase: { name: "Supabase Storage", type: "Object storage", color: "#14B8A6" },
+  redis: { name: "Redis", type: "Key-value (Upstash)", color: "#FF4D5E" },
+  cloudinary: { name: "Cloudinary", type: "Media storage", color: "#F472B6" },
+  sqlite: { name: "SQLite", type: "On-device SQL (Room)", color: "#E2C08D" },
+  ledger: { name: "Stellar ledger", type: "On-chain storage", color: "#F59E0B" },
+};
+
+const AUTH_COLOR = "#FDE68A";
+
+// data: [database, the library that talks to it]; auth: how people sign in.
+const BACKEND_REPOS = [
+  { name: "Swasthya-Neeti", big: true, backend: "express", data: [["mongodb", "Mongoose"]], auth: "scrypt passwords", bytes: 121831 },
+  { name: "Run-Neeti", big: true, backend: "express", data: [["mongodb", "Mongoose"]], auth: "scrypt passwords", bytes: 41473 },
+  { name: "Doxentra", big: true, backend: "express", data: [["mongodb", "Mongoose"], ["supabase", "Storage API"]], auth: "scrypt passwords", bytes: 775689 },
+  { name: "Glyph", backend: "express", data: [["mongodb", "Mongoose"], ["supabase", "Storage API"]], auth: "scrypt passwords", bytes: 601784 },
+  { name: "CitySync", big: true, backend: "express", data: [], bytes: 206290 },
+  { name: "DevTask", big: true, backend: "spring", data: [["postgres", "Spring Data JPA"]], auth: "Spring Security + JWT", bytes: 26244 },
+  { name: "spring-security", backend: "spring", data: [["postgres", "Spring Data JPA"]], auth: "Spring Security + JWT", bytes: 18106 },
+  { name: "OAuthExample", backend: "spring", data: [], auth: "OAuth2 (Google)", bytes: 1903 },
+  { name: "SpringJPA", backend: "spring", data: [["h2", "Spring Data JPA"]], bytes: 4130 },
+  { name: "ecom", backend: "spring", data: [["h2", "Spring Data JPA"]], bytes: 6948 },
+  { name: "studentManagement", backend: "spring", data: [["h2", "Spring Data JPA"]], bytes: 2597 },
+  { name: "mitarth", label: "Mitarth", big: true, backend: "nextapi", data: [["redis", "Upstash"]], bytes: 32013 },
+  { name: "yap-render", label: "Yap-Render", big: true, backend: "nextapi", data: [], bytes: 10947 },
+  { name: "Kahani-Studio", fork: true, backend: "nextapi", data: [["postgres", "Prisma"], ["cloudinary", "Cloudinary SDK"]], auth: "Admin passcode", bytes: 47286 },
+  { name: "supportagent-agent", backend: "nextapi", data: [], auth: "Better Auth (Vercel)", bytes: 2533 },
+  { name: "ScholarGuru", backend: "hono", data: [["postgres", "Neon driver"]], auth: "Auth.js", bytes: 8208 },
+  { name: "Lottery---Raffle-Contract", label: "Lottery-Raffle-Contract", backend: "soroban", data: [["ledger", "Soroban storage"]], bytes: 2928 },
+  { name: "yap-render-APP", backend: "device", data: [["sqlite", "Room"]], bytes: 48518 },
 ];
 
-const FILM_ROWS = [
-  [1, "ACE GOLDFINGER", "4.99", "G", "2006", "48", "Horror", "FAWCETT, GUINESS, ZELLWEGER, DEPP"],
-  [2, "AIRPLANE SIERRA", "4.99", "PG-13", "2006", "62", "Comedy", "PENN, KILMER, MOSTEL, BOLGER, HOPPER"],
-  [3, "AIRPORT POLLOCK", "4.99", "R", "2006", "54", "Horror", "WILLIS, KILMER, DAVIS, DEE"],
-  [4, "ALADDIN CALENDAR", "4.99", "NC-17", "2006", "63", "Sports", "RYDER, BOLGER, TRACY, JOHANSSON, MALDEN, DUKAKIS, WAYNE, CHASE"],
-  [5, "ALI FOREVER", "4.99", "PG", "2006", "150", "Horror", "TORN, BERRY, MCCONAUGHEY, MCDORMAND, CHASE"],
-  [6, "AMELIE HELLFIGHTERS", "4.99", "R", "2006", "79", "Music", "HUNT, TANDY, TORN, MANSFIELD, GOODING, BRODY"],
-  [7, "AMERICAN CIRCUS", "4.99", "R", "2006", "129", "Action", "TOMEI, JACKMAN, BLOOM, CROWE, CRAWFORD"],
-  [8, "ANTHEM LUKE", "4.99", "PG-13", "2006", "91", "Comedy", "KEITEL, KILMER"],
-  [9, "APACHE DIVINE", "4.99", "NC-17", "2006", "92", "Family", "CRONYN, OLIVIER, BERRY, WAHLBERG"],
-  [10, "APOCALYPSE FLAMINGOS", "4.99", "R", "2006", "119", "New", "CLOSE, HOFFMAN, BASINGER, KILMER, WILSON"],
-  [11, "ATTACKS HATE", "4.99", "PG-13", "2006", "113", "Sci-Fi", "KEITEL, TEMPLE, TORN, DUNST"],
-  [12, "ATTRACTION NEWTON", "4.99", "PG-13", "2006", "83", "New", "WOOD, WEST, PENN, TAUTOU, HUDSON"],
-  [13, "AUTUMN CROW", "4.99", "G", "2006", "108", "Games", "PITT, TAUTOU, JOHANSSON, WAHLBERG, DEAN"],
-];
+// Public repos with neither a server nor a database: frontends, a CLI, a
+// console app and practice code.
+const NO_BACKEND_REPOS = REPO_DATA.filter((r) => !BACKEND_REPOS.some((b) => b.name === r.name)).map((r) => r.label);
 
-const QUERY_LINES = [
-  [{ t: "SELECT", c: "kw" }],
-  [{ t: "    f.title," }],
-  [{ t: "    f.rental_rate," }],
-  [{ t: "    f.rating," }],
-  [{ t: "    f.release_year," }],
-  [{ t: "    f.length," }],
-  [{ t: "    c.name " }, { t: "AS", c: "kw" }, { t: " category_name," }],
-  [
-    { t: "    " },
-    { t: "STRING_AGG", c: "fn" },
-    { t: "(a.last_name, " },
-    { t: "', '", c: "str" },
-    { t: ") " },
-    { t: "AS", c: "kw" },
-    { t: " actors" },
-  ],
-  [{ t: "FROM", c: "kw" }],
-  [{ t: "    film f" }],
-  [{ t: "JOIN", c: "kw" }],
-  [{ t: "    film_actor fa " }, { t: "ON", c: "kw" }, { t: " f.film_id = fa.film_id" }],
-  [{ t: "JOIN", c: "kw" }],
-  [{ t: "    actor a " }, { t: "ON", c: "kw" }, { t: " fa.actor_id = a.actor_id" }],
-  [{ t: "JOIN", c: "kw" }],
-];
+const SILO_R = 0.3;
+const SILO_RING = 2.1; // the silos stand on a circle this wide in the middle
+const DISTRICT_RING = 5.7; // and the districts around them, this far out
 
-function DbReplicaBackground() {
+const BE_BYTES = BACKEND_REPOS.map((r) => r.bytes);
+const BE_MIN = Math.min(...BE_BYTES);
+const BE_MAX = Math.max(...BE_BYTES);
+
+const BE_NODES = BACKEND_REPOS.map((r) => {
+  const backend = BACKENDS[r.backend];
+  const layers = [
+    ...r.data.map(([key, lib]) => ({ key, color: DATABASES[key].color, lib })),
+    { key: r.backend, color: backend.color },
+    ...(r.auth ? [{ key: "auth", color: AUTH_COLOR }] : []),
+  ];
+  const height = logScale(r.bytes, BE_MIN, BE_MAX, 0.5, 3.2);
+  const h = height / layers.length;
+  return {
+    ...r,
+    label: r.label || r.name,
+    size: r.big ? 0.56 : 0.4,
+    dbs: r.data.map(([key]) => key),
+    floors: layers.map((layer, i) => ({ ...layer, y: round2(h * (i + 0.5)), h: round2(h - 0.03) })),
+    height: round2(height),
+    roofColor: backend.color,
+    url: `https://github.com/mitarthpathak/${r.name}`,
+  };
+});
+
+const BE_BY_NAME = BE_NODES.reduce((acc, n) => ({ ...acc, [n.name]: n }), {});
+
+// Districts ring the silos, busy ones alternating with small ones so the
+// ring stays balanced; inside each, the tallest buildings stand outermost
+// so they never hide the silos.
+const BE_DISTRICTS = (() => {
+  const all = Object.entries(BACKENDS)
+    .map(([key, b]) => ({ key, ...b, repos: BE_NODES.filter((p) => p.backend === key) }))
+    .filter((d) => d.repos.length)
+    .sort((a, b) => b.repos.length - a.repos.length);
+  const half = Math.ceil(all.length / 2);
+  const ordered = all.slice(0, half).flatMap((d, i) => (all[half + i] ? [d, all[half + i]] : [d]));
+  return ordered.map((d, i) => {
+    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / ordered.length;
+    const dir = [Math.cos(angle), Math.sin(angle)];
+    const cols = Math.ceil(Math.sqrt(d.repos.length));
+    const rows = Math.ceil(d.repos.length / cols);
+    const w = cols * CELL + LOT_PAD * 2;
+    const depth = rows * CELL + LOT_PAD * 2;
+    const x = round2(dir[0] * DISTRICT_RING);
+    const z = round2(dir[1] * DISTRICT_RING);
+    const cells = Array.from({ length: cols * rows }, (_, c) => [
+      round2(x - w / 2 + LOT_PAD + CELL * ((c % cols) + 0.5)),
+      round2(z - depth / 2 + LOT_PAD + CELL * (Math.floor(c / cols) + 0.5)),
+    ]).sort((a, b) => Math.hypot(b[0], b[1]) - Math.hypot(a[0], a[1]));
+    [...d.repos]
+      .sort((a, b) => b.height - a.height)
+      .forEach((p, c) => {
+        [p.x, p.z] = cells[c];
+      });
+    const count = d.repos.length;
+    return {
+      ...d,
+      title: d.name,
+      meta: `${count} repo${count === 1 ? "" : "s"}`,
+      interactive: true,
+      x,
+      z,
+      w,
+      d: depth,
+      // Name tags sit on the outer side of each lot, facing away from the middle.
+      labelOffset: [round2(dir[0] * (w / 2 + 0.45)), 0.02, round2(dir[1] * (depth / 2 + 0.45))],
+    };
+  });
+})();
+
+// Each silo stands at the point of the ring nearest the buildings that use
+// it, so most wires run short. Taller silos serve more repos.
+const SILOS = (() => {
+  const list = Object.entries(DATABASES)
+    .map(([key, db]) => {
+      const users = BE_NODES.filter((p) => p.dbs.includes(key));
+      const mx = users.reduce((s, p) => s + p.x, 0) / (users.length || 1);
+      const mz = users.reduce((s, p) => s + p.z, 0) / (users.length || 1);
+      return { key, ...db, users, count: users.length, want: Math.atan2(mz, mx) };
+    })
+    .filter((s) => s.count)
+    .sort((a, b) => a.want - b.want);
+  return list.map((s, i) => {
+    const angle = list[0].want + (i * 2 * Math.PI) / list.length;
+    return {
+      ...s,
+      x: round2(Math.cos(angle) * SILO_RING),
+      z: round2(Math.sin(angle) * SILO_RING),
+      h: round2(0.55 + 0.32 * s.count),
+    };
+  });
+})();
+
+const SILO_BY_KEY = SILOS.reduce((acc, s) => ({ ...acc, [s.key]: s }), {});
+
+// One wire per repo per database it uses, from the roof to the silo top.
+const BE_EDGES = BE_NODES.flatMap((p) =>
+  p.dbs.map((key) => {
+    const silo = SILO_BY_KEY[key];
+    return {
+      project: p.name,
+      key,
+      color: DATABASES[key].color,
+      width: 1.6,
+      points: beamPoints([p.x, p.height + 0.04, p.z], [silo.x, silo.h + 0.04, silo.z]),
+    };
+  })
+);
+
+const MAX_BACKEND_REPOS = Math.max(...BE_DISTRICTS.map((d) => d.repos.length));
+const MAX_DB_USERS = Math.max(...SILOS.map((s) => s.count));
+
+// Everything tied to one selection: a repo's backend and databases, a
+// backend's repos and their databases, a database's repos and their backends.
+function backendRelations(sel) {
+  const repos = BE_NODES.filter((p) =>
+    sel.type === "project" ? p.name === sel.name : sel.type === "backend" ? p.backend === sel.key : p.dbs.includes(sel.key)
+  );
+  return {
+    repos: new Set(repos.map((p) => p.name)),
+    backends: new Set(sel.type === "backend" ? [sel.key] : repos.map((p) => p.backend)),
+    dbs: new Set(sel.type === "db" ? [sel.key] : repos.flatMap((p) => p.dbs)),
+  };
+}
+
+// A database: a silo shaped like the classic database icon — a cylinder
+// with stacked disks — glowing in its own color.
+function Silo3D({ silo, isActive, isFocus, onHover, onLeave, onSelect }) {
+  const fade = isActive ? 1 : 0.15;
+  const { color, h } = silo;
+
   return (
-    <div className="db-replica">
-      <div className="dbrep-tabbar">
-        <div className="dbrep-tabbar-left">
-          <button type="button" className="dbrep-tab is-active">Databases</button>
-          <button type="button" className="dbrep-tab">Scripts</button>
-          <button type="button" className="dbrep-tab">&#9733; Favorites</button>
-        </div>
-        <div className="dbrep-tabbar-right">
-          <button type="button" className="dbrep-querytab is-active">
-            4: Top rental actors{" "}
-            <span className="dbrep-tab-close">&times;</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="dbrep-toolbar">
-        <div className="dbrep-toolbar-icons">
-          <button type="button" className="dbrep-icon dbrep-icon-run" title="Execute">&#9654;</button>
-          {["▷", "⏹", "↺", "↻", "⌕", "▦", "▧", "⋮"].map((g, i) => (
-            <button type="button" className="dbrep-icon" key={i}>
-              {g}
-            </button>
-          ))}
-        </div>
-        <div className="dbrep-toolbar-conn">
-          <label className="dbrep-check">
-            <input type="checkbox" /> Sticky
-          </label>
-          <span className="dbrep-conn-label">Database Connection</span>
-          <button type="button" className="dbrep-dd">&#128031; PostgreSQL 14.1</button>
-          <button type="button" className="dbrep-dd">&#128451; sakila</button>
-          <span className="dbrep-conn-label">Schema</span>
-          <button type="button" className="dbrep-dd">&#128273; public</button>
-          <span className="dbrep-conn-label">Max Rows</span>
-          <span className="dbrep-input">1000</span>
-          <span className="dbrep-conn-label">Max Chars</span>
-          <span className="dbrep-input">-1</span>
-        </div>
-      </div>
-
-      <div className="dbrep-body">
-        <div className="dbrep-sidebar">
-          <button type="button" className="dbrep-tree-row lvl0">&#128451; PostgreSQL 14.1</button>
-          <button type="button" className="dbrep-tree-row lvl1">Databases</button>
-          <button type="button" className="dbrep-tree-row lvl2">&#128451; sakila</button>
-          <button type="button" className="dbrep-tree-row lvl3">Schemas</button>
-          <button type="button" className="dbrep-tree-row lvl4">information_schema</button>
-          <button type="button" className="dbrep-tree-row lvl4">other</button>
-          <button type="button" className="dbrep-tree-row lvl4">pg_catalog</button>
-          <button type="button" className="dbrep-tree-row lvl4">pg_toast</button>
-          <button type="button" className="dbrep-tree-row lvl4">public</button>
-          <button type="button" className="dbrep-tree-row lvl5">Tables</button>
-          {SAKILA_TABLES.map((t) => (
-            <button
-              type="button"
-              className={`dbrep-tree-row lvl6 ${t === "category" ? "is-selected" : ""}`}
-              key={t}
-            >
-              {t}
-            </button>
-          ))}
-          <button type="button" className="dbrep-tree-row lvl5">Foreign Tables</button>
-          <button type="button" className="dbrep-tree-row lvl5">Views</button>
-          <button type="button" className="dbrep-tree-row lvl5">Materialized Views</button>
-          <button type="button" className="dbrep-tree-row lvl5">Indexes</button>
-          <button type="button" className="dbrep-tree-row lvl5">Triggers</button>
-        </div>
-
-        <div className="dbrep-main">
-          <div className="dbrep-editor">
-            {QUERY_LINES.map((tokens, i) => (
-              <div className="dbrep-editor-line" key={i}>
-                <span className="dbrep-ln">{i + 1}</span>
-                <span className="dbrep-code">
-                  {tokens.map((tok, j) => (
-                    <span key={j} className={tok.c ? `dbrep-tok-${tok.c}` : undefined}>
-                      {tok.t}
-                    </span>
-                  ))}
-                  {i === QUERY_LINES.length - 1 && <span className="dbrep-caret" />}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="dbrep-editor-status">
-            <span>8 / 15&nbsp;&nbsp;[130]&nbsp;&nbsp;INS</span>
-            <span>LF&nbsp;&nbsp;Auto Commit: ON&nbsp;&nbsp;UTF-8&nbsp;&nbsp;Untitled*</span>
-          </div>
-
-          <div className="dbrep-resulttabs">
-            <button type="button" className="dbrep-resulttab">Log</button>
-            <button type="button" className="dbrep-resulttab is-active">
-              1: film [657] <span className="dbrep-tab-close">&times;</span>
-            </button>
-          </div>
-
-          <div className="dbrep-grid-wrap">
-            <table className="dbrep-grid">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>title</th>
-                  <th>rental_rate</th>
-                  <th>rating</th>
-                  <th>release_year</th>
-                  <th>length</th>
-                  <th>category_name</th>
-                  <th>actors</th>
-                </tr>
-              </thead>
-              <tbody>
-                {FILM_ROWS.map((row) => (
-                  <tr key={row[0]}>
-                    {row.map((cell, i) => (
-                      <td key={i}>{cell}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="dbrep-grid-status">
-            <span>Format: &lt;Select a Cell&gt;</span>
-            <span>0.104/0.004 sec&nbsp;&nbsp;657/7&nbsp;&nbsp;1-14</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <group position={[silo.x, 0, silo.z]} {...pointerHandlers(onHover, onLeave, onSelect)}>
+      <mesh position={[0, h / 2, 0]}>
+        <cylinderGeometry args={[SILO_R, SILO_R, h, 40, 1]} />
+        <meshStandardMaterial
+          color={darken(color, 0.6)}
+          emissive={color}
+          emissiveIntensity={isFocus ? 0.7 : 0.2}
+          roughness={0.4}
+          metalness={0.3}
+          transparent
+          opacity={0.9 * fade}
+        />
+        <Edges
+          color={isFocus ? lighten(color, 0.35) : color}
+          lineWidth={isFocus ? 1.8 : 1.1}
+          threshold={20}
+          transparent
+          opacity={fade}
+        />
+      </mesh>
+      {[h / 3, (2 * h) / 3].map((y) => (
+        <mesh key={y} position={[0, y, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[SILO_R + 0.004, 0.012, 8, 48]} />
+          <meshBasicMaterial color={color} transparent opacity={0.9 * fade} />
+        </mesh>
+      ))}
+      <NodeLabel
+        anchor={[silo.x, h, silo.z]}
+        offset={[0, h + 0.24, 0]}
+        variant="silo"
+        color={color}
+        dim={!isActive}
+        focus={isFocus}
+      >
+        {silo.name}
+        <b>{silo.count}</b>
+      </NodeLabel>
+    </group>
   );
 }
 
-const WHOAMI_ROWS = [
-  { label: "Database", value: "PostgreSQL, MongoDB Atlas" },
-  { label: "Backend", value: "Spring Boot, JWT" },
-  { label: "Tools", value: "IntelliJ IDEA" },
-];
-
 function BackendPane() {
+  const isMobile = useIsMobile();
+  const [hovered, setHovered] = useState(null);
+  const [pinned, setPinned] = useState(null);
+  const [query, setQuery] = useState("");
+  const [tab, setTab] = useState("network");
+  // Same rule as pane 01: it turns until the first click or drag, then stays.
+  const [spinning, setSpinning] = useState(true);
+  const stopSpinning = () => setSpinning(false);
 
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-  const drag = useRef(null);
+  const active = hovered || pinned;
 
-  const onPointerDown = (e) => {
-    drag.current = { startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const onPointerMove = (e) => {
-    if (!drag.current) return;
-    setPos({
-      x: drag.current.origX + (e.clientX - drag.current.startX),
-      y: drag.current.origY + (e.clientY - drag.current.startY),
+  const q = query.trim().toLowerCase();
+  const searching = q.length > 0;
+  let lit = null;
+  if (searching) {
+    const matches = [
+      ...Object.entries(BACKENDS)
+        .filter(([, b]) => b.name.toLowerCase().includes(q))
+        .map(([key]) => ({ type: "backend", key })),
+      ...SILOS.filter((s) => s.name.toLowerCase().includes(q)).map((s) => ({ type: "db", key: s.key })),
+      ...BE_NODES.filter((p) => p.label.toLowerCase().includes(q)).map((p) => ({ type: "project", name: p.name })),
+    ];
+    lit = { repos: new Set(), backends: new Set(), dbs: new Set() };
+    matches.forEach((m) => {
+      const r = backendRelations(m);
+      r.repos.forEach((x) => lit.repos.add(x));
+      r.backends.forEach((x) => lit.backends.add(x));
+      r.dbs.forEach((x) => lit.dbs.add(x));
     });
-  };
+  } else if (active) {
+    lit = backendRelations(active);
+  }
 
-  const onPointerUp = () => {
-    drag.current = null;
-  };
+  const backendActive = (key) => !lit || lit.backends.has(key);
+  const dbActive = (key) => !lit || lit.dbs.has(key);
+  const projectActive = (name) => !lit || lit.repos.has(name);
+  const edgeState = (e) => (!lit ? "rest" : lit.repos.has(e.project) && lit.dbs.has(e.key) ? "focus" : "dim");
+
+  const isSel = (type, id) => active?.type === type && (active.key ?? active.name) === id;
+  const toggle = (sel) =>
+    setPinned((p) => (p?.type === sel.type && (p.key ?? p.name) === (sel.key ?? sel.name) ? null : sel));
+  const clearHover = () => setHovered(null);
+
+  const detail = (() => {
+    if (active?.type === "backend") {
+      const b = BACKENDS[active.key];
+      const repos = BE_NODES.filter((p) => p.backend === active.key);
+      const dbs = new Set(repos.flatMap((p) => p.dbs));
+      return {
+        title: b.name,
+        rows: [
+          ["Runs on", b.note],
+          ["Repos", `${repos.length}`],
+          ["Databases", `${dbs.size}`],
+        ],
+        chips: repos.map((p) => p.label),
+        link: null,
+      };
+    }
+    if (active?.type === "db") {
+      const s = SILO_BY_KEY[active.key];
+      return {
+        title: s.name,
+        rows: [
+          ["Type", s.type],
+          ["Used by", `${s.count} repo${s.count === 1 ? "" : "s"}`],
+        ],
+        chips: s.users.map((p) => p.label),
+        link: null,
+      };
+    }
+    if (active?.type === "project") {
+      const p = BE_BY_NAME[active.name];
+      return {
+        title: p.label,
+        rows: [
+          ["Backend", BACKENDS[p.backend].name],
+          ["Data layer", p.data.map(([, lib]) => lib).join(", ") || "—"],
+          ["Auth", p.auth || "—"],
+          ["Backend code", `${Math.max(1, Math.round(p.bytes / 1024))} KB`],
+        ],
+        chips: p.dbs.map((key) => DATABASES[key].name),
+        link: p.url,
+      };
+    }
+    const top = SILOS.filter((s) => s.count === MAX_DB_USERS).map((s) => s.name);
+    return {
+      title: "Backend & data",
+      rows: [
+        ["Backends", `${BE_DISTRICTS.length}`],
+        ["Databases", `${SILOS.length}`],
+        ["Repos", `${BE_NODES.length} of ${REPO_DATA.length}`],
+        ["Most used", top.join(", ")],
+      ],
+      chips: [],
+      link: "https://github.com/mitarthpathak?tab=repositories",
+    };
+  })();
 
   return (
-    <div className="ide-terminal-stage">
-      <DbReplicaBackground />
-      <div
-        className="ide-terminal-float ide-terminal-float-whoami"
-        style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
-      >
-        <TerminalChrome
-          name="whoami — bash"
-          draggable
-          bodyClassName="ide-terminal-body-compact"
-          cardClassName="ide-terminal-card-wide"
-          titlebarProps={{
-            onPointerDown,
-            onPointerMove,
-            onPointerUp,
-            onPointerCancel: onPointerUp,
-          }}
-        >
-          <TermLine line={{ cmd: "whoami" }} />
-          <div className="whoami-rows">
-            {WHOAMI_ROWS.map((row) => (
-              <div className="whoami-row" key={row.label}>
-                <span className="whoami-label">{row.label}</span>
-                <span className="whoami-value">{row.value}</span>
+    <div className="lang-graph">
+      <div className="lang-graph-header">
+        <label className="lang-graph-search">
+          <span className="lang-graph-search-icon">&#9906;</span>
+          <input
+            type="text"
+            className="lang-graph-search-input"
+            placeholder="Find backend, database, repo…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+          />
+        </label>
+        <span className="lang-graph-filters">Filters &#9662;</span>
+        <div className="lang-graph-tabs">
+          <span
+            className={`lang-graph-tab ${tab === "network" ? "is-active" : ""}`}
+            onClick={() => setTab("network")}
+          >
+            Network
+          </span>
+          <span
+            className={`lang-graph-tab ${tab === "list" ? "is-active" : ""}`}
+            onClick={() => setTab("list")}
+          >
+            List
+          </span>
+        </div>
+        <span className="lang-graph-info">&#8505;</span>
+      </div>
+
+      <div className="lang-graph-body" onPointerDown={stopSpinning}>
+        <div className="lang-graph-sidebar">
+          <p className="lang-graph-group-label">Backends ({BE_DISTRICTS.length})</p>
+          {BE_DISTRICTS.map((d) => (
+            <div
+              key={d.key}
+              className={`lang-graph-row ${backendActive(d.key) ? "" : "is-dim"} ${isSel("backend", d.key) ? "is-focus" : ""}`}
+              onMouseEnter={() => setHovered({ type: "backend", key: d.key })}
+              onMouseLeave={clearHover}
+              onClick={() => toggle({ type: "backend", key: d.key })}
+            >
+              <span className="lang-graph-row-dot" style={{ background: d.color }} />
+              <span className="lang-graph-row-name">{d.name}</span>
+              <span className="lang-graph-row-bar">
+                <span
+                  className="lang-graph-row-bar-fill"
+                  style={{ width: `${(d.repos.length / MAX_BACKEND_REPOS) * 100}%`, background: d.color }}
+                />
+              </span>
+              <span className="lang-graph-row-pct">{d.repos.length}</span>
+            </div>
+          ))}
+
+          <p className="lang-graph-group-label lang-graph-group-label-spaced">Databases ({SILOS.length})</p>
+          {SILOS.map((s) => (
+            <div
+              key={s.key}
+              className={`lang-graph-row ${dbActive(s.key) ? "" : "is-dim"} ${isSel("db", s.key) ? "is-focus" : ""}`}
+              onMouseEnter={() => setHovered({ type: "db", key: s.key })}
+              onMouseLeave={clearHover}
+              onClick={() => toggle({ type: "db", key: s.key })}
+            >
+              <span className="lang-graph-row-dot" style={{ background: s.color }} />
+              <span className="lang-graph-row-name">{s.name}</span>
+              <span className="lang-graph-row-bar">
+                <span
+                  className="lang-graph-row-bar-fill"
+                  style={{ width: `${(s.count / MAX_DB_USERS) * 100}%`, background: s.color }}
+                />
+              </span>
+              <span className="lang-graph-row-pct">{s.count}</span>
+            </div>
+          ))}
+
+          <p className="lang-graph-group-label lang-graph-group-label-spaced">Repos ({BE_NODES.length})</p>
+          {BE_NODES.map((p) => (
+            <div
+              key={p.name}
+              className={`lang-graph-row ${projectActive(p.name) ? "" : "is-dim"} ${p.big ? "is-big-row" : ""} ${isSel("project", p.name) ? "is-focus" : ""}`}
+              onMouseEnter={() => setHovered({ type: "project", name: p.name })}
+              onMouseLeave={clearHover}
+              onClick={() => toggle({ type: "project", name: p.name })}
+            >
+              <span className="ide-folder-dot" />
+              <span className="lang-graph-row-name">{p.label}</span>
+              <span className="lang-graph-row-chips">
+                {[BACKENDS[p.backend].color, ...p.dbs.map((key) => DATABASES[key].color)].map((c, i) => (
+                  <span key={i} className="lang-graph-row-chipdot" style={{ background: c }} />
+                ))}
+              </span>
+            </div>
+          ))}
+
+          <p className="lang-graph-group-label lang-graph-group-label-spaced">
+            No backend ({NO_BACKEND_REPOS.length})
+          </p>
+          {NO_BACKEND_REPOS.map((label) => (
+            <div key={label} className="lang-graph-row is-dim is-static">
+              <span className="ide-folder-dot" />
+              <span className="lang-graph-row-name">{label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="lang-graph-canvas" style={{ cursor: isMobile ? "default" : "grab" }}>
+          <CityScene
+            isMobile={isMobile}
+            spinning={spinning}
+            onStopSpinning={stopSpinning}
+            onMissed={() => setPinned(null)}
+            camera={[12.5, 12.5, 16.5]}
+            target={[0, 0.5, 0]}
+            fog={[24, 44]}
+            mobileOrbit={{ radius: 21, height: 14 }}
+          >
+            {/* The data center: the pad the silos stand on. */}
+            <mesh position={[0, 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[SILO_RING + 0.62, SILO_RING + 0.68, 96]} />
+              <meshBasicMaterial color="#3b4a7a" transparent opacity={0.6} />
+            </mesh>
+
+            {BE_DISTRICTS.map((d) => (
+              <District3D
+                key={d.key}
+                district={d}
+                isActive={backendActive(d.key)}
+                isFocus={isSel("backend", d.key)}
+                onHover={() => setHovered({ type: "backend", key: d.key })}
+                onLeave={clearHover}
+                onSelect={() => toggle({ type: "backend", key: d.key })}
+              />
+            ))}
+
+            {SILOS.map((s) => (
+              <Silo3D
+                key={s.key}
+                silo={s}
+                isActive={dbActive(s.key)}
+                isFocus={isSel("db", s.key)}
+                onHover={() => setHovered({ type: "db", key: s.key })}
+                onLeave={clearHover}
+                onSelect={() => toggle({ type: "db", key: s.key })}
+              />
+            ))}
+
+            {BE_NODES.map((p) => (
+              <Building3D
+                key={p.name}
+                node={p}
+                isActive={projectActive(p.name)}
+                isFocus={isSel("project", p.name)}
+                focusKey={active && active.type !== "project" ? active.key : null}
+                showLabel={p.big || isSel("project", p.name)}
+                onHover={() => setHovered({ type: "project", name: p.name })}
+                onLeave={clearHover}
+                onSelect={() => toggle({ type: "project", name: p.name })}
+              />
+            ))}
+
+            {BE_EDGES.map((edge) => (
+              <Beam3D key={`${edge.project}-${edge.key}-${edgeState(edge)}`} edge={edge} state={edgeState(edge)} />
+            ))}
+          </CityScene>
+        </div>
+
+        <div className="lang-graph-detail">
+          <p className="lang-graph-detail-label">Selected</p>
+          <p className="lang-graph-detail-title">{detail.title}</p>
+          <div className="lang-graph-detail-rows">
+            {detail.rows.map(([k, v]) => (
+              <div className="lang-graph-detail-row" key={k}>
+                <span>{k}</span>
+                <span>{v}</span>
               </div>
             ))}
           </div>
-        </TerminalChrome>
+          {detail.chips.length > 0 && (
+            <div className="lang-graph-detail-chips">
+              {detail.chips.map((c) => (
+                <span className="lang-graph-detail-chip" key={c}>
+                  {c}
+                </span>
+              ))}
+            </div>
+          )}
+          {detail.link && (
+            <a className="lang-graph-detail-link" href={detail.link} target="_blank" rel="noopener noreferrer">
+              View on GitHub &#8599;
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );

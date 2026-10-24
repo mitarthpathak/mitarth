@@ -36,7 +36,6 @@ html {
   overscroll-behavior: none;
 }
 
-
 body {
   font-family: var(--font-body);
   background: var(--cream);
@@ -1274,80 +1273,6 @@ body {
   overflow: hidden;
 }
 
-/* --- Terminal card (shared chrome for all "running tool" views) --- */
-.ide-terminal-stage {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.ide-terminal-float {
-  position: relative;
-  z-index: 1;
-}
-
-.ide-terminal-card {
-  width: min(520px, 92%);
-  background: #000000;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 16px 40px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
-}
-
-.ide-terminal-card-wide {
-  width: min(760px, 96%);
-}
-
-.ide-terminal-float-whoami {
-  margin-top: -160px;
-  margin-left: 40px;
-}
-
-.ide-terminal-float-whoami .ide-terminal-card-wide {
-  width: min(640px, 90vw);
-}
-
-.ide-terminal-card.is-draggable .ide-terminal-titlebar {
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-}
-
-.ide-terminal-card.is-draggable .ide-terminal-titlebar:active {
-  cursor: grabbing;
-}
-
-.ide-terminal-titlebar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #000000;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.ide-terminal-name {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.ide-terminal-body {
-  padding: 12px 14px;
-  font-family: var(--font-mono);
-  font-size: clamp(11px, 1vw, 13px);
-  line-height: 1.7;
-}
-
-.ide-terminal-body-compact {
-  font-size: clamp(11px, 1vw, 12px);
-  line-height: 1.7;
-}
-
 .term-prompt {
   color: rgba(255, 255, 255, 0.9);
 }
@@ -1359,49 +1284,6 @@ body {
 .term-out {
   color: rgba(255, 255, 255, 0.5);
 }
-
-.ls-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 20px;
-  margin-top: 4px;
-}
-
-.ls-file {
-  font-weight: 500;
-}
-
-.whoami-rows {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.whoami-row {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-}
-
-.whoami-label {
-  flex: 0 0 84px;
-  color: rgba(255, 209, 70, 0.9);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.whoami-label::after {
-  content: ":";
-  opacity: 0.5;
-}
-
-.whoami-value {
-  color: rgba(255, 255, 255, 0.75);
-}
-
 
 /* --- Language graph explorer (Languages pane) --- */
 .lang-graph {
@@ -1680,6 +1562,40 @@ body {
   box-shadow: inset 2px 0 0 color-mix(in srgb, var(--c) 60%, transparent);
 }
 
+/* Database silos: a small cylinder glyph, lighter than the district pills. */
+.lg3d-label-silo {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--c) 35%, #fff);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.95);
+}
+
+.lg3d-label-silo::before {
+  content: "";
+  width: 7px;
+  height: 9px;
+  border: 1.5px solid var(--c);
+  border-radius: 50% / 22%;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--c) 60%, transparent);
+}
+
+.lg3d-label-silo b {
+  font-size: 9.5px;
+}
+
+.lg3d-label-silo.is-focus {
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--c);
+  background: rgba(8, 10, 18, 0.8);
+  color: #fff;
+  text-shadow: none;
+}
+
+.lang-graph-row.is-static {
+  cursor: default;
+}
+
 .lg3d-label-repo b {
   font-size: 9px;
   text-transform: uppercase;
@@ -1882,395 +1798,6 @@ body {
 
 .lang-graph-detail-link:hover {
   border-bottom-color: var(--yellow);
-}
-
-/* --- DataGrip-style DB client replica (backdrop behind the devtask popup) --- */
-.db-replica {
-  position: absolute;
-  inset: calc(-1 * var(--ide-main-pad, 0px));
-  z-index: 0;
-  display: flex;
-  flex-direction: column;
-  background: #1e1f22;
-  color: #dfe1e5;
-  font-family: var(--font-mono);
-  overflow: hidden;
-  user-select: none;
-}
-
-/* low-specificity reset so the specific .dbrep-* rules below always win */
-:where(.db-replica) button {
-  all: unset;
-  box-sizing: border-box;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.dbrep-tabbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 0 8px;
-  height: 26px;
-  flex: 0 0 auto;
-  background: #2b2d30;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 9px;
-}
-
-.dbrep-tabbar-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  height: 100%;
-}
-
-.dbrep-tab {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding: 0 2px;
-  color: #8a8e94;
-  border-bottom: 2px solid transparent;
-}
-
-.dbrep-tab:hover {
-  color: #dfe1e5;
-}
-
-.dbrep-tab:focus-visible {
-  outline: 1px solid #3574f0;
-  outline-offset: 1px;
-}
-
-.dbrep-tab.is-active {
-  color: #dfe1e5;
-  border-bottom-color: #3574f0;
-}
-
-.dbrep-tabbar-right {
-  display: flex;
-  align-items: center;
-  height: 100%;
-}
-
-.dbrep-querytab,
-.dbrep-resulttab {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
-  border-radius: 3px;
-  color: #8a8e94;
-}
-
-.dbrep-querytab:hover,
-.dbrep-resulttab:hover {
-  color: #dfe1e5;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.dbrep-querytab:focus-visible,
-.dbrep-resulttab:focus-visible {
-  outline: 1px solid #3574f0;
-  outline-offset: 1px;
-}
-
-.dbrep-querytab.is-active,
-.dbrep-resulttab.is-active {
-  color: #dfe1e5;
-  background: #3b3d41;
-}
-
-.dbrep-tab-close {
-  opacity: 0.6;
-}
-
-.dbrep-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 4px 8px;
-  flex: 0 0 auto;
-  background: #2b2d30;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 8px;
-}
-
-.dbrep-toolbar-icons {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #8a8e94;
-}
-
-.dbrep-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  font-size: 9px;
-}
-
-.dbrep-icon:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #dfe1e5;
-}
-
-.dbrep-icon:active {
-  transform: scale(0.9);
-}
-
-.dbrep-icon:focus-visible {
-  outline: 1px solid #3574f0;
-}
-
-.dbrep-icon-run {
-  color: #59a869;
-}
-
-.dbrep-toolbar-conn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  color: #8a8e94;
-}
-
-.dbrep-check {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  cursor: pointer;
-}
-
-.dbrep-check input {
-  width: 9px;
-  height: 9px;
-  cursor: pointer;
-}
-
-.dbrep-conn-label {
-  color: #6b6f76;
-}
-
-.dbrep-dd,
-.dbrep-input {
-  display: inline-flex;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: #1e1f22;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #dfe1e5;
-}
-
-.dbrep-dd:hover {
-  background: #2b2d30;
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.dbrep-dd:active {
-  background: #34363a;
-}
-
-.dbrep-dd:focus-visible {
-  outline: 1px solid #3574f0;
-}
-
-.dbrep-body {
-  display: flex;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.dbrep-sidebar {
-  flex: 0 0 clamp(120px, 15vw, 170px);
-  overflow: hidden;
-  background: #2b2d30;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 8px;
-  line-height: 1.9;
-}
-
-.dbrep-tree-row {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding-right: 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #c9ccd0;
-}
-
-.dbrep-tree-row.lvl0 { padding-left: 6px; font-weight: 600; }
-.dbrep-tree-row.lvl1 { padding-left: 16px; color: #9da1a8; }
-.dbrep-tree-row.lvl2 { padding-left: 24px; }
-.dbrep-tree-row.lvl3 { padding-left: 32px; color: #9da1a8; }
-.dbrep-tree-row.lvl4 { padding-left: 40px; }
-.dbrep-tree-row.lvl5 { padding-left: 48px; color: #9da1a8; }
-.dbrep-tree-row.lvl6 { padding-left: 58px; }
-
-.dbrep-tree-row:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.dbrep-tree-row:focus-visible {
-  outline: 1px solid #3574f0;
-  outline-offset: -1px;
-}
-
-.dbrep-tree-row.is-selected {
-  background: #43454a;
-  color: #ffffff;
-}
-
-.dbrep-tree-row.is-selected:hover {
-  background: #4a4c52;
-}
-
-.dbrep-main {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.dbrep-editor {
-  flex: 0 0 auto;
-  max-height: 45%;
-  overflow: hidden;
-  padding: 4px 0;
-  font-size: 8.5px;
-  line-height: 1.7;
-  cursor: text;
-  user-select: text;
-}
-
-.dbrep-caret {
-  display: inline-block;
-  width: 1px;
-  height: 1em;
-  margin-left: 1px;
-  background: #dfe1e5;
-  vertical-align: text-bottom;
-  animation: dbrep-caret-blink 1s steps(1, end) infinite;
-}
-
-@keyframes dbrep-caret-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
-
-.dbrep-editor-line {
-  display: flex;
-  padding: 0 8px;
-}
-
-.dbrep-ln {
-  flex: 0 0 20px;
-  color: #5c6066;
-  text-align: right;
-  padding-right: 8px;
-}
-
-.dbrep-code {
-  min-width: 0;
-  overflow: hidden;
-  color: #dfe1e5;
-  white-space: pre;
-}
-
-.dbrep-tok-kw { color: #cc7832; }
-.dbrep-tok-fn { color: #56a8f5; }
-.dbrep-tok-str { color: #6a8759; }
-
-.dbrep-editor-status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex: 0 0 auto;
-  padding: 2px 8px;
-  font-size: 7.5px;
-  color: #6b6f76;
-  background: #26282b;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.dbrep-resulttabs {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex: 0 0 auto;
-  padding: 3px 8px;
-  font-size: 8px;
-}
-
-.dbrep-grid-wrap {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.dbrep-grid {
-  table-layout: fixed;
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 7.5px;
-  white-space: nowrap;
-}
-
-.dbrep-grid th:nth-child(1), .dbrep-grid td:nth-child(1) { width: 5%; }
-.dbrep-grid th:nth-child(2), .dbrep-grid td:nth-child(2) { width: 16%; }
-.dbrep-grid th:nth-child(3), .dbrep-grid td:nth-child(3) { width: 10%; }
-.dbrep-grid th:nth-child(4), .dbrep-grid td:nth-child(4) { width: 8%; }
-.dbrep-grid th:nth-child(5), .dbrep-grid td:nth-child(5) { width: 11%; }
-.dbrep-grid th:nth-child(6), .dbrep-grid td:nth-child(6) { width: 8%; }
-.dbrep-grid th:nth-child(7), .dbrep-grid td:nth-child(7) { width: 12%; }
-.dbrep-grid th:nth-child(8), .dbrep-grid td:nth-child(8) { width: 30%; }
-
-.dbrep-grid th {
-  position: sticky;
-  top: 0;
-  background: #2b2d30;
-  color: #9da1a8;
-  text-align: left;
-  font-weight: 600;
-  padding: 3px 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.dbrep-grid td {
-  padding: 2px 8px;
-  color: #c9ccd0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dbrep-grid tbody tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.dbrep-grid-status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex: 0 0 auto;
-  padding: 2px 8px;
-  font-size: 7.5px;
-  color: #6b6f76;
-  background: #26282b;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* --- Framework & Tools: 3-up / 2-down bento grid of VS-Code-style terminals --- */
@@ -3062,8 +2589,6 @@ body {
   z-index: 2;
 }
 
-
-
 /* HOVER STATES (mouse) — keyboard focus gets the same image preview */
 .project-card:hover .project-bg,
 .project-card:focus-within .project-bg {
@@ -3556,10 +3081,6 @@ body {
     max-height: 40%;
   }
 
-  .ide-terminal-card {
-    width: 100%;
-  }
-
   .ide-agent-grid {
     position: static;
     inset: auto;
@@ -3617,21 +3138,6 @@ body {
   .ide-main {
     min-width: 0;
     max-width: 100%;
-  }
-
-  /* --- Backend & Database pane: drop the DataGrip-style mockup behind the
-     whoami card, it's a wide fixed layout that can't reasonably reflow, and
-     let the card sit in normal flow instead of floating over it. --- */
-  .db-replica {
-    display: none;
-  }
-
-  .ide-terminal-float-whoami {
-    margin: 0;
-  }
-
-  .ide-terminal-float-whoami .ide-terminal-card-wide {
-    width: 100%;
   }
 
   /* --- Framework & Tools pane: the neofetch/docker ASCII art has a fixed
