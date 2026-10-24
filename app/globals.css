@@ -1592,6 +1592,30 @@ body {
   text-shadow: none;
 }
 
+/* Engraved label plates on the monochrome language structure. */
+.lg3d-label-plate {
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(226, 231, 238, 0.86);
+  background: rgba(12, 14, 19, 0.8);
+  border: 1px solid rgba(200, 206, 216, 0.26);
+}
+
+.lg3d-label-plate b {
+  font-weight: 500;
+  color: rgba(226, 231, 238, 0.5);
+}
+
+.lg3d-label-plate.is-focus {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
+}
+
 .lang-graph-row.is-static {
   cursor: default;
 }
@@ -3116,8 +3140,9 @@ body {
     display: none;
   }
 
-  /* The city is small on a phone: district tags keep just the language name. */
-  .lg3d-label-lang b {
+  /* The scenes are small on a phone: tags keep just the name. */
+  .lg3d-label-lang b,
+  .lg3d-label-plate b {
     display: none;
   }
 

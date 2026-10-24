@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   SiTypescript,
   SiJavascript,
@@ -14,9 +14,18 @@ import {
 import { RiOpenaiFill } from "react-icons/ri";
 import { FaJava } from "react-icons/fa6";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Line, Html, Stars, Edges, Grid } from "@react-three/drei";
-import { Vector3 } from "three";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
+import { OrbitControls, Line, Html, Stars, Edges, Grid, Environment, Lightformer } from "@react-three/drei";
+import {
+  BufferGeometry,
+  CatmullRomCurve3,
+  DoubleSide,
+  Float32BufferAttribute,
+  Object3D,
+  Quaternion,
+  TubeGeometry,
+  Vector3,
+} from "three";
+import { EffectComposer, Bloom, DepthOfField, N8AO } from "@react-three/postprocessing";
 import useIsMobile from "../hooks/useIsMobile";
 import LazyTerminal from "./terminal/LazyTerminal";
 
@@ -274,14 +283,10 @@ const REPO_DATA = [
   { name: "yap-render-extension", label: "yap-render-extension", big: false, langs: { JavaScript: 548473, CSS: 8046, HTML: 6351 }, drop: ["JavaScript"] },
 ];
 
-// The graph is drawn as a small "code city", the classic way to picture a
-// codebase: every repo is a building whose height is its size in bytes and
-// whose floors are its languages, stacked biggest first. Each building stands
-// in the district of its main language. World units throughout.
+// Pane 02 is drawn as a small "code city", the classic way to picture a
+// codebase: buildings standing in districts on a grid. World units throughout.
 const CELL = 0.66; // one building plot
-const STREET = 1.05; // gap between districts, where their name tags sit
 const LOT_PAD = 0.26; // margin inside a district
-const CITY_WIDTH = 9.5; // districts wrap onto a new block past this width
 
 function round2(n) {
   return Math.round(n * 100) / 100;
@@ -346,7 +351,6 @@ const PROJECT_NODES = REPO_DATA.map((repo) => {
   return {
     ...repo,
     total,
-    size: repo.big ? 0.56 : 0.4,
     majorKeys: majorEntries.map(([key]) => key),
     shares: majorEntries.map(([key, bytes]) => [key, total ? bytes / total : 0]),
     extra: Object.keys(repo.langs).filter((n) => !LANG_NAME_TO_KEY[n]),
@@ -357,96 +361,8 @@ const PROJECT_NODES = REPO_DATA.map((repo) => {
 
 const PROJECT_BY_NAME = PROJECT_NODES.reduce((acc, n) => ({ ...acc, [n.name]: n }), {});
 
-const REPO_TOTALS = PROJECT_NODES.map((p) => p.total).filter(Boolean);
-const REPO_MIN = Math.min(...REPO_TOTALS);
-const REPO_MAX = Math.max(...REPO_TOTALS);
-
-// Floors: one block per language, biggest at the bottom. Even a sliver of a
-// language keeps a floor thick enough to see.
-PROJECT_NODES.forEach((p) => {
-  const height = p.total ? logScale(p.total, REPO_MIN, REPO_MAX, 0.4, 3.4) : 0.14;
-  let y = 0;
-  p.floors = p.shares.map(([key, share]) => {
-    const h = Math.max(share * height, 0.07);
-    const floor = { key, color: LANG_COLORS[key], y: round2(y + h / 2), h: round2(h - 0.03) };
-    y += h;
-    return floor;
-  });
-  p.height = round2(y || height);
-  p.roofColor = LANG_COLORS[p.dominant] || README_COLOR;
-});
-
-// One district per language that is some repo's main language, plus a lot
-// for the README-only profile repo, which GitHub gives no language at all.
-const DISTRICTS = [
-  ...LANG_NODES.map((lang) => ({ key: lang.key, lang, repos: PROJECT_NODES.filter((p) => p.dominant === lang.key) })),
-  { key: null, lang: null, repos: PROJECT_NODES.filter((p) => !p.dominant) },
-].filter((d) => d.repos.length);
-
-DISTRICTS.forEach((d) => {
-  const count = d.repos.length;
-  d.color = d.lang ? LANG_COLORS[d.key] : README_COLOR;
-  d.title = d.lang ? d.lang.name : "README";
-  d.meta = `${d.lang ? `${d.lang.pctLabel} · ` : ""}${count} repo${count === 1 ? "" : "s"}`;
-  d.interactive = !!d.lang;
-  d.repos.sort((a, b) => b.height - a.height);
-  d.cols = Math.ceil(Math.sqrt(d.repos.length));
-  d.rows = Math.ceil(d.repos.length / d.cols);
-  d.w = d.cols * CELL + LOT_PAD * 2;
-  d.d = d.rows * CELL + LOT_PAD * 2;
-});
-
-// Shelf packing: the busiest districts first, left to right, wrapping into
-// blocks; each block is centered, the first one furthest from the camera.
-{
-  const blocks = [];
-  let block = null;
-  [...DISTRICTS]
-    .sort((a, b) => b.repos.length - a.repos.length || (b.lang?.pct ?? 0) - (a.lang?.pct ?? 0))
-    .forEach((d) => {
-      if (!block || block.width + STREET + d.w > CITY_WIDTH) {
-        block = { districts: [], width: -STREET, depth: 0 };
-        blocks.push(block);
-      }
-      block.districts.push(d);
-      block.width += STREET + d.w;
-      block.depth = Math.max(block.depth, d.d);
-    });
-  const cityDepth = blocks.reduce((sum, b) => sum + b.depth, 0) + STREET * (blocks.length - 1);
-  let z = -cityDepth / 2;
-  blocks.forEach((b) => {
-    let x = -b.width / 2;
-    b.districts.forEach((d) => {
-      d.x = round2(x + d.w / 2);
-      d.z = round2(z + b.depth - d.d / 2);
-      x += d.w + STREET;
-    });
-    z += b.depth + STREET;
-  });
-}
-
-// Plots inside each district: tallest buildings at the back, so the short
-// ones in front never hide behind them.
-DISTRICTS.forEach((d) => {
-  if (d.lang) d.lang.district = d;
-  d.repos.forEach((p, i) => {
-    p.x = round2(d.x - d.w / 2 + LOT_PAD + CELL * ((i % d.cols) + 0.5));
-    p.z = round2(d.z - d.d / 2 + LOT_PAD + CELL * (Math.floor(i / d.cols) + 0.5));
-  });
-});
-
-// Edges carry the actual byte weight of that language inside that repo, so a
-// beam's thickness reads as "how much of this repo is this language".
-const GRAPH_EDGES = PROJECT_NODES.flatMap((p) =>
-  repoMajorEntries(p).map(([key, bytes]) => ({ project: p.name, key, bytes }))
-);
-
-const EDGE_BYTE_VALUES = GRAPH_EDGES.map((e) => e.bytes);
-const EDGE_MIN = Math.min(...EDGE_BYTE_VALUES);
-const EDGE_MAX = Math.max(...EDGE_BYTE_VALUES);
-
 // A data beam: an arc lifted over the streets from a building's roof to
-// the district of another language it's written in.
+// whatever it's wired to.
 function beamPoints(from, to, segments = 32) {
   const mid = scale(add(from, to), 0.5);
   const ctrl = [mid[0], Math.max(from[1], to[1]) + len(sub(to, from)) * 0.3 + 0.6, mid[2]];
@@ -456,20 +372,6 @@ function beamPoints(from, to, segments = 32) {
     return [0, 1, 2].map((k) => round2(u * u * from[k] + 2 * u * t * ctrl[k] + t * t * to[k]));
   });
 }
-
-GRAPH_EDGES.forEach((e) => {
-  e.color = LANG_COLORS[e.key];
-  e.width = round2(logScale(e.bytes, EDGE_MIN, EDGE_MAX, 0.8, 2.6));
-  const project = PROJECT_BY_NAME[e.project];
-  const district = LANG_BY_KEY[e.key].district;
-  // A repo's own district is right under it, so only other languages get a beam.
-  e.points =
-    district && project.dominant !== e.key
-      ? beamPoints([project.x, project.height + 0.04, project.z], [district.x, 0.04, district.z])
-      : null;
-});
-
-const BEAM_EDGES = GRAPH_EDGES.filter((e) => e.points);
 
 // A beam between a building and what it's connected to. A focused beam
 // carries a dashed "data flow"; resting ones are faint static threads, and
@@ -517,7 +419,7 @@ function AutoOrbitCamera({ enabled, target, radius = 22, height = 13, speed = 0.
 
 // Billboarded name tag pinned to a point in the city. Tags on the far side
 // fade back, so the ones in front stay readable while the city turns.
-function NodeLabel({ anchor, offset, variant, color, dim, focus, children }) {
+function NodeLabel({ anchor, offset, variant, color, dim, focus, distanceFactor = 10, children }) {
   const ref = useRef(null);
   const point = useMemo(() => new Vector3(...anchor), [anchor]);
   useFrame(({ camera }) => {
@@ -528,7 +430,7 @@ function NodeLabel({ anchor, offset, variant, color, dim, focus, children }) {
     el.style.opacity = ((1 - fade * 0.7) * (dim ? 0.3 : 1)).toFixed(2);
   });
   return (
-    <Html position={offset} center distanceFactor={10} zIndexRange={[40, 0]} style={{ pointerEvents: "none" }}>
+    <Html position={offset} center distanceFactor={distanceFactor} zIndexRange={[40, 0]} style={{ pointerEvents: "none" }}>
       <span
         ref={ref}
         className={`lg3d-label lg3d-label-${variant}${focus ? " is-focus" : ""}`}
@@ -658,6 +560,7 @@ function CityScene({
     <Canvas
       camera={{ position: camera, fov: 38 }}
       gl={{ alpha: true, antialias: !isMobile }}
+      resize={{ offsetSize: true }}
       dpr={isMobile ? 1 : [1, 2]}
       onPointerMissed={onMissed}
     >
@@ -709,6 +612,665 @@ function CityScene({
       {!isMobile && (
         <EffectComposer multisampling={0}>
           <Bloom luminanceThreshold={0.25} luminanceSmoothing={0.3} intensity={0.7} mipmapBlur radius={0.6} />
+        </EffectComposer>
+      )}
+    </Canvas>
+  );
+}
+
+// Pane 01 is a structural study rather than a chart: an engineered sphere of
+// broken concentric shells around a dense core. The ten languages are
+// cylindrical chambers in the inner shells, sized by their share of all the
+// code; the eight featured repos are faceted monoliths in the outer shells,
+// layered by the languages inside them; every other repo is a small cube in
+// the grids on the outermost shell. Braided conduits run from each language
+// to every repo layer that uses it. One language is always active — the most
+// used, until the visitor picks another. Monochrome, so the form reads first.
+// World units; it's all generated from fixed seeds, so every visit (and the
+// server render) builds the same structure.
+const MONO = {
+  metal: "#c4c9d1",
+  plate: "#7b818c",
+  dark: "#3b4049",
+  line: "#9aa3b2",
+};
+const SHELL_RADII = [1.05, 1.55, 2.15, 2.75, 3.35, 3.95];
+const CORE_R = 0.55;
+const BLOCK_RING = 3.05; // repo monoliths hang between shells 4 and 5
+const CUBE_RING = 4.08; // the other repos sit just outside the last shell
+const STRUCT_SEED = 20261025;
+
+const unit = (a) => scale(a, 1 / (len(a) || 1));
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+
+function mulberry32(seed) {
+  let t = seed >>> 0;
+  return function () {
+    t = (t + 0x6d2b79f5) | 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function randomDir(rand) {
+  const z = rand() * 2 - 1;
+  const t = rand() * Math.PI * 2;
+  const s = Math.sqrt(1 - z * z);
+  return [s * Math.cos(t), z, s * Math.sin(t)];
+}
+
+// Two unit vectors spanning the plane tangent to the sphere at direction n.
+function tangentBasis(n) {
+  const u = unit(cross(Math.abs(n[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], n));
+  return [u, cross(n, u)];
+}
+
+// A point on the sphere of radius r, offset (x, y) world units from the
+// direction n along its tangent plane.
+function onSphere(n, u, v, r, x, y) {
+  return scale(unit(add(n, add(scale(u, x / r), scale(v, y / r)))), r);
+}
+
+// Each shell: two or three great circles broken into rods and flat bands
+// with gaps between them, plus plates floating on its surface. Shells turn
+// slowly on their own axes.
+const SHELLS = SHELL_RADII.map((r, i) => {
+  const rand = mulberry32(STRUCT_SEED + i * 101);
+  const outer = i >= 3;
+  const rings = Array.from({ length: i === 0 ? 2 : 3 }, () => {
+    const rotation = [rand() * Math.PI, rand() * Math.PI, rand() * Math.PI];
+    const arcs = [];
+    let a = rand() * Math.PI * 2;
+    const end = a + Math.PI * 2;
+    while (a < end - 0.4) {
+      const length = Math.min(0.35 + rand() * 1.15, end - a - 0.2);
+      arcs.push({
+        start: a,
+        length,
+        band: rand() < (outer ? 0.45 : 0.3),
+        width: 0.04 + rand() * (outer ? 0.1 : 0.05),
+        tube: (outer ? 0.016 : 0.01) + rand() * 0.012,
+      });
+      a += length + 0.12 + rand() * 0.45;
+    }
+    return { rotation, arcs };
+  });
+  const plates = Array.from({ length: outer ? 26 : 14 }, () => ({
+    pos: scale(randomDir(rand), r + (rand() - 0.5) * 0.06),
+    spin: rand() * Math.PI,
+    size: [0.08 + rand() * (outer ? 0.32 : 0.18), 0.05 + rand() * 0.16, 0.012],
+  }));
+  plates.forEach((p) => (p.normal = unit(p.pos)));
+  return { r, rings, plates, axis: randomDir(rand), spin: (rand() < 0.5 ? -1 : 1) * (0.015 + rand() * 0.03) };
+});
+
+// The core: a knot of small blocks packed tighter toward the middle.
+const CORE_BLOCKS = (() => {
+  const rand = mulberry32(STRUCT_SEED + 3);
+  return Array.from({ length: 70 }, () => {
+    const s = 0.04 + rand() * 0.12;
+    const pos = scale(randomDir(rand), CORE_R * Math.pow(rand(), 1.8));
+    return { pos, normal: randomDir(rand), spin: rand() * Math.PI, size: [s, s * (0.4 + rand()), s * (0.4 + rand())] };
+  });
+})();
+
+const CORE_KNOTS = [
+  { r: 0.32, p: 2, q: 3, rotation: [0.3, 0.2, 0] },
+  { r: 0.36, p: 3, q: 4, rotation: [1.2, 0.4, 0.6] },
+  { r: 0.28, p: 2, q: 5, rotation: [-0.5, 1.1, 0.3] },
+  { r: 0.4, p: 3, q: 5, rotation: [0.8, -0.9, 1.4] },
+];
+
+// The detail layer: radial streaks, struts between shells, tick-mark arcs,
+// lines that branch and merge, tiny cube grids and readout plates.
+const STRUCT_DETAIL = (() => {
+  const rand = mulberry32(STRUCT_SEED + 7);
+  const streaks = [];
+  const scaffold = [];
+  const seg = (arr, a, b) => arr.push(...a, ...b);
+
+  for (let i = 0; i < 150; i++) {
+    const n = randomDir(rand);
+    const r0 = CORE_R + rand() * 3.2;
+    seg(streaks, scale(n, r0), scale(n, Math.min(r0 + 0.25 + rand() * 1.6, 4.9)));
+  }
+
+  for (let i = 0; i < SHELL_RADII.length - 1; i++) {
+    for (let k = 0; k < 16; k++) {
+      const n = randomDir(rand);
+      const m = unit(add(n, scale(randomDir(rand), 0.12)));
+      seg(scaffold, scale(n, SHELL_RADII[i]), scale(m, SHELL_RADII[i + 1]));
+    }
+  }
+
+  for (let i = 0; i < 9; i++) {
+    const [u, v] = tangentBasis(randomDir(rand));
+    const r = SHELL_RADII[1 + Math.floor(rand() * 5)] + 0.08;
+    const t0 = rand() * Math.PI * 2;
+    const steps = Math.round((0.5 + rand()) / 0.05);
+    for (let s = 0; s < steps; s++) {
+      const a = t0 + s * 0.05;
+      const pa = add(scale(u, Math.cos(a)), scale(v, Math.sin(a)));
+      const pb = add(scale(u, Math.cos(a + 0.05)), scale(v, Math.sin(a + 0.05)));
+      seg(scaffold, scale(pa, r), scale(pb, r));
+      seg(scaffold, scale(pa, r), scale(pa, r + (s % 5 === 0 ? 0.1 : 0.045)));
+    }
+  }
+
+  for (let i = 0; i < 10; i++) {
+    const n = randomDir(rand);
+    const [u, v] = tangentBasis(n);
+    const r = SHELL_RADII[2 + Math.floor(rand() * 4)] + 0.04;
+    const L = 0.18 + rand() * 0.12;
+    const W = 0.08 + rand() * 0.08;
+    const P = ([x, y]) => onSphere(n, u, v, r, x, y);
+    const pts = [[0, 0], [L, 0], [2 * L, W], [2 * L, -W], [3 * L, 0], [4 * L, 0], [2.6 * L, 2 * W]];
+    [[0, 1], [1, 2], [1, 3], [2, 4], [3, 4], [4, 5], [2, 6]].forEach(([a, b]) => seg(scaffold, P(pts[a]), P(pts[b])));
+  }
+
+  const cubes = [];
+  for (let i = 0; i < 7; i++) {
+    const n = randomDir(rand);
+    const [u, v] = tangentBasis(n);
+    const r = SHELL_RADII[1 + Math.floor(rand() * 5)] + 0.1;
+    for (let x = 0; x < 5; x++) {
+      for (let y = 0; y < 4; y++) {
+        if (rand() < 0.28) continue;
+        cubes.push({ pos: onSphere(n, u, v, r, x * 0.075, y * 0.075), normal: n, size: [0.038, 0.038, 0.038] });
+      }
+    }
+  }
+
+  const readouts = [];
+  const bars = [];
+  for (let i = 0; i < 26; i++) {
+    const n = randomDir(rand);
+    const [u, v] = tangentBasis(n);
+    const r = SHELL_RADII[1 + Math.floor(rand() * 5)] + 0.14;
+    readouts.push({ pos: scale(n, r), normal: n, size: [0.15, 0.075, 0.008] });
+    for (let b = 0; b < 3; b++) {
+      const w = 0.03 + rand() * 0.08;
+      bars.push({
+        pos: add(onSphere(n, u, v, r, -0.06 + w / 2, 0.022 - b * 0.022), scale(n, 0.006)),
+        normal: n,
+        size: [w, 0.008, 0.004],
+      });
+    }
+  }
+
+  return { streaks, scaffold, cubes, readouts, bars };
+})();
+
+const TOP_LANG = [...LANG_NODES].sort((a, b) => LANG_TOTALS[b.key] - LANG_TOTALS[a.key])[0].key;
+
+// Language chambers on a squashed Fibonacci sphere across the three inner
+// shells; the busiest languages take the slots nearest the equator.
+{
+  const rand = mulberry32(STRUCT_SEED + 31);
+  const n = LANG_NODES.length;
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  const yaw = rand() * Math.PI * 2;
+  const slots = Array.from({ length: n }, (_, i) => {
+    const y = 1 - ((i + 0.5) / n) * 2;
+    const ring = Math.sqrt(1 - y * y);
+    return [Math.cos(i * golden + yaw) * ring, y * 0.85, Math.sin(i * golden + yaw) * ring];
+  }).sort((a, b) => Math.abs(a[1]) - Math.abs(b[1]));
+  const max = LANG_TOTALS[TOP_LANG];
+  [...LANG_NODES]
+    .sort((a, b) => LANG_TOTALS[b.key] - LANG_TOTALS[a.key])
+    .forEach((lang, i) => {
+      const size = Math.sqrt(LANG_TOTALS[lang.key] / max);
+      lang.pos = scale(unit(slots[i]), [1.45, 1.9, 2.3][i % 3]).map(round2);
+      lang.chamberR = round2(0.06 + 0.3 * size);
+      lang.chamberH = round2(0.2 + 0.8 * size);
+      lang.ringR = round2(lang.chamberR * 1.9 + 0.06);
+      lang.ringTilt = [round2((rand() - 0.5) * 0.7), 0, round2((rand() - 0.5) * 0.7)];
+      const start = rand() * Math.PI * 2;
+      lang.ringArcs = [0, 1, 2].map((k) => ({ start: start + (k * 2 * Math.PI) / 3, length: 1.6 + rand() * 0.3 }));
+    });
+}
+
+// Where a conduit plugs into a layer of a monolith (its inner face) or into
+// a repo cube (its inner side).
+const ZAXIS = new Vector3(0, 0, 1);
+const FEATURED = PROJECT_NODES.filter((p) => p.big);
+const FEATURED_TOTALS = FEATURED.map((p) => p.total);
+
+FEATURED.forEach((p, i) => {
+  const rand = mulberry32(STRUCT_SEED + 50 + i);
+  const n = FEATURED.length;
+  const y = -0.55 + 1.1 * ((i * 0.618 + 0.3) % 1);
+  const t = 0.4 + (i * 2 * Math.PI) / n + (rand() - 0.5) * 0.3;
+  const dir = unit([Math.cos(t) * Math.sqrt(1 - y * y), y, Math.sin(t) * Math.sqrt(1 - y * y)]);
+  const H = logScale(p.total, Math.min(...FEATURED_TOTALS), Math.max(...FEATURED_TOTALS), 0.95, 1.85);
+  const W = 0.36 + rand() * 0.12;
+  const D = 0.17;
+  const raw = p.shares.map(([, share]) => Math.max(share, 0.06));
+  const rawSum = raw.reduce((a, b) => a + b, 0);
+  const gap = 0.025;
+  let yCursor = -H / 2;
+  const layers = p.shares.map(([key], k) => {
+    const h = (raw[k] / rawSum) * (H - gap * (p.shares.length - 1));
+    const layer = { key, y: round2(yCursor + h / 2), h: round2(h), inset: k % 2 ? 0.93 : 1 };
+    yCursor += h + gap;
+    return layer;
+  });
+  const facing = Math.atan2(dir[0], dir[2]);
+  // Local -z is the inner face; rotate (0, ly, -D/2) by `facing` into the world.
+  const plug = (ly) =>
+    add(scale(dir, BLOCK_RING), [Math.sin(facing) * (-D / 2), ly, Math.cos(facing) * (-D / 2)]).map(round2);
+  p.block = {
+    pos: scale(dir, BLOCK_RING).map(round2),
+    facing: round2(facing),
+    H: round2(H),
+    W: round2(W),
+    D,
+    silhouette: i % 4,
+    layers,
+    plugs: Object.fromEntries(layers.map((l) => [l.key, plug(l.y)])),
+  };
+});
+
+// The other repos: three grids of cubes on the outermost shell.
+{
+  const rand = mulberry32(STRUCT_SEED + 70);
+  const rest = PROJECT_NODES.filter((p) => !p.big);
+  const per = Math.ceil(rest.length / 3);
+  [[0.35, 0.95], [-0.25, 3.05], [0.15, 5.0]].forEach(([y, t], g) => {
+    const n = unit([Math.cos(t + (rand() - 0.5) * 0.3), y, Math.sin(t + (rand() - 0.5) * 0.3)]);
+    const [u, v] = tangentBasis(n);
+    rest.slice(g * per, (g + 1) * per).forEach((p, k) => {
+      const pos = onSphere(n, u, v, CUBE_RING, ((k % 3) - 1) * 0.2, (Math.floor(k / 3) - 1) * 0.2).map(round2);
+      const q = new Quaternion().setFromUnitVectors(ZAXIS, new Vector3(...unit(pos)));
+      p.cube = {
+        pos,
+        quat: [q.x, q.y, q.z, q.w].map((c) => Math.round(c * 1e4) / 1e4),
+        plug: scale(unit(pos), CUBE_RING - 0.07).map(round2),
+      };
+    });
+  });
+}
+
+// A conduit leaves its chamber outward, bows through the gap between the
+// shells and comes in to its plug from the inside. Three strands braid
+// around that path and pull together at both ends.
+function conduitStrands(start, end, bulge) {
+  const a = unit(start);
+  const b = unit(end);
+  const sum = add(a, b);
+  const midDir = len(sum) > 0.2 ? unit(sum) : tangentBasis(a)[0];
+  const mid = scale(midDir, (len(start) + len(end)) / 2 + bulge);
+  const curve = new CatmullRomCurve3(
+    [start, scale(a, len(start) + 0.35), mid, scale(b, len(end) - 0.4), end].map((p) => new Vector3(...p)),
+    false,
+    "centripetal"
+  );
+  const N = 90;
+  const frames = curve.computeFrenetFrames(N, false);
+  const turns = Math.max(3, Math.round(curve.getLength() * 2.2));
+  return [0, 1, 2].map((k) =>
+    Array.from({ length: N + 1 }, (_, j) => {
+      const t = j / N;
+      const p = curve.getPointAt(t);
+      const angle = t * turns * Math.PI * 2 + (k * 2 * Math.PI) / 3;
+      const r = 0.03 * Math.sqrt(Math.sin(Math.PI * t));
+      const o = frames.normals[j].clone().multiplyScalar(Math.cos(angle) * r).add(frames.binormals[j].clone().multiplyScalar(Math.sin(angle) * r));
+      return [p.x + o.x, p.y + o.y, p.z + o.z].map((c) => Math.round(c * 1000) / 1000);
+    })
+  );
+}
+
+const STRUCT_EDGES = PROJECT_NODES.flatMap((p, i) =>
+  p.majorKeys.map((key) => {
+    const lang = LANG_BY_KEY[key];
+    const end = p.block ? p.block.plugs[key] : p.cube.plug;
+    return { project: p.name, key, big: p.big, strands: conduitStrands(lang.pos, end, 0.35 + ((i * 7) % 5) * 0.08) };
+  })
+);
+
+// Boxes that share one material, drawn in a single call.
+function InstancedBoxes({ items, color, emissive = "#000000", emissiveIntensity = 0, metalness = 0.5, roughness = 0.45 }) {
+  const ref = useRef(null);
+
+  useLayoutEffect(() => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    const dummy = new Object3D();
+    const normal = new Vector3();
+    items.forEach((it, i) => {
+      dummy.position.set(...it.pos);
+      dummy.quaternion.setFromUnitVectors(ZAXIS, normal.set(...it.normal));
+      dummy.rotateZ(it.spin || 0);
+      dummy.scale.set(...it.size);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.computeBoundingSphere();
+  }, [items]);
+
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, items.length]}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial
+        color={color}
+        emissive={emissive}
+        emissiveIntensity={emissiveIntensity}
+        metalness={metalness}
+        roughness={roughness}
+      />
+    </instancedMesh>
+  );
+}
+
+function LineCloud({ positions, opacity }) {
+  const geometry = useMemo(() => {
+    const g = new BufferGeometry();
+    g.setAttribute("position", new Float32BufferAttribute(positions, 3));
+    return g;
+  }, [positions]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  return (
+    <lineSegments geometry={geometry}>
+      <lineBasicMaterial color={MONO.line} transparent opacity={opacity} depthWrite={false} />
+    </lineSegments>
+  );
+}
+
+function Shell3D({ shell, spinning }) {
+  const ref = useRef(null);
+  const axis = useMemo(() => new Vector3(...shell.axis).normalize(), [shell]);
+
+  useFrame((_, delta) => {
+    if (spinning && ref.current) ref.current.rotateOnWorldAxis(axis, shell.spin * delta);
+  });
+
+  return (
+    <group ref={ref}>
+      {shell.rings.map((ring, i) => (
+        <group key={i} rotation={ring.rotation}>
+          {ring.arcs.map((a, j) =>
+            a.band ? (
+              <mesh key={j}>
+                <ringGeometry
+                  args={[shell.r - a.width / 2, shell.r + a.width / 2, Math.max(8, Math.round(a.length * 24)), 1, a.start, a.length]}
+                />
+                <meshStandardMaterial color={MONO.plate} metalness={0.6} roughness={0.42} side={DoubleSide} />
+              </mesh>
+            ) : (
+              <mesh key={j} rotation={[0, 0, a.start]}>
+                <torusGeometry args={[shell.r, a.tube, 4, Math.max(8, Math.round(a.length * 28)), a.length]} />
+                <meshStandardMaterial color={MONO.metal} metalness={0.7} roughness={0.32} />
+              </mesh>
+            )
+          )}
+        </group>
+      ))}
+      <InstancedBoxes items={shell.plates} color={MONO.plate} metalness={0.55} roughness={0.5} />
+    </group>
+  );
+}
+
+function Core3D({ spinning }) {
+  const ref = useRef(null);
+  useFrame((_, delta) => {
+    if (spinning && ref.current) ref.current.rotation.y += delta * 0.06;
+  });
+  return (
+    <group ref={ref}>
+      <mesh>
+        <icosahedronGeometry args={[0.2, 0]} />
+        <meshStandardMaterial color={MONO.metal} metalness={0.75} roughness={0.28} flatShading />
+      </mesh>
+      <InstancedBoxes items={CORE_BLOCKS} color={MONO.metal} metalness={0.65} roughness={0.35} />
+      {CORE_KNOTS.map((k, i) => (
+        <mesh key={i} rotation={k.rotation}>
+          <torusKnotGeometry args={[k.r, 0.006, 220, 5, k.p, k.q]} />
+          <meshStandardMaterial color={MONO.line} metalness={0.8} roughness={0.25} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// A language: a vertical chamber with a charge inside, capped by rings and
+// held in its own broken ring. The active language's charge burns white.
+function LangChamber3D({ node, isActive, isHot, onHover, onLeave, onSelect }) {
+  const { chamberR: r, chamberH: h, ringR } = node;
+  const fade = isActive ? 1 : 0.25;
+
+  return (
+    <group position={node.pos}>
+      <mesh {...pointerHandlers(onHover, onLeave, onSelect)}>
+        <cylinderGeometry args={[r, r, h, 12, 1, true]} />
+        <meshStandardMaterial
+          color={MONO.metal}
+          metalness={0.7}
+          roughness={0.3}
+          side={DoubleSide}
+          transparent
+          opacity={0.8 * fade}
+        />
+        <Edges threshold={10} color={isHot ? "#ffffff" : MONO.line} lineWidth={isHot ? 1.4 : 0.8} transparent opacity={fade} />
+      </mesh>
+      <mesh>
+        <cylinderGeometry args={[r * 0.5, r * 0.5, h * 0.86, 16]} />
+        <meshStandardMaterial
+          color={isHot ? "#ffffff" : MONO.dark}
+          emissive="#ffffff"
+          emissiveIntensity={isHot ? 2.2 : 0.04}
+          metalness={0.3}
+          roughness={0.5}
+          transparent
+          opacity={fade}
+        />
+      </mesh>
+      {[h / 2, -h / 2].map((y) => (
+        <mesh key={y} position={[0, y, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[r * 1.06, Math.max(0.008, r * 0.08), 6, 28]} />
+          <meshStandardMaterial color={MONO.metal} metalness={0.75} roughness={0.3} transparent opacity={fade} />
+        </mesh>
+      ))}
+      <group rotation={node.ringTilt}>
+        <group rotation={[Math.PI / 2, 0, 0]}>
+          {node.ringArcs.map((a, i) => (
+            <mesh key={i} rotation={[0, 0, a.start]}>
+              <torusGeometry args={[ringR, 0.014, 4, 24, a.length]} />
+              <meshStandardMaterial
+                color={isHot ? "#ffffff" : MONO.plate}
+                emissive="#ffffff"
+                emissiveIntensity={isHot ? 0.8 : 0}
+                metalness={0.6}
+                roughness={0.4}
+                transparent
+                opacity={fade}
+              />
+            </mesh>
+          ))}
+        </group>
+      </group>
+      <NodeLabel anchor={node.pos} offset={[0, -h / 2 - 0.2, 0]} variant="plate" distanceFactor={6} dim={!isActive} focus={isHot}>
+        {node.name}
+        <b>{node.pctLabel}</b>
+      </NodeLabel>
+    </group>
+  );
+}
+
+// A featured repo: a faceted monolith whose stacked layers are its
+// languages, biggest at the bottom, with an engraved plate beneath it.
+function RepoMonolith3D({ node, isActive, isHot, hotKey, onHover, onLeave, onSelect }) {
+  const b = node.block;
+  const fade = isActive ? 1 : 0.22;
+  const top = b.H / 2;
+
+  return (
+    <group position={b.pos} rotation={[0, b.facing, 0]} {...pointerHandlers(onHover, onLeave, onSelect)}>
+      {b.layers.map((l) => {
+        const lit = isHot || hotKey === l.key;
+        return (
+          <mesh key={l.key} position={[0, l.y, 0]} scale={[(b.W / 2) * l.inset, l.h, b.D / 2]}>
+            <cylinderGeometry args={[1, 1, 1, 6]} />
+            <meshStandardMaterial
+              color={lit ? "#eef1f6" : MONO.metal}
+              emissive="#ffffff"
+              emissiveIntensity={lit ? 1.1 : 0}
+              metalness={0.65}
+              roughness={0.33}
+              transparent
+              opacity={0.95 * fade}
+            />
+            <Edges threshold={15} color={lit ? "#ffffff" : MONO.dark} lineWidth={lit ? 1.4 : 0.8} transparent opacity={fade} />
+          </mesh>
+        );
+      })}
+      {b.silhouette === 1 && (
+        <mesh position={[0, top + 0.09, 0]} scale={[b.W / 2, 0.16, b.D / 2]}>
+          <cylinderGeometry args={[0.55, 1, 1, 6]} />
+          <meshStandardMaterial color={MONO.metal} metalness={0.65} roughness={0.33} transparent opacity={0.95 * fade} />
+        </mesh>
+      )}
+      {b.silhouette === 2 && (
+        <mesh position={[0, top + 0.08, 0]} scale={[b.W * 0.27, 0.14, b.D * 0.4]}>
+          <cylinderGeometry args={[1, 1, 1, 6]} />
+          <meshStandardMaterial color={MONO.metal} metalness={0.65} roughness={0.33} transparent opacity={0.95 * fade} />
+        </mesh>
+      )}
+      {b.silhouette === 3 && (
+        <mesh position={[b.W * 0.22, top + 0.15, 0]}>
+          <boxGeometry args={[b.W * 0.12, 0.3, b.D * 0.5]} />
+          <meshStandardMaterial color={MONO.metal} metalness={0.65} roughness={0.33} transparent opacity={0.95 * fade} />
+        </mesh>
+      )}
+      <mesh position={[0, -top - 0.1, 0]}>
+        <boxGeometry args={[b.W * 0.95, 0.07, 0.03]} />
+        <meshStandardMaterial color={MONO.dark} metalness={0.5} roughness={0.55} transparent opacity={fade} />
+      </mesh>
+      <NodeLabel anchor={b.pos} offset={[0, -top - 0.24, 0]} variant="plate" distanceFactor={6} dim={!isActive} focus={isHot}>
+        {node.label}
+      </NodeLabel>
+    </group>
+  );
+}
+
+// Any other repo: a small cube in a grid on the outermost shell.
+function RepoCube3D({ node, isActive, isHot, showLabel, onHover, onLeave, onSelect }) {
+  const c = node.cube;
+  return (
+    <group position={c.pos} quaternion={c.quat}>
+      <mesh {...pointerHandlers(onHover, onLeave, onSelect)}>
+        <boxGeometry args={[0.11, 0.11, 0.11]} />
+        <meshStandardMaterial
+          color={isHot ? "#eef1f6" : MONO.metal}
+          emissive="#ffffff"
+          emissiveIntensity={isHot ? 1 : 0}
+          metalness={0.6}
+          roughness={0.38}
+          transparent
+          opacity={isActive ? 1 : 0.25}
+        />
+        <Edges color={isHot ? "#ffffff" : MONO.dark} lineWidth={0.8} />
+      </mesh>
+      {showLabel && (
+        <NodeLabel anchor={c.pos} offset={[0, 0.16, 0]} variant="plate" distanceFactor={6} focus={isHot}>
+          {node.label}
+        </NodeLabel>
+      )}
+    </group>
+  );
+}
+
+// An active conduit: three braided white tubes with a pulse running along
+// them from the language to the repo.
+function HotConduit3D({ edge }) {
+  const geometries = useMemo(
+    () =>
+      edge.strands.map(
+        (pts) => new TubeGeometry(new CatmullRomCurve3(pts.map((p) => new Vector3(...p))), 96, edge.big ? 0.009 : 0.006, 6, false)
+      ),
+    [edge]
+  );
+  const path = useMemo(() => new CatmullRomCurve3(edge.strands[0].map((p) => new Vector3(...p))), [edge]);
+  const pulseRef = useRef(null);
+  useEffect(() => () => geometries.forEach((g) => g.dispose()), [geometries]);
+  useFrame(({ clock }) => {
+    if (pulseRef.current) pulseRef.current.position.copy(path.getPointAt((clock.elapsedTime * 0.35) % 1));
+  });
+
+  return (
+    <group>
+      {geometries.map((g, i) => (
+        <mesh key={i} geometry={g}>
+          <meshStandardMaterial color="#dfe4ec" emissive="#ffffff" emissiveIntensity={0.55} metalness={0.4} roughness={0.35} />
+        </mesh>
+      ))}
+      <mesh ref={pulseRef}>
+        <sphereGeometry args={[edge.big ? 0.028 : 0.018, 12, 12]} />
+        <meshBasicMaterial color="#ffffff" />
+      </mesh>
+    </group>
+  );
+}
+
+// A resting conduit: two thin braided threads that recede.
+function Conduit3D({ edge, dim }) {
+  return edge.strands.slice(0, 2).map((pts, i) => (
+    <Line key={i} points={pts} color={MONO.line} lineWidth={0.8} transparent opacity={dim ? 0.07 : 0.3} depthWrite={false} />
+  ));
+}
+
+// The stage for pane 01: a 3/4 hero angle from slightly below, monochrome
+// light from soft panels, and on desktop ambient occlusion, a little bloom
+// for the active state and depth of field focused on the core.
+function StructureScene({ isMobile, spinning, onStopSpinning, onMissed, children }) {
+  return (
+    <Canvas
+      camera={{ position: [9.6, -3.2, 12.5], fov: 34 }}
+      gl={{ alpha: true, antialias: !isMobile }}
+      resize={{ offsetSize: true }}
+      dpr={isMobile ? 1 : [1, 1.5]}
+      onPointerMissed={onMissed}
+    >
+      <color attach="background" args={["#05060a"]} />
+      <fog attach="fog" args={["#05060a", 13, 25]} />
+      <ambientLight intensity={0.18} />
+      <directionalLight position={[5, 8, 6]} intensity={1.4} />
+      <directionalLight position={[-6, -2, -5]} intensity={0.7} color="#cfd8ff" />
+      <pointLight position={[0, -6, 3]} intensity={0.4} />
+      <Environment resolution={128} frames={1}>
+        <Lightformer form="rect" intensity={2.4} position={[0, 6, 4]} scale={[12, 4, 1]} />
+        <Lightformer form="rect" intensity={1.1} position={[-6, 1, -4]} rotation-y={Math.PI / 2} scale={[8, 3, 1]} />
+        <Lightformer form="ring" intensity={1.4} position={[5, -3, 6]} scale={3} />
+      </Environment>
+      <Stars radius={45} depth={25} count={isMobile ? 300 : 900} factor={1.8} saturation={0} fade speed={0.2} />
+
+      {children}
+
+      {isMobile ? (
+        <AutoOrbitCamera enabled={spinning} target={[0, 0, 0]} radius={17} height={-2.8} />
+      ) : (
+        <OrbitControls
+          target={[0, 0, 0]}
+          enablePan={false}
+          minDistance={8}
+          maxDistance={22}
+          minPolarAngle={0.15}
+          maxPolarAngle={Math.PI - 0.15}
+          rotateSpeed={0.6}
+          zoomSpeed={0.8}
+          autoRotate={spinning}
+          autoRotateSpeed={0.4}
+          onStart={onStopSpinning}
+          makeDefault
+        />
+      )}
+
+      {!isMobile && (
+        <EffectComposer multisampling={0}>
+          <N8AO halfRes quality="performance" aoRadius={0.6} intensity={2.2} distanceFalloff={0.6} />
+          <Bloom luminanceThreshold={0.9} luminanceSmoothing={0.15} intensity={0.6} mipmapBlur radius={0.5} />
+          <DepthOfField target={[0, 0, 0]} worldFocusRange={4.5} bokehScale={2.2} />
         </EffectComposer>
       )}
     </Canvas>
@@ -774,16 +1336,23 @@ function LanguagesPane() {
     );
   };
 
-  const edgeActive = (edge) => {
-    if (searching) return searchLangKeys.has(edge.key) && searchProjectNames.has(edge.project);
-    return (
-      !active ||
-      (active.type === "lang" && active.key === edge.key) ||
-      (active.type === "project" && active.name === edge.project)
-    );
+  // In 3D one language is always "hot": the hovered or pinned one, a picked
+  // repo's languages, the search matches, or else the most used language.
+  const hotKey = searching || active?.type === "project" ? null : active?.type === "lang" ? active.key : TOP_LANG;
+  const hotEdge = (e) => {
+    if (searching) return searchLangKeys.has(e.key) && searchProjectNames.has(e.project);
+    if (active?.type === "project") return e.project === active.name;
+    return e.key === hotKey;
   };
-
-  const edgeFocused = (edge) => !!active && edgeActive(edge);
+  const hotLang = (key) =>
+    searching
+      ? searchLangKeys.has(key)
+      : active?.type === "project"
+        ? PROJECT_BY_NAME[active.name].majorKeys.includes(key)
+        : key === hotKey;
+  const hotProject = (name) =>
+    searching ? searchProjectNames.has(name) : active?.type === "project" ? active.name === name : PROJECT_BY_NAME[name].majorKeys.includes(hotKey);
+  const dimming = searching || !!active;
 
   const detail = (() => {
     if (active?.type === "lang") {
@@ -905,44 +1474,68 @@ function LanguagesPane() {
         </div>
 
         <div className="lang-graph-canvas" style={{ cursor: isMobile ? "default" : "grab" }}>
-          <CityScene
+          <StructureScene
             isMobile={isMobile}
             spinning={spinning}
             onStopSpinning={stopSpinning}
             onMissed={() => setPinned(null)}
-            camera={[10, 9.5, 13]}
-            mobileOrbit={{ radius: 22, height: 13 }}
           >
-            {DISTRICTS.map((d) => (
-              <District3D
-                key={d.key ?? "readme"}
-                district={d}
-                isActive={d.lang ? langActive(d.key) : !active && !searching}
-                isFocus={!!d.lang && active?.type === "lang" && active.key === d.key}
-                onHover={() => hoverLang(d.key)}
+            <Core3D spinning={spinning} />
+            {SHELLS.map((shell, i) => (
+              <Shell3D key={i} shell={shell} spinning={spinning} />
+            ))}
+            <LineCloud positions={STRUCT_DETAIL.streaks} opacity={0.16} />
+            <LineCloud positions={STRUCT_DETAIL.scaffold} opacity={0.34} />
+            <InstancedBoxes items={STRUCT_DETAIL.cubes} color={MONO.metal} metalness={0.6} roughness={0.4} />
+            <InstancedBoxes items={STRUCT_DETAIL.readouts} color={MONO.dark} metalness={0.4} roughness={0.6} />
+            <InstancedBoxes items={STRUCT_DETAIL.bars} color={MONO.line} emissive="#ffffff" emissiveIntensity={0.35} />
+
+            {LANG_NODES.map((s) => (
+              <LangChamber3D
+                key={s.key}
+                node={s}
+                isActive={langActive(s.key)}
+                isHot={hotLang(s.key)}
+                onHover={() => hoverLang(s.key)}
                 onLeave={clearHover}
-                onSelect={() => selectLang(d.key)}
+                onSelect={() => selectLang(s.key)}
               />
             ))}
 
-            {PROJECT_NODES.map((p) => (
-              <Building3D
+            {FEATURED.map((p) => (
+              <RepoMonolith3D
                 key={p.name}
                 node={p}
                 isActive={projectActive(p.name)}
-                isFocus={active?.type === "project" && active.name === p.name}
-                focusKey={active?.type === "lang" ? active.key : null}
-                showLabel={p.big || (active?.type === "project" && active.name === p.name)}
+                isHot={active?.type === "project" && active.name === p.name}
+                hotKey={hotKey}
                 onHover={() => hoverProject(p.name)}
                 onLeave={clearHover}
                 onSelect={() => selectProject(p.name)}
               />
             ))}
 
-            {BEAM_EDGES.filter(edgeFocused).map((edge) => (
-              <Beam3D key={`${edge.project}-${edge.key}`} edge={edge} />
+            {PROJECT_NODES.filter((p) => p.cube).map((p) => (
+              <RepoCube3D
+                key={p.name}
+                node={p}
+                isActive={projectActive(p.name)}
+                isHot={hotProject(p.name)}
+                showLabel={dimming && hotProject(p.name)}
+                onHover={() => hoverProject(p.name)}
+                onLeave={clearHover}
+                onSelect={() => selectProject(p.name)}
+              />
             ))}
-          </CityScene>
+
+            {STRUCT_EDGES.map((edge) =>
+              hotEdge(edge) ? (
+                <HotConduit3D key={`${edge.project}-${edge.key}-hot`} edge={edge} />
+              ) : edge.big ? (
+                <Conduit3D key={`${edge.project}-${edge.key}`} edge={edge} dim={dimming} />
+              ) : null
+            )}
+          </StructureScene>
         </div>
 
         <div className="lang-graph-detail">
