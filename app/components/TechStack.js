@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   SiTypescript,
   SiJavascript,
@@ -14,7 +14,8 @@ import {
 import { RiOpenaiFill } from "react-icons/ri";
 import { FaJava } from "react-icons/fa6";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Line, Html, Stars } from "@react-three/drei";
+import { OrbitControls, Line, Html, Stars, Sparkles } from "@react-three/drei";
+import { AdditiveBlending, CanvasTexture, Color, SRGBColorSpace, Vector3 } from "three";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import useIsMobile from "../hooks/useIsMobile";
 import LazyTerminal from "./terminal/LazyTerminal";
@@ -32,22 +33,21 @@ const FILE_ICONS = {
   next: { Icon: SiNextdotjs, color: "#ffffff" },
 };
 
-// Deeper jewel-tone palette for the language graph only — the IDE-mockup file
-// icons elsewhere keep their true brand colors via FILE_ICONS.
+// Glow-friendly palette for the language graph only, one clearly separate hue
+// per language so neighbouring planets never blur together. The IDE-mockup
+// file icons elsewhere keep their true brand colors via FILE_ICONS.
 const LANG_COLORS = {
-  js: "#D9A441",
-  ts: "#3E63DD",
-  next: "#C7CCD6",
-  html: "#D2543A",
-  css: "#2FA8A0",
-  java: "#B5542E",
-  py: "#6366B8",
-  cpp: "#3E8E63",
+  js: "#F5C451",
+  ts: "#4D8DFF",
+  next: "#E6EAF2",
+  html: "#FF5A5F",
+  css: "#2ED3C6",
+  java: "#F28C3B",
+  py: "#8C8CFF",
+  cpp: "#5BE38A",
+  kt: "#D17BFF",
+  rs: "#FF8EC7",
 };
-
-// Idle edges read as a neutral gray mesh; only the hovered/pinned node's own
-// edges pick up their language color (see is-flowing below).
-const NEUTRAL_EDGE = "#aab2c2";
 
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -241,9 +241,11 @@ function TermLine({ line }) {
 }
 
 // Real data pulled from github.com/mitarthpathak — one repo missed here is one
-// missed in the graph, so this mirrors `gh api users/mitarthpathak/repos` + per-repo
-// `/languages` exactly (byte counts), except Next.js which GitHub doesn't report
-// as a "language" — it's tagged on manually for the mitarth (portfolio) repo.
+// missed in the graph, so this lists every public repo on the profile (the
+// Kahani-Studio fork too, since Mitarth has commits in it). Byte counts are
+// GitHub Linguist's per-repo `/languages` numbers, TSX counted as TypeScript
+// the way GitHub does, measured on each default branch in October 2026.
+// Next.js isn't a GitHub "language": see NEXTJS_REPOS below.
 const LANG_NAME_TO_KEY = {
   JavaScript: "js",
   TypeScript: "ts",
@@ -252,9 +254,11 @@ const LANG_NAME_TO_KEY = {
   Python: "py",
   HTML: "html",
   CSS: "css",
+  Kotlin: "kt",
+  Rust: "rs",
 };
 
-const MAJOR_KEYS = ["js", "ts", "next", "html", "css", "java", "py", "cpp"];
+const MAJOR_KEYS = ["js", "ts", "next", "html", "css", "java", "py", "cpp", "kt", "rs"];
 const LANG_LABELS = {
   js: "JavaScript",
   ts: "TypeScript",
@@ -264,18 +268,39 @@ const LANG_LABELS = {
   java: "Java",
   py: "Python",
   cpp: "C++",
+  kt: "Kotlin",
+  rs: "Rust",
 };
-// Both are Next.js apps under the hood — their JS/TS byte counts roll into the
-// Next.js node instead of the raw-language nodes.
-const NEXTJS_REPOS = ["mitarth", "Swasthya-Neeti"];
+// Every repo whose package.json depends on `next`: their JS/TS byte counts
+// roll into the Next.js node instead of the raw-language nodes.
+const NEXTJS_REPOS = [
+  "mitarth",
+  "yap-render",
+  "TestAI",
+  "supportagent-agent",
+  "Kahani-Studio",
+  "citysnc-app",
+  "citysync-landing-page-design",
+];
 
 const REPO_DATA = [
-  { name: "Swasthya-Neeti", label: "Swasthya-Neeti", big: true, langs: { TypeScript: 272040, JavaScript: 120660, CSS: 99984, HTML: 678 } },
-  { name: "Run-Neeti", label: "Run-Neeti", big: true, langs: { TypeScript: 127503, JavaScript: 15751, CSS: 1413, HTML: 638 } },
+  { name: "Swasthya-Neeti", label: "Swasthya-Neeti", big: true, langs: { TypeScript: 272040, JavaScript: 121831, CSS: 99984, HTML: 678 } },
+  { name: "Run-Neeti", label: "Run-Neeti", big: true, langs: { TypeScript: 139032, JavaScript: 41473, CSS: 1658, HTML: 1226 } },
   { name: "DevTask", label: "DevTask", big: true, langs: { Java: 26688 } },
-  { name: "mitarth", label: "Mitarth", big: true, langs: { JavaScript: 99645, CSS: 65968, Python: 617 } },
-  { name: "yap-render", label: "Yap-Render", big: true, langs: { JavaScript: 505621, TypeScript: 75368, CSS: 41634 } },
+  { name: "mitarth", label: "Mitarth", big: true, langs: { JavaScript: 321049, CSS: 129273, Python: 617 } },
+  { name: "yap-render", label: "Yap-Render", big: true, langs: { JavaScript: 1881908, TypeScript: 461970, CSS: 106866, Python: 52896, Dockerfile: 471 } },
   { name: "PeerLink", label: "PeerLink", big: true, langs: { "C++": 29450 } },
+  { name: "CitySync", label: "CitySync", big: true, langs: { JavaScript: 363240, CSS: 57358, HTML: 1211 } },
+  { name: "Doxentra", label: "Doxentra", big: true, langs: { JavaScript: 929280, TypeScript: 378594, CSS: 6723, HTML: 1168 } },
+  { name: "Glyph", label: "Glyph", big: false, langs: { JavaScript: 719927, TypeScript: 335309, CSS: 5484, HTML: 1162 } },
+  { name: "TestAI", label: "TestAI", big: false, langs: { JavaScript: 349812, CSS: 1334 } },
+  { name: "supportagent-agent", label: "supportagent-agent", big: false, langs: { TypeScript: 177697, CSS: 2945, JavaScript: 94 } },
+  { name: "Kahani-Studio", label: "Kahani-Studio", big: false, langs: { TypeScript: 368673, CSS: 3152, JavaScript: 559 }, fork: true },
+  { name: "citysnc-app", label: "citysnc-app", big: false, langs: { CSS: 24160, TypeScript: 17660, JavaScript: 325 } },
+  { name: "citysync-landing-page-design", label: "citysync-landing-page-design", big: false, langs: { TypeScript: 14916, CSS: 13974, JavaScript: 325 } },
+  { name: "myFirstReactApp", label: "myFirstReactApp", big: false, langs: { JavaScript: 4618, CSS: 456, HTML: 367 } },
+  { name: "weatherApp", label: "weatherApp", big: false, langs: { JavaScript: 2995, CSS: 1525, HTML: 595 } },
+  { name: "Java_DSA", label: "Java_DSA", big: false, langs: { Java: 6591 } },
   { name: "Cognizant", label: "Cognizant", big: false, langs: { Python: 107615 } },
   { name: "ecom", label: "ecom", big: false, langs: { Java: 7156 } },
   { name: "Lottery---Raffle-Contract", label: "Lottery-Raffle-Contract", big: false, langs: { Rust: 2928, Makefile: 171 } },
@@ -290,27 +315,11 @@ const REPO_DATA = [
   { name: "yap-render-extension", label: "yap-render-extension", big: false, langs: { JavaScript: 548473, CSS: 8046, HTML: 6351 }, drop: ["JavaScript"] },
 ];
 
-function bytesToRadius(bytes, allBytes, min, max) {
-  const lo = Math.log10(min + 1);
-  const hi = Math.log10(max + 1);
-  const t = hi > lo ? (Math.log10(bytes + 1) - lo) / (hi - lo) : 0.5;
-  return round2(15 + t * 19);
-}
-
-const GRAPH_CUBE = 640;
-const GRAPH_CENTER = { x: 330, y: 240, z: GRAPH_CUBE / 2 };
-const WORLD_SCALE = 60;
-const LANG_RING = 95;
-const BIG_RING = 172;
-const SMALL_RING = 224;
+// World units: languages sit on a shell this far from the center.
+const LANG_SHELL = 4.3;
 
 function round2(n) {
   return Math.round(n * 100) / 100;
-}
-
-function polar(cx, cy, r, deg) {
-  const rad = (deg * Math.PI) / 180;
-  return { x: round2(cx + r * Math.cos(rad)), y: round2(cy + r * Math.sin(rad)) };
 }
 
 function mulberry32(seed) {
@@ -323,156 +332,19 @@ function mulberry32(seed) {
   };
 }
 
-// Stretches the settled node cloud to fill the target cube. X, Y and Z are
-// normalized independently (not a single uniform scale) so the cluster
-// always uses the full volume instead of leaving empty margins when the
-// organic shape doesn't match the cube's proportions — node radii are
-// untouched, so spheres stay spheres.
-function fitNodesToBounds3D(nodes, size, padding) {
-  const axes = ["x", "y", "z"];
-  const bounds = {};
-  axes.forEach((axis) => {
-    const vals = nodes.map((n) => n[axis]);
-    bounds[axis] = { min: Math.min(...vals), span: Math.max(Math.max(...vals) - Math.min(...vals), 1) };
-  });
-  nodes.forEach((n) => {
-    axes.forEach((axis) => {
-      const { min, span } = bounds[axis];
-      const scale = (size - padding * 2) / span;
-      n[axis] = round2(padding + (n[axis] - min) * scale);
-    });
-  });
+// Log scale, so one huge repo doesn't flatten everything else to the minimum.
+function logScale(value, min, max, lo, hi) {
+  const a = Math.log10(min + 1);
+  const b = Math.log10(max + 1);
+  const t = b > a ? (Math.log10(value + 1) - a) / (b - a) : 0.5;
+  return lo + t * (hi - lo);
 }
 
-// Force-directed relaxation in real 3D: languages act as heavier cluster hubs,
-// repos get pulled toward the languages they use and pushed apart from
-// everything else, in x/y/z all at once — a true volumetric node cloud
-// instead of a flat graph, like a scene laid out in a 3D app. Seeded PRNG
-// keeps the layout identical between server render and client hydration.
-function relaxForceLayout(langNodes, projectNodes, edges, center, cube) {
-  const rand = mulberry32(20260919);
-  const sims = [
-    ...langNodes.map((ref) => ({ ref, r: ref.r, mass: 2.2 })),
-    ...projectNodes.map((ref) => ({ ref, r: ref.r, mass: ref.big ? 1.5 : 1 })),
-  ];
-  sims.forEach((n) => {
-    // x/y start from the old polar seed (still a good basin to relax from);
-    // z has no natural seed, so it starts spread randomly through the cube.
-    n.x = n.ref.x + (rand() - 0.5) * 8;
-    n.y = n.ref.y + (rand() - 0.5) * 8;
-    n.z = center.z + (rand() - 0.5) * cube * 0.5;
-  });
-
-  const simByLang = {};
-  langNodes.forEach((n, i) => (simByLang[n.key] = sims[i]));
-  const simByProject = {};
-  projectNodes.forEach((n, i) => (simByProject[n.name] = sims[langNodes.length + i]));
-
-  const links = edges.map((e) => ({
-    a: simByProject[e.project],
-    b: simByLang[e.key],
-    dist: e.big ? 76 : 122,
-  }));
-
-  let alpha = 1;
-  for (let iter = 0; iter < 420; iter++) {
-    for (let i = 0; i < sims.length; i++) {
-      for (let j = i + 1; j < sims.length; j++) {
-        const a = sims[i];
-        const b = sims[j];
-        let dx = a.x - b.x;
-        let dy = a.y - b.y;
-        let dz = a.z - b.z;
-        let d2 = dx * dx + dy * dy + dz * dz;
-        if (d2 < 0.02) {
-          dx = rand() - 0.5;
-          dy = rand() - 0.5;
-          dz = rand() - 0.5;
-          d2 = 0.02;
-        }
-        const d = Math.sqrt(d2);
-        const force = (2100 / d2) * alpha;
-        const fx = (dx / d) * force;
-        const fy = (dy / d) * force;
-        const fz = (dz / d) * force;
-        a.x += fx / a.mass;
-        a.y += fy / a.mass;
-        a.z += fz / a.mass;
-        b.x -= fx / b.mass;
-        b.y -= fy / b.mass;
-        b.z -= fz / b.mass;
-      }
-    }
-    links.forEach(({ a, b, dist }) => {
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const dz = b.z - a.z;
-      const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.02;
-      const diff = ((d - dist) * 0.035 * alpha) / d;
-      const fx = dx * diff;
-      const fy = dy * diff;
-      const fz = dz * diff;
-      a.x += fx / a.mass;
-      a.y += fy / a.mass;
-      a.z += fz / a.mass;
-      b.x -= fx / b.mass;
-      b.y -= fy / b.mass;
-      b.z -= fz / b.mass;
-    });
-    sims.forEach((n) => {
-      n.x += (center.x - n.x) * 0.012 * alpha;
-      n.y += (center.y - n.y) * 0.012 * alpha;
-      n.z += (center.z - n.z) * 0.012 * alpha;
-    });
-    alpha *= 0.988;
-  }
-
-  for (let pass = 0; pass < 22; pass++) {
-    for (let i = 0; i < sims.length; i++) {
-      for (let j = i + 1; j < sims.length; j++) {
-        const a = sims[i];
-        const b = sims[j];
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const dz = b.z - a.z;
-        const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.02;
-        const minDist = (a.r + b.r) * 1.4 + 12;
-        if (d < minDist) {
-          const overlap = (minDist - d) / 2;
-          const nx = dx / d;
-          const ny = dy / d;
-          const nz = dz / d;
-          a.x -= nx * overlap;
-          a.y -= ny * overlap;
-          a.z -= nz * overlap;
-          b.x += nx * overlap;
-          b.y += ny * overlap;
-          b.z += nz * overlap;
-        }
-      }
-    }
-  }
-
-  fitNodesToBounds3D(sims, cube, 40);
-
-  sims.forEach((n) => {
-    n.ref.x = n.x;
-    n.ref.y = n.y;
-    n.ref.z = n.z;
-  });
-}
-
-// Converts a node's simulated x/y/z (pixel-ish units, 0..GRAPH_CUBE) into
-// Three.js world-space coordinates centered on the origin. Y is flipped so
-// "up" in the data reads as "up" in the 3D scene.
-function toWorld(n) {
-  const half = GRAPH_CUBE / 2;
-  return [
-    round2((n.x - half) / WORLD_SCALE),
-    round2(-(n.y - half) / WORLD_SCALE),
-    round2((n.z - half) / WORLD_SCALE),
-  ];
-}
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const scale = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const len = (a) => Math.hypot(a[0], a[1], a[2]);
+const norm = (a) => scale(a, 1 / (len(a) || 1));
 
 function repoMajorEntries(repo) {
   const isNext = NEXTJS_REPOS.includes(repo.name);
@@ -506,57 +378,41 @@ const LANG_MAX = Math.max(...LANG_TOTAL_VALUES);
 const LANG_SUM = LANG_TOTAL_VALUES.reduce((a, b) => a + b, 0);
 
 const LANG_NODES = MAJOR_KEYS.map((key, i) => {
-  const angle = -90 + i * (360 / MAJOR_KEYS.length);
-  const { x, y } = polar(GRAPH_CENTER.x, GRAPH_CENTER.y, LANG_RING, angle);
-  const bytes = LANG_TOTALS[key];
+  const share = (LANG_TOTALS[key] / LANG_SUM) * 100;
   return {
     key,
     name: LANG_LABELS[key],
-    angle,
-    x,
-    y,
-    pct: Math.round((bytes / LANG_SUM) * 100),
-    r: bytesToRadius(bytes, LANG_TOTAL_VALUES, LANG_MIN, LANG_MAX),
+    pct: Math.round(share),
+    pctLabel: share < 1 ? "<1%" : `${Math.round(share)}%`,
+    r: round2(logScale(LANG_TOTALS[key], LANG_MIN, LANG_MAX, 0.2, 0.5)),
+    // Every planet's ring sits at its own tilt, so they never line up.
+    tilt: [round2(1.1 + i * 0.37), 0, round2(0.4 - i * 0.29)],
+    phase: round2(i * 1.7),
   };
 });
 
 const LANG_BY_KEY = LANG_NODES.reduce((acc, n) => ({ ...acc, [n.key]: n }), {});
 
-let bigIdx = 0;
-let smallIdx = 0;
 const PROJECT_NODES = REPO_DATA.map((repo) => {
-  const majorEntries = repoMajorEntries(repo);
-  const extra = Object.keys(repo.langs).filter((n) => !LANG_NAME_TO_KEY[n]);
-  const dominant = majorEntries.sort((a, b) => b[1] - a[1])[0]?.[0] || null;
-
-  let angle;
-  if (repo.big) {
-    angle = -60 + bigIdx * (360 / 6);
-    bigIdx += 1;
-  } else {
-    angle = -15 + smallIdx * (360 / 12);
-    smallIdx += 1;
-  }
-  const { x, y } = polar(GRAPH_CENTER.x, GRAPH_CENTER.y, repo.big ? BIG_RING : SMALL_RING, angle);
-
+  const majorEntries = repoMajorEntries(repo).sort((a, b) => b[1] - a[1]);
+  const total = majorEntries.reduce((sum, [, bytes]) => sum + bytes, 0);
   return {
     ...repo,
-    angle,
-    x,
-    y,
-    r: repo.big ? 7.5 : 3.5,
+    r: repo.big ? 0.12 : 0.07,
     majorKeys: majorEntries.map(([key]) => key),
-    extra,
-    dominant,
+    shares: majorEntries.map(([key, bytes]) => [key, total ? bytes / total : 0]),
+    extra: Object.keys(repo.langs).filter((n) => !LANG_NAME_TO_KEY[n]),
+    dominant: majorEntries[0]?.[0] || null,
     url: `https://github.com/mitarthpathak/${repo.name}`,
   };
 });
 
 const PROJECT_BY_NAME = PROJECT_NODES.reduce((acc, n) => ({ ...acc, [n.name]: n }), {});
 
+const repoColor = (p) => LANG_COLORS[p.dominant] || LANG_COLORS.next;
+
 // Edges carry the actual byte weight of that language inside that repo, so
-// line thickness reads as "how much of this repo is this language" — the
-// priority signal the graph is drawn from — instead of a flat width.
+// line thickness reads as "how much of this repo is this language".
 const GRAPH_EDGES = PROJECT_NODES.flatMap((p) =>
   repoMajorEntries(p).map(([key, bytes]) => ({ project: p.name, key, big: p.big, bytes }))
 );
@@ -565,75 +421,240 @@ const EDGE_BYTE_VALUES = GRAPH_EDGES.map((e) => e.bytes);
 const EDGE_MIN = Math.min(...EDGE_BYTE_VALUES);
 const EDGE_MAX = Math.max(...EDGE_BYTE_VALUES);
 GRAPH_EDGES.forEach((e) => {
-  const lo = Math.log10(EDGE_MIN + 1);
-  const hi = Math.log10(EDGE_MAX + 1);
-  const t = hi > lo ? (Math.log10(e.bytes + 1) - lo) / (hi - lo) : 0.5;
-  e.width = round2(1 + t * 3.6);
+  e.width = round2(logScale(e.bytes, EDGE_MIN, EDGE_MAX, 0.6, 2.2));
 });
 
-// Quiet background mesh: languages that co-occur inside the same repo get a
-// faint static link between them, so the scene reads as a dense web instead
-// of a bare hub-and-spoke — grounded in real data (how often two languages
-// actually appear together), not decoration.
-const LANG_LINK_COUNTS = new Map();
+// How many repos use each pair of languages together.
+const CO_COUNTS = new Map();
 PROJECT_NODES.forEach((p) => {
   const keys = p.majorKeys;
   for (let i = 0; i < keys.length; i++) {
     for (let j = i + 1; j < keys.length; j++) {
       const pairKey = [keys[i], keys[j]].sort().join("|");
-      LANG_LINK_COUNTS.set(pairKey, (LANG_LINK_COUNTS.get(pairKey) || 0) + 1);
+      CO_COUNTS.set(pairKey, (CO_COUNTS.get(pairKey) || 0) + 1);
     }
   }
 });
-const LANG_LINKS = Array.from(LANG_LINK_COUNTS.entries()).map(([pairKey, count]) => {
-  const [a, b] = pairKey.split("|");
-  return { a, b, count };
+const coCount = (a, b) => CO_COUNTS.get([a, b].sort().join("|")) || 0;
+
+// Languages sit on an even Fibonacci shell; a seeded swap search then puts
+// languages that share repos next to each other, so most arcs stay short
+// instead of every edge cutting through the middle of the scene.
+function placeLanguages() {
+  const n = LANG_NODES.length;
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  const slots = Array.from({ length: n }, (_, i) => {
+    const y = 1 - ((i + 0.5) / n) * 2;
+    const ring = Math.sqrt(1 - y * y);
+    return [Math.cos(i * golden) * ring * LANG_SHELL, y * LANG_SHELL * 0.72, Math.sin(i * golden) * ring * LANG_SHELL];
+  });
+  const slotOf = LANG_NODES.map((_, i) => i);
+  const cost = () => {
+    let total = 0;
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        total += coCount(LANG_NODES[i].key, LANG_NODES[j].key) * len(sub(slots[slotOf[i]], slots[slotOf[j]]));
+      }
+    }
+    return total;
+  };
+  const rand = mulberry32(20261024);
+  let best = cost();
+  for (let step = 0; step < 3000; step++) {
+    const i = Math.floor(rand() * n);
+    const j = Math.floor(rand() * n);
+    if (i === j) continue;
+    [slotOf[i], slotOf[j]] = [slotOf[j], slotOf[i]];
+    const next = cost();
+    if (next <= best) best = next;
+    else [slotOf[i], slotOf[j]] = [slotOf[j], slotOf[i]];
+  }
+  LANG_NODES.forEach((node, i) => (node.pos = slots[slotOf[i]]));
+}
+
+// Repos settle between the languages they're written in like moons: a spring
+// to each language (stronger the bigger its share of the repo), a soft push
+// away from every other node, then a final pass so nothing overlaps.
+function placeRepos() {
+  const rand = mulberry32(20260919);
+  const jitter = (s) => [(rand() - 0.5) * s, (rand() - 0.5) * s, (rand() - 0.5) * s];
+  const moving = PROJECT_NODES.filter((p) => p.shares.length);
+
+  PROJECT_NODES.forEach((p) => {
+    // No language to orbit (the profile README repo): it rests at the core.
+    if (!p.shares.length) {
+      p.pos = [0, 0, 0];
+      return;
+    }
+    let pos = [0, 0, 0];
+    p.shares.forEach(([key, share]) => (pos = add(pos, scale(LANG_BY_KEY[key].pos, share))));
+    p.pos = add(add(pos, scale(norm(pos), 0.6)), jitter(0.9));
+  });
+
+  const others = [...LANG_NODES, ...PROJECT_NODES];
+  const steps = 260;
+  for (let iter = 0; iter < steps; iter++) {
+    const step = 0.5 * (1 - iter / steps) + 0.05;
+    moving.forEach((p) => {
+      let force = [0, 0, 0];
+      p.shares.forEach(([key, share]) => {
+        const hub = LANG_BY_KEY[key];
+        const d = sub(hub.pos, p.pos);
+        const dist = len(d) || 0.001;
+        const rest = hub.r + p.r + (p.big ? 1 : 0.7);
+        force = add(force, scale(d, ((dist - rest) / dist) * (0.08 + 0.5 * share)));
+      });
+      others.forEach((o) => {
+        if (o === p) return;
+        const d = sub(p.pos, o.pos);
+        const d2 = Math.max(d[0] ** 2 + d[1] ** 2 + d[2] ** 2, 0.01);
+        force = add(force, scale(d, 0.08 / (d2 * Math.sqrt(d2))));
+      });
+      p.pos = add(p.pos, scale(force, step));
+    });
+  }
+
+  const bodies = [
+    ...LANG_NODES.map((node) => ({ node, fixed: true })),
+    ...moving.map((node) => ({ node, fixed: false })),
+  ];
+  for (let pass = 0; pass < 40; pass++) {
+    for (let i = 0; i < bodies.length; i++) {
+      for (let j = i + 1; j < bodies.length; j++) {
+        const a = bodies[i];
+        const b = bodies[j];
+        if (a.fixed && b.fixed) continue;
+        // Featured repos and planets carry labels, so they keep more room.
+        const roomy = a.fixed || b.fixed || a.node.big || b.node.big;
+        const min = a.node.r + b.node.r + (a.node.big && b.node.big ? 1.05 : roomy ? 0.5 : 0.3);
+        const d = sub(b.node.pos, a.node.pos);
+        const dist = len(d) || 0.001;
+        if (dist >= min) continue;
+        const push = scale(d, (min - dist) / dist);
+        if (a.fixed) b.node.pos = add(b.node.pos, push);
+        else if (b.fixed) a.node.pos = sub(a.node.pos, push);
+        else {
+          a.node.pos = sub(a.node.pos, scale(push, 0.5));
+          b.node.pos = add(b.node.pos, scale(push, 0.5));
+        }
+      }
+    }
+  }
+}
+
+placeLanguages();
+placeRepos();
+
+// Center the whole cloud on its bounding box, so the camera orbits its middle.
+{
+  const all = [...LANG_NODES, ...PROJECT_NODES];
+  const mid = [0, 1, 2].map((k) => {
+    const vals = all.map((n) => n.pos[k]);
+    return (Math.min(...vals) + Math.max(...vals)) / 2;
+  });
+  all.forEach((n) => (n.pos = sub(n.pos, mid).map(round2)));
+}
+
+// Each edge is a soft arc bowed away from the core, shaded from the repo's
+// color into its language's color.
+function arcPoints(a, b, segments = 24) {
+  const mid = scale(add(a, b), 0.5);
+  const bow = len(mid) > 0.05 ? norm(mid) : [0, 1, 0];
+  const ctrl = add(mid, scale(bow, len(sub(b, a)) * 0.2));
+  return Array.from({ length: segments + 1 }, (_, i) => {
+    const t = i / segments;
+    const u = 1 - t;
+    return [0, 1, 2].map((k) => round2(u * u * a[k] + 2 * u * t * ctrl[k] + t * t * b[k]));
+  });
+}
+
+GRAPH_EDGES.forEach((e) => {
+  const project = PROJECT_BY_NAME[e.project];
+  e.points = arcPoints(project.pos, LANG_BY_KEY[e.key].pos);
+  const from = new Color(repoColor(project));
+  const to = new Color(LANG_COLORS[e.key]);
+  e.colors = e.points.map((_, i) => from.clone().lerp(to, i / (e.points.length - 1)));
 });
 
-// Replaces the fixed ring placement above with an organic, clustered 3D layout.
-relaxForceLayout(LANG_NODES, PROJECT_NODES, GRAPH_EDGES, GRAPH_CENTER, GRAPH_CUBE);
+// One soft radial sprite, shared by every glow in the scene. Built lazily in
+// the browser (it needs a canvas), the first time a glow mounts.
+let glowTexture = null;
+function getGlowTexture() {
+  if (glowTexture) return glowTexture;
+  const size = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  g.addColorStop(0, "rgba(255,255,255,1)");
+  g.addColorStop(0.2, "rgba(255,255,255,0.55)");
+  g.addColorStop(0.5, "rgba(255,255,255,0.14)");
+  g.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  glowTexture = new CanvasTexture(canvas);
+  glowTexture.colorSpace = SRGBColorSpace;
+  return glowTexture;
+}
 
-LANG_NODES.forEach((n) => {
-  const [wx, wy, wz] = toWorld(n);
-  n.wx = wx;
-  n.wy = wy;
-  n.wz = wz;
-  n.wr = round2(n.r / WORLD_SCALE);
-});
-PROJECT_NODES.forEach((n) => {
-  const [wx, wy, wz] = toWorld(n);
-  n.wx = wx;
-  n.wy = wy;
-  n.wz = wz;
-  n.wr = round2(n.r / WORLD_SCALE);
-});
+// Additive halo that always faces the camera; `pulse` makes it breathe.
+function Halo({ position = [0, 0, 0], color, size, opacity, pulse = 0, phase = 0 }) {
+  const ref = useRef(null);
+  const texture = useMemo(() => getGlowTexture(), []);
+  useFrame(({ clock }) => {
+    if (!pulse || !ref.current) return;
+    const s = size * (1 + Math.sin(clock.elapsedTime * 1.3 + phase) * pulse);
+    ref.current.scale.set(s, s, 1);
+  });
+  return (
+    <sprite ref={ref} position={position} scale={[size, size, 1]}>
+      <spriteMaterial
+        map={texture}
+        color={color}
+        transparent
+        opacity={opacity}
+        depthWrite={false}
+        blending={AdditiveBlending}
+      />
+    </sprite>
+  );
+}
 
-// A straight 3D edge between a repo and a language hub. Idle edges are a
-// neutral gray; the hovered/pinned node's own edges light up in its
-// language color and get an animated dashed "flow" running through them.
-function EdgeLine3D({ edge, from, to, isActive, isFocused }) {
+// A soft, many-colored glow at the heart of the cloud.
+function NebulaCore() {
+  return (
+    <group>
+      <Halo color="#5b4cff" size={9} opacity={0.14} />
+      <Halo position={[1.3, 0.6, -0.8]} color="#2ed3c6" size={7} opacity={0.07} />
+      <Halo position={[-1.4, -0.7, 0.6]} color="#ff5a8a" size={7} opacity={0.07} />
+    </group>
+  );
+}
+
+// An arc from a repo to one of its languages. The hovered/pinned node's own
+// arcs brighten, thicken and get a dashed "flow" running along them.
+function EdgeArc3D({ edge, isActive, isFocused }) {
   const lineRef = useRef(null);
 
   useFrame((_, delta) => {
     const material = lineRef.current?.material;
     if (isFocused && material) {
-      material.dashOffset -= delta * 1.6;
+      material.dashOffset -= delta * 1.4;
     }
   });
 
   return (
     <Line
       ref={lineRef}
-      points={[
-        [from.wx, from.wy, from.wz],
-        [to.wx, to.wy, to.wz],
-      ]}
-      color={isFocused ? LANG_COLORS[edge.key] : NEUTRAL_EDGE}
+      points={edge.points}
+      vertexColors={edge.colors}
       transparent
-      opacity={isFocused ? 0.95 : isActive ? 0.4 : 0.05}
-      lineWidth={isFocused ? edge.width + 1.3 : edge.width}
+      depthWrite={false}
+      opacity={isFocused ? 1 : isActive ? 0.3 : 0.04}
+      lineWidth={isFocused ? edge.width + 1 : edge.width}
       dashed={isFocused}
-      dashSize={0.14}
+      dashSize={0.18}
       gapSize={0.1}
     />
   );
@@ -642,7 +663,7 @@ function EdgeLine3D({ edge, from, to, isActive, isFocused }) {
 // Slowly circles the camera around the scene on its own — used instead of
 // OrbitControls on touch devices so there's nothing here to capture a
 // finger swipe that's actually meant to scroll the page.
-function AutoOrbitCamera({ radius = 16, height = 6, speed = 0.12 }) {
+function AutoOrbitCamera({ radius = 16.5, height = 5.5, speed = 0.12 }) {
   useFrame(({ camera, clock }) => {
     const t = clock.elapsedTime * speed;
     camera.position.x = Math.sin(t) * radius;
@@ -653,38 +674,24 @@ function AutoOrbitCamera({ radius = 16, height = 6, speed = 0.12 }) {
   return null;
 }
 
-// Static, non-interactive thread between two languages that co-occur in a
-// repo — always faint, never highlighted. Purely adds background density so
-// the scene reads as a real web instead of a bare hub-and-spoke.
-function BackgroundLink3D({ a, b, count }) {
+// Billboarded name tag pinned to a node. Tags on the far side of the cloud
+// fade back, so the ones in front stay readable while the scene turns.
+function NodeLabel({ anchor, offset, variant, color, dim, focus, children }) {
+  const ref = useRef(null);
+  const point = useMemo(() => new Vector3(...anchor), [anchor]);
+  useFrame(({ camera }) => {
+    const el = ref.current;
+    if (!el) return;
+    const depth = camera.position.distanceTo(point) - camera.position.length();
+    const fade = Math.min(1, Math.max(0, (depth + 1.5) / 6));
+    el.style.opacity = ((1 - fade * 0.75) * (dim ? 0.3 : 1)).toFixed(2);
+  });
   return (
-    <Line
-      points={[
-        [a.wx, a.wy, a.wz],
-        [b.wx, b.wy, b.wz],
-      ]}
-      color={NEUTRAL_EDGE}
-      transparent
-      opacity={0.08 + Math.min(count, 4) * 0.025}
-      lineWidth={0.6}
-    />
-  );
-}
-
-// Billboarded name tag floating just above a node, screen-projected from its
-// 3D position so it stays readable at any orbit angle.
-function NodeLabel({ position, color, big, children }) {
-  return (
-    <Html position={position} center distanceFactor={8} style={{ pointerEvents: "none" }}>
+    <Html position={offset} center distanceFactor={9} zIndexRange={[40, 0]} style={{ pointerEvents: "none" }}>
       <span
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: big ? "12px" : "10.5px",
-          fontWeight: big ? 700 : 600,
-          color,
-          whiteSpace: "nowrap",
-          textShadow: "0 1px 4px rgba(0,0,0,0.9)",
-        }}
+        ref={ref}
+        className={`lg3d-label lg3d-label-${variant}${focus ? " is-focus" : ""}`}
+        style={{ "--c": color }}
       >
         {children}
       </span>
@@ -692,91 +699,100 @@ function NodeLabel({ position, color, big, children }) {
   );
 }
 
-function LangSphere3D({ node, isActive, isFocus, onHover, onLeave, onSelect }) {
+function pointerHandlers(onHover, onLeave, onSelect) {
+  return {
+    onPointerOver: (e) => {
+      e.stopPropagation();
+      onHover();
+    },
+    onPointerOut: (e) => {
+      e.stopPropagation();
+      onLeave();
+    },
+    onClick: (e) => {
+      e.stopPropagation();
+      onSelect();
+    },
+  };
+}
+
+// A language: a glowing planet with a tilted ring and a tiny moon circling it.
+function LangPlanet3D({ node, isActive, isFocus, onHover, onLeave, onSelect }) {
   const color = LANG_COLORS[node.key];
+  const orbitRef = useRef(null);
+  const ringR = node.r * 1.8;
+
+  useFrame((_, delta) => {
+    if (orbitRef.current) orbitRef.current.rotation.z += delta * 0.6;
+  });
+
   return (
-    <group>
-      <mesh
-        position={[node.wx, node.wy, node.wz]}
-        scale={isFocus ? 1.12 : 1}
-        onPointerOver={(e) => {
-          e.stopPropagation();
-          onHover();
-        }}
-        onPointerOut={(e) => {
-          e.stopPropagation();
-          onLeave();
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect();
-        }}
-      >
-        <sphereGeometry args={[node.wr, 32, 32]} />
+    <group position={node.pos}>
+      <Halo color={color} size={node.r * (isFocus ? 6 : 4.2)} opacity={isActive ? 0.45 : 0.06} pulse={0.04} phase={node.phase} />
+      <mesh scale={isFocus ? 1.12 : 1} {...pointerHandlers(onHover, onLeave, onSelect)}>
+        <sphereGeometry args={[node.r, 48, 48]} />
         <meshStandardMaterial
           color={color}
-          roughness={0.35}
-          metalness={0.2}
           emissive={color}
-          emissiveIntensity={isFocus ? 0.85 : 0.28}
+          emissiveIntensity={isFocus ? 1 : 0.5}
+          roughness={0.35}
+          metalness={0.1}
           transparent
           opacity={isActive ? 1 : 0.18}
         />
       </mesh>
-      <NodeLabel
-        position={[node.wx, node.wy + node.wr + 0.16, node.wz]}
-        color={isActive ? "#ffffff" : "rgba(255,255,255,0.4)"}
-        big
-      >
+      <group rotation={node.tilt}>
+        <mesh>
+          <torusGeometry args={[ringR, 0.007, 8, 120]} />
+          <meshBasicMaterial color={color} transparent opacity={isActive ? 0.5 : 0.06} depthWrite={false} />
+        </mesh>
+        <group ref={orbitRef}>
+          <mesh position={[ringR, 0, 0]}>
+            <sphereGeometry args={[0.028, 12, 12]} />
+            <meshBasicMaterial color={lighten(color, 0.4)} transparent opacity={isActive ? 1 : 0.1} />
+          </mesh>
+        </group>
+      </group>
+      <NodeLabel anchor={node.pos} offset={[0, -node.r - 0.26, 0]} variant="lang" color={color} dim={!isActive} focus={isFocus}>
         {node.name}
+        <b>{node.pctLabel}</b>
       </NodeLabel>
     </group>
   );
 }
 
-function ProjectSphere3D({ node, isActive, isFocus, showLabel, onHover, onLeave, onSelect }) {
-  const fillColor =
-    node.big && node.dominant
-      ? LANG_COLORS[node.dominant]
-      : node.dominant
-        ? lighten(LANG_COLORS[node.dominant], 0.55)
-        : "#c7ccd6";
-  const labelColor = node.dominant
-    ? lighten(LANG_COLORS[node.dominant], node.big ? 0.32 : 0.18)
-    : "rgba(255,255,255,0.6)";
+// A repo: a small moon in its main language's color.
+function RepoMoon3D({ node, isActive, isFocus, showLabel, onHover, onLeave, onSelect }) {
+  const color = repoColor(node);
+  const fill = node.big ? color : lighten(color, 0.3);
 
   return (
-    <group>
-      <mesh
-        position={[node.wx, node.wy, node.wz]}
-        scale={isFocus ? 1.25 : 1}
-        onPointerOver={(e) => {
-          e.stopPropagation();
-          onHover();
-        }}
-        onPointerOut={(e) => {
-          e.stopPropagation();
-          onLeave();
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect();
-        }}
-      >
-        <sphereGeometry args={[node.wr, 24, 24]} />
+    <group position={node.pos}>
+      <Halo
+        color={color}
+        size={node.r * (isFocus ? 8 : node.big ? 5 : 4)}
+        opacity={isActive ? (node.big ? 0.45 : 0.28) : 0.04}
+      />
+      <mesh scale={isFocus ? 1.35 : 1}>
+        <sphereGeometry args={[node.r, 24, 24]} />
         <meshStandardMaterial
-          color={fillColor}
+          color={fill}
+          emissive={fill}
+          emissiveIntensity={isFocus ? 1.1 : node.big ? 0.55 : 0.4}
           roughness={0.4}
-          metalness={node.big ? 0.25 : 0.05}
-          emissive={fillColor}
-          emissiveIntensity={isFocus ? 0.9 : node.big ? 0.22 : 0.1}
           transparent
           opacity={isActive ? 1 : 0.15}
         />
       </mesh>
+      {/* A larger invisible target, so even the smallest repos are easy to hover. */}
+      <mesh {...pointerHandlers(onHover, onLeave, onSelect)}>
+        <sphereGeometry args={[Math.max(node.r * 2, 0.2), 12, 12]} />
+        <meshBasicMaterial colorWrite={false} depthWrite={false} />
+      </mesh>
       {showLabel && (
-        <NodeLabel position={[node.wx, node.wy + node.wr + 0.1, node.wz]} color={labelColor} big={node.big}>
+        <NodeLabel anchor={node.pos} offset={[0, node.r + 0.17, 0]} variant="repo" color={color} dim={!isActive} focus={isFocus}>
           {node.label}
+          {node.fork && <b>fork</b>}
         </NodeLabel>
       )}
     </group>
@@ -856,7 +872,7 @@ function LanguagesPane() {
       return {
         title: s.name,
         rows: [
-          ["Share of repos", `${s.pct}%`],
+          ["Share of repos", s.pctLabel],
           ["Used in", `${usedIn.length} project${usedIn.length === 1 ? "" : "s"}`],
         ],
         chips: usedIn.map((p) => p.label),
@@ -869,7 +885,7 @@ function LanguagesPane() {
         title: p.label,
         rows: [
           ["Languages", `${p.majorKeys.length + p.extra.length}`],
-          ["Tier", p.big ? "Featured" : "Repo"],
+          ["Tier", p.fork ? "Fork" : p.big ? "Featured" : "Repo"],
         ],
         chips: [
           ...p.majorKeys.map((key) => LANG_BY_KEY[key].name),
@@ -942,7 +958,7 @@ function LanguagesPane() {
                   style={{ width: `${s.pct}%`, background: LANG_COLORS[s.key] }}
                 />
               </span>
-              <span className="lang-graph-row-pct">{s.pct}%</span>
+              <span className="lang-graph-row-pct">{s.pctLabel}</span>
             </div>
           ))}
 
@@ -970,39 +986,27 @@ function LanguagesPane() {
 
         <div className="lang-graph-canvas" style={{ cursor: isMobile ? "default" : "grab" }}>
           <Canvas
-            camera={{ position: [9, 6, 13], fov: 40 }}
+            camera={{ position: [9, 5.5, 14], fov: 40 }}
             gl={{ alpha: true, antialias: !isMobile }}
             dpr={isMobile ? 1 : [1, 2]}
             onPointerMissed={() => setPinned(null)}
           >
-            <ambientLight intensity={0.5} />
-            <directionalLight position={[6, 9, 7]} intensity={0.95} />
-            <pointLight position={[-7, -4, -5]} intensity={0.4} color="#5b7cff" />
-            <pointLight position={[4, -6, 6]} intensity={0.25} color="#ff9d5b" />
+            <fog attach="fog" args={["#06070c", 13, 28]} />
+            <ambientLight intensity={0.45} />
+            <directionalLight position={[6, 9, 7]} intensity={0.9} />
+            <pointLight position={[-7, -4, -5]} intensity={0.5} color="#5b7cff" />
+            <pointLight position={[4, -6, 6]} intensity={0.3} color="#ff9d5b" />
 
-            <Stars radius={40} depth={30} count={isMobile ? 450 : 1400} factor={2.4} saturation={0} fade speed={0.4} />
+            <Stars radius={40} depth={30} count={isMobile ? 500 : 1600} factor={2.2} saturation={0.35} fade speed={0.4} />
+            <Sparkles count={isMobile ? 30 : 70} scale={[11, 7, 11]} size={1.4} speed={0.2} opacity={0.45} color="#b8c1ff" />
+            <NebulaCore />
 
-            {LANG_LINKS.map((link, i) => (
-              <BackgroundLink3D key={i} a={LANG_BY_KEY[link.a]} b={LANG_BY_KEY[link.b]} count={link.count} />
+            {GRAPH_EDGES.map((edge, i) => (
+              <EdgeArc3D key={i} edge={edge} isActive={edgeActive(edge)} isFocused={edgeFocused(edge)} />
             ))}
 
-            {GRAPH_EDGES.map((edge, i) => {
-              const from = PROJECT_BY_NAME[edge.project];
-              const to = LANG_BY_KEY[edge.key];
-              return (
-                <EdgeLine3D
-                  key={i}
-                  edge={edge}
-                  from={from}
-                  to={to}
-                  isActive={edgeActive(edge)}
-                  isFocused={edgeFocused(edge)}
-                />
-              );
-            })}
-
             {PROJECT_NODES.map((p) => (
-              <ProjectSphere3D
+              <RepoMoon3D
                 key={p.name}
                 node={p}
                 isActive={projectActive(p.name)}
@@ -1015,7 +1019,7 @@ function LanguagesPane() {
             ))}
 
             {LANG_NODES.map((s) => (
-              <LangSphere3D
+              <LangPlanet3D
                 key={s.key}
                 node={s}
                 isActive={langActive(s.key)}
@@ -1046,7 +1050,7 @@ function LanguagesPane() {
 
             {!isMobile && (
               <EffectComposer multisampling={0}>
-                <Bloom luminanceThreshold={0.22} luminanceSmoothing={0.3} intensity={0.75} mipmapBlur radius={0.6} />
+                <Bloom luminanceThreshold={0.2} luminanceSmoothing={0.3} intensity={0.85} mipmapBlur radius={0.65} />
               </EffectComposer>
             )}
           </Canvas>
