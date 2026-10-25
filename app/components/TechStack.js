@@ -2463,7 +2463,7 @@ export default function TechStack() {
                 </div>
               </div>
 
-              <div className={`ide-main${active.mode === "grid" ? " ide-main-terminal" : ""}`}>
+              <div className={`ide-main${active.mode === "grid" ? " ide-main-terminal" : " ide-main-graph"}`}>
                 {active.mode === "ls" && <LanguagesPane />}
                 {active.mode === "terminal" && <BackendPane />}
                 {active.mode === "grid" && <FrameworkPane />}

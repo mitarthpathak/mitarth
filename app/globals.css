@@ -1349,6 +1349,17 @@ body {
   overflow: hidden;
 }
 
+/* The two graph panes fill the editor edge to edge, flush under the
+   breadcrumb bar, with no frame of their own. */
+.ide-main.ide-main-graph {
+  padding: 0;
+}
+
+.ide-main-graph > .lang-graph {
+  border: none;
+  border-radius: 0;
+}
+
 .term-prompt {
   color: rgba(255, 255, 255, 0.9);
 }
