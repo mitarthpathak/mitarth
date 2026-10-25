@@ -196,18 +196,6 @@ const AGENT_CARDS = [
   },
 ];
 
-// Illustrative source-control list for the IDE mock-up (decorative, like the
-// agent cards); pane 03's terminals are the parts that show real data.
-const SCM_FILES = [
-  { name: "package-lock.json", path: "", status: "M" },
-  { name: "package.json", path: "", status: "M" },
-  { name: "globals.css", path: "app", status: "M" },
-  { name: "page.js", path: "app", status: "M" },
-  { name: "TechStack.js", path: "app\\components", status: "U" },
-  { name: "devtask.png", path: "public", status: "U" },
-  { name: "yap-render.png", path: "public", status: "U" },
-];
-
 // Real data pulled from github.com/mitarthpathak — one repo missed here is one
 // missed in the graph, so this lists every public repo on the profile (the
 // Kahani-Studio fork too, since Mitarth has commits in it). Byte counts are
@@ -2221,7 +2209,7 @@ export default function TechStack() {
       const index = Math.min(SEGMENTS - 1, Math.floor(indexProgress * SEGMENTS));
 
       if (trackFillRef.current) {
-        trackFillRef.current.style.transform = `scaleY(${progress})`;
+        trackFillRef.current.style.transform = `scaleX(${progress})`;
       }
 
       if (edgeFillRef.current) {
@@ -2305,8 +2293,27 @@ export default function TechStack() {
             </div>
 
             <div className="ide-breadcrumb">
-              {active.featured} <span className="ide-breadcrumb-sep">&#8250;</span>{" "}
-              {active.files[0].name}
+              <span className="ide-breadcrumb-path">
+                {active.featured} <span className="ide-breadcrumb-sep">&#8250;</span> {active.files[0].name}
+              </span>
+              {/* Which of the three panes is showing; the line under it fills as the section scrolls. */}
+              <nav className="ide-stack-nav" aria-label="Tech stack sections">
+                <ol className="ide-stack-nav-list">
+                  {STACK.map((category, i) => (
+                    <li
+                      key={category.label}
+                      className={`ide-stack-nav-item ${i === activeIndex ? "is-active" : ""}`}
+                      aria-current={i === activeIndex ? "step" : undefined}
+                    >
+                      <span className="ide-stack-nav-index">0{i + 1}</span>
+                      <span className="ide-stack-nav-label">{category.label}</span>
+                    </li>
+                  ))}
+                </ol>
+                <span className="ide-stack-nav-track">
+                  <span className="ide-stack-nav-track-fill" ref={trackFillRef} />
+                </span>
+              </nav>
             </div>
 
             <div className="tech-window-body">
@@ -2365,72 +2372,6 @@ export default function TechStack() {
                 {active.mode === "ls" && <LanguagesPane />}
                 {active.mode === "terminal" && <BackendPane />}
                 {active.mode === "grid" && <FrameworkPane />}
-              </div>
-
-              <div className="ide-right-panel">
-                <div className="ide-right-nav">
-                  <div className="ide-right-nav-track">
-                    <span className="ide-right-nav-track-fill" ref={trackFillRef} />
-                  </div>
-                  <ul className="ide-right-nav-list">
-                    {STACK.map((category, i) => (
-                      <li
-                        key={category.label}
-                        className={`ide-right-nav-item ${i === activeIndex ? "is-active" : ""}`}
-                      >
-                        <span className="ide-right-nav-index">0{i + 1}</span>
-                        {category.label}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Fake git/SCM flourish — decorative only, dropped on mobile to keep the panel to just the functional 01/02/03 nav. */}
-                <div className="ide-right-panel-extra">
-                  <div className="ide-right-divider" />
-
-                  <p className="ide-right-panel-label">Changes</p>
-                  <div className="ide-file-stats">
-                    {active.files.map((f) => (
-                      <div className="ide-file-stat-row" key={f.name}>
-                        <FileIcon name={f.name} />
-                        <span className="ide-file-stat-name">{f.name}</span>
-                        <span className="ide-file-stat-nums">
-                          {f.add > 0 && <span className="ide-stat-add">+{f.add}</span>}
-                          {f.del > 0 && <span className="ide-stat-del">-{f.del}</span>}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="ide-right-divider" />
-
-                  <p className="ide-right-panel-label">Source Control</p>
-                  <div className="ide-scm-commit-box">
-                    <textarea
-                      className="ide-scm-commit-input"
-                      placeholder="Commit message"
-                      rows={1}
-                    />
-                    <button type="button" className="ide-scm-commit-btn">
-                      &#10003; Commit <span className="ide-scm-commit-caret">&#8964;</span>
-                    </button>
-                  </div>
-                  <div className="ide-scm-changes-head">
-                    <span>Changes</span>
-                    <span className="ide-scm-count">{SCM_FILES.length}</span>
-                  </div>
-                  <div className="ide-scm-file-list">
-                    {SCM_FILES.map((f) => (
-                      <div className="ide-scm-file-row" key={f.name}>
-                        <FileIcon name={f.name} />
-                        <span className="ide-scm-file-name">{f.name}</span>
-                        {f.path && <span className="ide-scm-file-path">{f.path}</span>}
-                        <span className={`ide-scm-status ide-scm-status-${f.status}`}>{f.status}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
 

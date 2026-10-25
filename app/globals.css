@@ -1250,7 +1250,7 @@ body {
 .ide-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 16px;
   padding: 7px 16px;
   font-family: var(--font-mono);
   font-size: clamp(10px, 0.9vw, 12px);
@@ -1261,6 +1261,82 @@ body {
 
 .ide-breadcrumb-sep {
   color: rgba(255, 255, 255, 0.25);
+}
+
+.ide-breadcrumb-path {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* The 01/02/03 section nav, on the right of the breadcrumb bar. */
+.ide-stack-nav {
+  position: relative;
+  margin-left: auto;
+  padding-bottom: 6px;
+}
+
+.ide-stack-nav-list {
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: clamp(14px, 2vw, 30px);
+  margin: 0;
+  padding: 0;
+}
+
+.ide-stack-nav-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: clamp(12px, 0.95vw, 14px);
+  font-weight: 500;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+  transition: color 0.35s ease, text-shadow 0.35s ease;
+}
+
+.ide-stack-nav-item.is-active {
+  color: var(--yellow);
+  font-weight: 800;
+  text-shadow: 0 0 18px rgba(255, 209, 70, 0.45);
+}
+
+.ide-stack-nav-index {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  transition: color 0.35s ease;
+}
+
+.ide-stack-nav-item.is-active .ide-stack-nav-index {
+  color: var(--yellow);
+}
+
+.ide-stack-nav-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.ide-stack-nav-track-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--yellow);
+  transform: scaleX(0);
+  transform-origin: left;
+  will-change: transform;
 }
 
 /* --- Main editor pane --- */
@@ -2065,276 +2141,6 @@ body {
   color: #6dd39e;
 }
 
-/* --- Right panel: category nav + changed files (replaces external label list) --- */
-.ide-right-panel {
-  flex: 0 0 clamp(200px, 20vw, 270px);
-  background: #0a0a0a;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  padding: clamp(15px, 2vw, 23px) clamp(13px, 1.7vw, 19px);
-  overflow-y: auto;
-}
-
-.ide-right-nav {
-  display: flex;
-  gap: clamp(12px, 1.4vw, 18px);
-}
-
-.ide-right-nav-track {
-  position: relative;
-  width: 2px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.12);
-  overflow: hidden;
-}
-
-.ide-right-nav-track-fill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--yellow);
-  transform: scaleY(0);
-  transform-origin: top;
-  will-change: transform;
-}
-
-.ide-right-nav-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(16px, 2.4vh, 26px);
-}
-
-.ide-right-nav-item {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-family: var(--font-body);
-  font-size: clamp(14px, 1.05vw, 17px);
-  font-weight: 500;
-  line-height: 1.2;
-  color: rgba(255, 255, 255, 0.55);
-  opacity: 1;
-  transform: translateX(0) scale(1);
-  transform-origin: left center;
-  transition: color 0.35s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.35s ease;
-}
-
-.ide-right-nav-item.is-active {
-  color: var(--yellow);
-  font-weight: 800;
-  transform: translateX(3px) scale(1.08);
-  text-shadow: 0 0 18px rgba(255, 209, 70, 0.45);
-}
-
-.ide-right-nav-item.is-active .ide-right-nav-index {
-  color: var(--yellow);
-}
-
-.ide-right-nav-index {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.4);
-  transition: color 0.35s ease;
-}
-
-.ide-right-divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: clamp(20px, 3vh, 30px) 0 clamp(14px, 2vh, 20px);
-}
-
-.ide-right-panel-label {
-  margin: 0 0 12px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-}
-
-.ide-file-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.ide-file-stat-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: clamp(11px, 1vw, 13px);
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.ide-file-stat-row svg {
-  width: 13px;
-  height: 13px;
-  flex: 0 0 auto;
-}
-
-.ide-file-stat-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ide-file-stat-nums {
-  margin-left: auto;
-  display: flex;
-  gap: 6px;
-  flex: 0 0 auto;
-}
-
-.ide-stat-add {
-  color: #3fb950;
-}
-
-.ide-stat-del {
-  color: #f85149;
-}
-
-/* --- Source Control panel (real VS Code SCM replica) --- */
-.ide-scm-commit-box {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin-bottom: 14px;
-}
-
-.ide-scm-commit-input {
-  width: 100%;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: #000000;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: #dfe1e5;
-  resize: none;
-  overflow: hidden;
-}
-
-.ide-scm-commit-input::placeholder {
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.ide-scm-commit-input:focus {
-  outline: none;
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.ide-scm-commit-input:focus-visible {
-  outline: 2px solid var(--yellow);
-  outline-offset: 2px;
-}
-
-.ide-scm-commit-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 0;
-  border: none;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #000000;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
-}
-
-.ide-scm-commit-btn:hover {
-  background: #e6e6e6;
-}
-
-.ide-scm-commit-btn:active {
-  transform: scale(0.97);
-}
-
-.ide-scm-commit-btn:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.6);
-  outline-offset: 2px;
-}
-
-.ide-scm-commit-caret {
-  opacity: 0.7;
-}
-
-.ide-scm-changes-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 9px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.ide-scm-count {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  font-size: 9px;
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-.ide-scm-file-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ide-scm-file-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--font-mono);
-  font-size: clamp(10px, 0.9vw, 12px);
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.ide-scm-file-row svg {
-  width: 13px;
-  height: 13px;
-  flex: 0 0 auto;
-}
-
-.ide-scm-file-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ide-scm-file-path {
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ide-scm-status {
-  margin-left: auto;
-  flex: 0 0 auto;
-  font-weight: 700;
-  font-size: 11px;
-}
-
-.ide-scm-status-M {
-  color: #e2c08d;
-}
-
-.ide-scm-status-U {
-  color: #3fb950;
-}
-
 /* ========== PROJECTS SECTION ========== */
 .projects-section {
   position: relative;
@@ -3101,10 +2907,6 @@ body {
     transform: translateY(-16px);
   }
 
-  .ide-right-panel {
-    max-height: 40%;
-  }
-
   .ide-agent-grid {
     position: static;
     inset: auto;
@@ -3122,21 +2924,27 @@ body {
     height: auto;
   }
 
-  .ide-right-panel {
-    flex: 0 0 auto;
-    max-width: 100%;
-    border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  /* Fake git changes / source control panel — decorative, not information a
-     visitor needs; keep only the functional 01/02/03 category nav above it. */
-  .ide-right-panel-extra {
+  .lang-graph-sidebar,
+  .lang-graph-detail {
     display: none;
   }
 
-  .lang-graph-sidebar,
-  .lang-graph-detail {
+  /* No room for the file path and three full labels on a phone: the nav
+     takes the bar, and only the active section keeps its name. */
+  .ide-breadcrumb-path {
+    display: none;
+  }
+
+  .ide-stack-nav {
+    margin-left: 0;
+    flex: 1 1 auto;
+  }
+
+  .ide-stack-nav-list {
+    justify-content: space-between;
+  }
+
+  .ide-stack-nav-item:not(.is-active) .ide-stack-nav-label {
     display: none;
   }
 
@@ -3154,10 +2962,6 @@ body {
   .lang-graph-filters,
   .lang-graph-info {
     display: none;
-  }
-
-  .ide-right-nav-list {
-    gap: 12px;
   }
 
   .ide-main {
