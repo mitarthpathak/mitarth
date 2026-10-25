@@ -430,6 +430,195 @@ Content-Type: application/json
       ],
     },
   },
+  {
+    slug: "citysync",
+    title: "CitySync",
+    year: "2026",
+    date: "September 2026",
+    updated: "2026-09-25",
+    status: "Code only",
+    // TODO(mitarth): Is CitySync deployed anywhere? Add the URL to links.live and set status to "Live".
+    roleShort: "Team of four",
+    mark: "C",
+    variant: "serif",
+    cardType: "Live Civic Data on a 3D Globe",
+    oneLiner: "Live civic data feeds fused into one stream, on a 3D globe and a local map of Jaipur.",
+    summary:
+      "A civic dashboard that pulls earthquakes, weather, air quality, official alerts, news and climate data from public feeds into one normalized event stream, shown on a 3D globe for the world and a Leaflet map for a chosen spot in Jaipur.",
+    problem:
+      "City information is scattered across dozens of feeds: weather here, air quality there, disaster alerts somewhere else. We wanted one place that turns all of it into a single, honest picture of what is happening around you right now.",
+    // Phrase inside `problem` that gets the yellow highlight
+    highlight: "a single, honest picture",
+    myRole:
+      "One of a four-person team (Mitarth Pathak, Deep Panchal, Navneet Singh, Jayant Katariya). The team page credits me with engineering, UI and 3D, and I wrote most of the commits, including the Tier 1 data sources, the worldwide WMO and GDACS alerts, the local map and the landing page animations.",
+    // TODO(mitarth): Was this built for a hackathon? It was built over two days (24–25 Sep 2026).
+    stack: ["React 19", "Express 5", "react-globe.gl", "Leaflet", "Three.js", "Tailwind CSS", "Vite"],
+    tags: ["web", "backend"],
+    features: [
+      "A 3D globe (react-globe.gl) with events coloured and sized by severity, plus pulsing rings for the most severe ones.",
+      "A local view for Amer or Achrol in Jaipur: an area pulse, key readings, a Leaflet map with clustered pins and a live feed.",
+      "26 source adapters, among them USGS earthquakes, Open-Meteo weather and air quality, NDMA SACHET alerts, WMO and GDACS warnings, GDELT news and NASA POWER climate data.",
+      "A one-line “now, next, what to do” brief for any point, built from cached events and an hourly forecast.",
+      "Every event carries a tag: real live, real static, media reported, estimated or simulated. Simulated data is always labelled.",
+      "An offline demo mode that serves a mock file and makes no network calls.",
+    ],
+    architecture: {
+      text:
+        "An Express backend runs every source as an independent adapter on its own timer and keeps the results in an in-memory cache. No request ever triggers an upstream call. The Vite + React front end polls the API and draws the events on the globe or the local map.",
+      nodes: [
+        { id: "feeds", label: "Public feeds", note: "USGS · Open-Meteo · SACHET · GDELT" },
+        { id: "adapters", label: "Source adapters", note: "One timer each" },
+        { id: "cache", label: "Express API", note: "Cache · /events · /health" },
+        { id: "client", label: "React client", note: "Globe · Leaflet map" },
+      ],
+      edges: [
+        ["feeds", "adapters", "fetch"],
+        ["adapters", "cache", "normalized events"],
+        ["cache", "client", "polling"],
+      ],
+    },
+    decisions: [
+      {
+        decision: "Refresh every source in the background and answer requests only from the cache.",
+        why: "A slow or rate-limited feed can never make the page slow, and visitors never multiply upstream calls.",
+        tradeoff: "Data is only as fresh as each source's refresh interval, from one minute to a day.",
+      },
+      {
+        decision: "Tag every event with where it came from, and always mark mock data as simulated.",
+        why: "A civic dashboard is only useful if people can trust it, so guessed or fake data must never look real.",
+        tradeoff: "More labels on screen, and news without a named place is dropped rather than guessed.",
+      },
+      {
+        decision: "Keep the globe mounted and paused while the local view is open.",
+        why: "Starting three.js again is expensive; the Leaflet map is cheap to mount and unmount.",
+        tradeoff: "The globe's memory stays in use while it is hidden.",
+      },
+    ],
+    results: [
+      "Source code is public on GitHub, with the full API, event schema and source list in the README.",
+      "Works offline in demo mode, and a failing source never takes the others down.",
+    ],
+    learnings: [
+      "Every public feed fails in its own way, so each one needs its own timer, timeout and fallback.",
+      "Honesty about data has to be built into the schema, not added to the UI later.",
+      "Rate limits like GDELT's decide how a pipeline is scheduled.",
+    ],
+    links: {
+      live: null,
+      code: [{ label: "GitHub", href: "https://github.com/mitarthpathak/CitySync" }],
+    },
+    images: {
+      hero: { src: "/work/citysync/hero.webp", width: 1440, height: 900, alt: "CitySync global view: “The world, in pulse.” with a 3D globe and the list of data layers." },
+      gallery: [
+        { src: "/work/citysync/local.webp", width: 1440, height: 900, alt: "CitySync local view for Amer, Jaipur with the area pulse and five key readings", caption: "The local view for Amer, Jaipur, in offline demo mode." },
+        { src: "/work/citysync/phone.webp", width: 780, height: 1688, alt: "CitySync local view on a phone", caption: "The local view at 390 px.", phone: true },
+        { src: "/work/citysync/landing.webp", width: 1440, height: 900, alt: "CitySync landing page: “Know your city. In a heartbeat.”", caption: "The landing page." },
+      ],
+    },
+  },
+  {
+    slug: "doxentra",
+    title: "Doxentra",
+    year: "2026",
+    date: "October 2026",
+    updated: "2026-10-15",
+    status: "Live",
+    roleShort: "Lead developer",
+    mark: "D",
+    variant: "script",
+    cardType: "AI Document Intelligence for Indian Documents",
+    oneLiner: "Upload invoices, IDs and marksheets; get checked fields, flagged problems and a knowledge graph.",
+    summary:
+      "A document intelligence app that reads PDFs, scans and photos, classifies them, extracts fields with confidence scores and source references, flags missing or inconsistent details, and builds a knowledge graph, roadmap and quiz from the content.",
+    problem:
+      "Schools and offices still check piles of certificates, invoices and IDs by hand, and the mistakes hide in the details: a wrong total, an expired certificate, an Aadhaar number with a bad check digit. I wanted a tool that reads the documents and points a reviewer straight at what needs a second look.",
+    // Phrase inside `problem` that gets the yellow highlight
+    highlight: "what needs a second look",
+    myRole:
+      "I built it as the lead developer: the Gemini pipeline, the OCR cross-check, the Express API, the validation rules, the review workflows and the React interface. Shruti added the app-wide dark mode. Doxentra grew out of Glyph, my earlier version of the same engine.",
+    // TODO(mitarth): Was this a hackathon or course project, and who else was on the team?
+    stack: ["React 19", "TypeScript", "Express 5", "Gemini", "Tesseract.js", "PaddleOCR", "MongoDB", "Supabase"],
+    tags: ["ai", "web", "backend"],
+    features: [
+      "Upload PDFs, scans or photos up to 50 MB; large files go straight to Supabase Storage.",
+      "Classifies each document and extracts its fields, each with a confidence score and the page and quote it came from.",
+      "Rule checks for Indian documents: the Verhoeff checksum for Aadhaar, formats for PAN and GSTIN, totals and dates.",
+      "Document Twin: upload two versions of an invoice and see exactly which fields changed, then approve or flag them.",
+      "Packets: build a checklist from a circular, add a student's documents and get missing proof, mismatches and expired certificates in priority order.",
+      "Ask questions about your documents and get answers with verified citations, plus a D3 knowledge graph, roadmap and quiz.",
+    ],
+    ai: {
+      approach:
+        "A three-stage Gemini pipeline: page OCR with Gemini vision (three pages at a time, skipped when the PDF already has clean text), then text-only reasoning for classification and fields, then a targeted vision re-check of low-confidence fields. Requests are spread across two API keys with failover on rate limits.",
+      data:
+        "No training. The model works only from the uploaded documents. Tesseract and PaddleOCR read the same pages locally as an independent cross-check.",
+      quality:
+        "A benchmark against hand-labelled samples: on a digital invoice, a scanned student ID and a bilingual Hindi–English notice, the Gemini pipeline got 84.4% of fields right and classified all three correctly, against 65.6% and two of three for the older pipeline. About 40 server test files cover the API, OCR, validation and workflows.",
+      limits:
+        "The benchmark is three documents, one run each, so it is a sanity check, not proof. OCR agreement is evidence, not correctness, and unclear fields are left for a human instead of being guessed.",
+      safety:
+        "Aadhaar numbers, PAN, emails and phone numbers are masked by default on exports and on screen. Fields that fail a checksum or where the OCR engines disagree are withheld and sent to review, and every human correction is written to an audit trail.",
+    },
+    architecture: {
+      text:
+        "The React client uploads files to Supabase Storage and starts a job on the Express API. A background queue runs the Gemini pipeline and the local OCR cross-check, then validation, and stores the results in MongoDB, which the client polls.",
+      nodes: [
+        { id: "client", label: "React client", note: "Upload · review · graph" },
+        { id: "api", label: "Express API", note: "Job queue · validation" },
+        { id: "gemini", label: "Gemini", note: "OCR · reasoning" },
+        { id: "ocr", label: "Local OCR", note: "Tesseract · PaddleOCR" },
+        { id: "db", label: "MongoDB", note: "Jobs · extractions" },
+      ],
+      edges: [
+        ["client", "api", "jobs · polling"],
+        ["api", "gemini", "pages · text"],
+        ["api", "ocr", "cross-check"],
+        ["api", "db", "Mongoose"],
+      ],
+    },
+    decisions: [
+      {
+        decision: "Upload files straight to Supabase Storage instead of through the API.",
+        why: "Vercel functions cap request bodies at 4.5 MB, and real scans are often bigger.",
+        tradeoff: "One more service to configure and keep in sync with the database.",
+      },
+      {
+        decision: "Cross-check fields with two local OCR engines and withhold anything they disagree on.",
+        why: "A wrong amount or ID number is worse than an empty field that a person fills in.",
+        tradeoff: "Fewer fields are filled in automatically, so reviewers do more work.",
+      },
+      {
+        decision: "Run long documents as background jobs with page-level checkpoints.",
+        why: "Multi-page PDFs and rate limits can outlast a single request, and a retry should not start from page one.",
+        tradeoff: "The client has to poll for results, and the queue adds moving parts.",
+      },
+    ],
+    results: [
+      "Deployed on Vercel at doxentra.vercel.app.",
+      "84.4% field accuracy and 3 of 3 correct classifications on the live benchmark samples.",
+    ],
+    // TODO(mitarth): Any usage numbers or feedback you can share?
+    learnings: [
+      "Measuring field accuracy against ground truth showed which pipeline changes actually helped.",
+      "Serverless limits, like body size and bundling native OCR models, shape the architecture.",
+      "Admitting uncertainty and handing a field to a person is a feature, not a failure.",
+    ],
+    links: {
+      // TODO(mitarth): Confirm this is the live URL; it is the deployment named in the repo's docs.
+      live: "https://doxentra.vercel.app/",
+      code: [
+        { label: "Doxentra", href: "https://github.com/mitarthpathak/Doxentra" },
+        { label: "Glyph", href: "https://github.com/mitarthpathak/Glyph" },
+      ],
+    },
+    images: {
+      hero: { src: "/work/doxentra/hero.webp", width: 1440, height: 900, alt: "Doxentra landing page: “Uncover the Hidden Links”." },
+      gallery: [
+        { src: "/work/doxentra/upload.webp", width: 1440, height: 900, alt: "Doxentra upload screen with the processing mode toggle and a drop zone for PDFs and images", caption: "The upload screen: PDFs, scans or photos up to 50 MB." },
+        { src: "/work/doxentra/phone.webp", width: 780, height: 1688, alt: "Doxentra landing page on a phone", caption: "Landing page at 390 px, with the bottom navigation.", phone: true },
+      ],
+    },
+  },
 ];
 
 export const sectionOrder = [

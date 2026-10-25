@@ -40,8 +40,8 @@ export default async function Image() {
             <span style={{ background: "#FFE862", padding: "2px 12px" }}>AI &amp; Full-Stack Developer</span>
           </div>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontFamily: "Geist Mono", fontSize: 24 }}>
-          <span>SWASTHYA-NEETI · RUN-NEETI · DEVTASK · YAP-RENDER</span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontFamily: "Geist Mono", fontSize: 20 }}>
+          <span>SWASTHYA-NEETI · RUN-NEETI · DEVTASK · YAP-RENDER · CITYSYNC · DOXENTRA</span>
           <span style={{ display: "flex", width: 22, height: 22, borderRadius: 11, background: "#FF9500" }} />
         </div>
       </div>

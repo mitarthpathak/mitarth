@@ -3,7 +3,7 @@
     {
       "id": "profile-summary",
       "title": "GitHub profile — About",
-      "text": "Mitarth Pathak is an AI and full-stack developer based in Jaipur, Rajasthan. He is studying for a B.Tech in Computer Science and Engineering at Arya College of Engineering & Technology (RTU Kota). He builds web apps with React and Next.js, backends with Spring Boot and Express, and AI features on top of LLM APIs such as Groq and Gemini. His projects are Swasthya-Neeti, Run-Neeti, DevTask and Yap-Render. He lives in Jaipur, Rajasthan, India. His stated focus areas are Backend development, Spring Security, API design.",
+      "text": "Mitarth Pathak is an AI and full-stack developer based in Jaipur, Rajasthan. He is studying for a B.Tech in Computer Science and Engineering at Arya College of Engineering & Technology (RTU Kota). He builds web apps with React and Next.js, backends with Spring Boot and Express, and AI features on top of LLM APIs such as Groq and Gemini. His projects are Swasthya-Neeti, Run-Neeti, DevTask, Yap-Render, CitySync and Doxentra. He lives in Jaipur, Rajasthan, India. His stated focus areas are Backend development, Spring Security, API design.",
       "url": "https://github.com/mitarthpathak",
       "command": "about",
       "keywords": "about bio who background based location lives city from"
@@ -19,7 +19,7 @@
     {
       "id": "profile-skills",
       "title": "GitHub profile — Skills",
-      "text": "Mitarth Pathak's skills, each with the projects that use it. Languages: Java (DevTask); JavaScript (Run-Neeti, Swasthya-Neeti, Yap-Render); TypeScript (Swasthya-Neeti, Run-Neeti, Yap-Render); Kotlin (Yap-Render); Python; C++. Frontend: React (Swasthya-Neeti, Run-Neeti, Yap-Render); Next.js (Yap-Render); Three.js / React Three Fiber (Yap-Render); D3 (Run-Neeti). Mobile: Jetpack Compose (Yap-Render). Backend: Spring Boot (DevTask); Spring Security + JWT (DevTask); Express (Swasthya-Neeti, Run-Neeti). Data: PostgreSQL (DevTask); MongoDB (Swasthya-Neeti, Run-Neeti). AI: Groq (Llama, Whisper) (Swasthya-Neeti, Run-Neeti); Gemini API (Yap-Render). Tools: Git; Vercel (Swasthya-Neeti, Run-Neeti, Yap-Render). Tools he uses: Spring Boot, PostgreSQL, React, Git, Next.js, Vite, Maven, Android Studio, Vercel.",
+      "text": "Mitarth Pathak's skills, each with the projects that use it. Languages: Java (DevTask); JavaScript (Run-Neeti, Swasthya-Neeti, Yap-Render, CitySync); TypeScript (Swasthya-Neeti, Run-Neeti, Yap-Render, Doxentra); Kotlin (Yap-Render); Python; C++. Frontend: React (Swasthya-Neeti, Run-Neeti, Yap-Render, CitySync, Doxentra); Next.js (Yap-Render); Three.js / React Three Fiber (Yap-Render, CitySync); D3 (Run-Neeti, Doxentra); Leaflet (CitySync). Mobile: Jetpack Compose (Yap-Render). Backend: Spring Boot (DevTask); Spring Security + JWT (DevTask); Express (Swasthya-Neeti, Run-Neeti, CitySync, Doxentra). Data: PostgreSQL (DevTask); MongoDB (Swasthya-Neeti, Run-Neeti, Doxentra); Supabase (Doxentra). AI: Groq (Llama, Whisper) (Swasthya-Neeti, Run-Neeti); Gemini API (Yap-Render, Doxentra); OCR (Tesseract, PaddleOCR) (Doxentra). Tools: Git; Vercel (Swasthya-Neeti, Run-Neeti, Yap-Render, Doxentra). Tools he uses: Spring Boot, PostgreSQL, React, Git, Next.js, Vite, Maven, Android Studio, Vercel.",
       "url": "https://github.com/mitarthpathak",
       "command": "skills",
       "keywords": "skills languages frameworks tools technologies stack"
@@ -290,6 +290,118 @@
       "title": "Yap-Render — What he learned",
       "text": "Yap-Render (August 2026): Speech or text in, Indian Sign Language out, signed by a 3D avatar. What Mitarth learned building Yap-Render: Sign languages have their own grammar; translating word by word does not work. Sharing one core (gloss engine, dictionary, avatar) across three platforms saved the most time. Browser extensions have hard limits, like CSP blocking import maps, that shape the build.",
       "url": "/work/yap-render#learned",
+      "keywords": "learned lessons learnings takeaways next"
+    },
+    {
+      "id": "citysync-problem",
+      "title": "CitySync — Problem",
+      "text": "CitySync (September 2026): Live civic data feeds fused into one stream, on a 3D globe and a local map of Jaipur. The problem: City information is scattered across dozens of feeds: weather here, air quality there, disaster alerts somewhere else. We wanted one place that turns all of it into a single, honest picture of what is happening around you right now. What it does: A civic dashboard that pulls earthquakes, weather, air quality, official alerts, news and climate data from public feeds into one normalized event stream, shown on a 3D globe for the world and a Leaflet map for a chosen spot in Jaipur.",
+      "url": "/work/citysync#problem",
+      "keywords": "problem why motivation goal need users"
+    },
+    {
+      "id": "citysync-role",
+      "title": "CitySync — Mitarth's role",
+      "text": "CitySync (September 2026): Live civic data feeds fused into one stream, on a 3D globe and a local map of Jaipur. Mitarth's role: One of a four-person team (Mitarth Pathak, Deep Panchal, Navneet Singh, Jayant Katariya). The team page credits him with engineering, UI and 3D, and he wrote most of the commits, including the Tier 1 data sources, the worldwide WMO and GDACS alerts, the local map and the landing page animations. Role: Team of four. Year: 2026. Stack: React 19, Express 5, react-globe.gl, Leaflet, Three.js, Tailwind CSS, Vite. Status: Code only.",
+      "url": "/work/citysync#role",
+      "keywords": "role team who built worked contribution collaborators responsibilities"
+    },
+    {
+      "id": "citysync-built",
+      "title": "CitySync — What he built",
+      "text": "CitySync (September 2026): Live civic data feeds fused into one stream, on a 3D globe and a local map of Jaipur. A civic dashboard that pulls earthquakes, weather, air quality, official alerts, news and climate data from public feeds into one normalized event stream, shown on a 3D globe for the world and a Leaflet map for a chosen spot in Jaipur. Stack: React 19, Express 5, react-globe.gl, Leaflet, Three.js, Tailwind CSS, Vite. Features: A 3D globe (react-globe.gl) with events coloured and sized by severity, plus pulsing rings for the most severe ones. A local view for Amer or Achrol in Jaipur: an area pulse, key readings, a Leaflet map with clustered pins and a live feed. 26 source adapters, among them USGS earthquakes, Open-Meteo weather and air quality, NDMA SACHET alerts, WMO and GDACS warnings, GDELT news and NASA POWER climate data. A one-line “now, next, what to do” brief for any point, built from cached events and an hourly forecast. Every event carries a tag: real live, real static, media reported, estimated or simulated. Simulated data is always labelled. An offline demo mode that serves a mock file and makes no network calls.",
+      "url": "/work/citysync#built",
+      "keywords": "features what built does product"
+    },
+    {
+      "id": "citysync-architecture",
+      "title": "CitySync — Architecture",
+      "text": "CitySync (September 2026): Live civic data feeds fused into one stream, on a 3D globe and a local map of Jaipur. Architecture: An Express backend runs every source as an independent adapter on its own timer and keeps the results in an in-memory cache. No request ever triggers an upstream call. The Vite + React front end polls the API and draws the events on the globe or the local map. Components: Public feeds (USGS · Open-Meteo · SACHET · GDELT), Source adapters (One timer each), Express API (Cache · /events · /health), React client (Globe · Leaflet map). Connections: Public feeds to Source adapters via fetch; Source adapters to Express API via normalized events; Express API to React client via polling.",
+      "url": "/work/citysync#architecture",
+      "keywords": "architecture how it works components system design stack diagram"
+    },
+    {
+      "id": "citysync-decisions",
+      "title": "CitySync — Key decisions",
+      "text": "CitySync key decisions. Decision: Refresh every source in the background and answer requests only from the cache. Why: A slow or rate-limited feed can never make the page slow, and visitors never multiply upstream calls. Trade-off: Data is only as fresh as each source's refresh interval, from one minute to a day. Decision: Tag every event with where it came from, and always mark mock data as simulated. Why: A civic dashboard is only useful if people can trust it, so guessed or fake data must never look real. Trade-off: More labels on screen, and news without a named place is dropped rather than guessed. Decision: Keep the globe mounted and paused while the local view is open. Why: Starting three.js again is expensive; the Leaflet map is cheap to mount and unmount. Trade-off: The globe's memory stays in use while it is hidden.",
+      "url": "/work/citysync#decisions",
+      "keywords": "decisions choices why trade-offs tradeoffs"
+    },
+    {
+      "id": "citysync-results",
+      "title": "CitySync — Results",
+      "text": "CitySync (September 2026): Live civic data feeds fused into one stream, on a 3D globe and a local map of Jaipur. A civic dashboard that pulls earthquakes, weather, air quality, official alerts, news and climate data from public feeds into one normalized event stream, shown on a 3D globe for the world and a Leaflet map for a chosen spot in Jaipur. Results: Source code is public on GitHub, with the full API, event schema and source list in the README. Works offline in demo mode, and a failing source never takes the others down. Status: Code only. Links: https://github.com/mitarthpathak/CitySync.",
+      "url": "/work/citysync#results",
+      "keywords": "results outcome impact status live deployed"
+    },
+    {
+      "id": "citysync-learned",
+      "title": "CitySync — What he learned",
+      "text": "CitySync (September 2026): Live civic data feeds fused into one stream, on a 3D globe and a local map of Jaipur. What Mitarth learned building CitySync: Every public feed fails in its own way, so each one needs its own timer, timeout and fallback. Honesty about data has to be built into the schema, not added to the UI later. Rate limits like GDELT's decide how a pipeline is scheduled.",
+      "url": "/work/citysync#learned",
+      "keywords": "learned lessons learnings takeaways next"
+    },
+    {
+      "id": "doxentra-problem",
+      "title": "Doxentra — Problem",
+      "text": "Doxentra (October 2026): Upload invoices, IDs and marksheets; get checked fields, flagged problems and a knowledge graph. The problem: Schools and offices still check piles of certificates, invoices and IDs by hand, and the mistakes hide in the details: a wrong total, an expired certificate, an Aadhaar number with a bad check digit. Mitarth wanted a tool that reads the documents and points a reviewer straight at what needs a second look. What it does: A document intelligence app that reads PDFs, scans and photos, classifies them, extracts fields with confidence scores and source references, flags missing or inconsistent details, and builds a knowledge graph, roadmap and quiz from the content.",
+      "url": "/work/doxentra#problem",
+      "keywords": "problem why motivation goal need users"
+    },
+    {
+      "id": "doxentra-role",
+      "title": "Doxentra — Mitarth's role",
+      "text": "Doxentra (October 2026): Upload invoices, IDs and marksheets; get checked fields, flagged problems and a knowledge graph. Mitarth's role: Mitarth built it as the lead developer: the Gemini pipeline, the OCR cross-check, the Express API, the validation rules, the review workflows and the React interface. Shruti added the app-wide dark mode. Doxentra grew out of Glyph, his earlier version of the same engine. Role: Lead developer. Year: 2026. Stack: React 19, TypeScript, Express 5, Gemini, Tesseract.js, PaddleOCR, MongoDB, Supabase. Status: Live.",
+      "url": "/work/doxentra#role",
+      "keywords": "role team who built worked contribution collaborators responsibilities"
+    },
+    {
+      "id": "doxentra-built",
+      "title": "Doxentra — What he built",
+      "text": "Doxentra (October 2026): Upload invoices, IDs and marksheets; get checked fields, flagged problems and a knowledge graph. A document intelligence app that reads PDFs, scans and photos, classifies them, extracts fields with confidence scores and source references, flags missing or inconsistent details, and builds a knowledge graph, roadmap and quiz from the content. Stack: React 19, TypeScript, Express 5, Gemini, Tesseract.js, PaddleOCR, MongoDB, Supabase. Features: Upload PDFs, scans or photos up to 50 MB; large files go straight to Supabase Storage. Classifies each document and extracts its fields, each with a confidence score and the page and quote it came from. Rule checks for Indian documents: the Verhoeff checksum for Aadhaar, formats for PAN and GSTIN, totals and dates. Document Twin: upload two versions of an invoice and see exactly which fields changed, then approve or flag them. Packets: build a checklist from a circular, add a student's documents and get missing proof, mismatches and expired certificates in priority order. Ask questions about your documents and get answers with verified citations, plus a D3 knowledge graph, roadmap and quiz.",
+      "url": "/work/doxentra#built",
+      "keywords": "features what built does product"
+    },
+    {
+      "id": "doxentra-ai",
+      "title": "Doxentra — How the AI works",
+      "text": "Doxentra AI details. Model and approach: A three-stage Gemini pipeline: page OCR with Gemini vision (three pages at a time, skipped when the PDF already has clean text), then text-only reasoning for classification and fields, then a targeted vision re-check of low-confidence fields. Requests are spread across two API keys with failover on rate limits. Data: No training. The model works only from the uploaded documents. Tesseract and PaddleOCR read the same pages locally as an independent cross-check.",
+      "url": "/work/doxentra#built",
+      "keywords": "ai model llm prompt data training approach"
+    },
+    {
+      "id": "doxentra-ai-limits",
+      "title": "Doxentra — AI quality, limits and safety",
+      "text": "Doxentra AI quality and limits. How quality was checked: A benchmark against hand-labelled samples: on a digital invoice, a scanned student ID and a bilingual Hindi–English notice, the Gemini pipeline got 84.4% of fields right and classified all three correctly, against 65.6% and two of three for the older pipeline. About 40 server test files cover the API, OCR, validation and workflows. Limits: The benchmark is three documents, one run each, so it is a sanity check, not proof. OCR agreement is evidence, not correctness, and unclear fields are left for a human instead of being guessed. Safety guardrails: Aadhaar numbers, PAN, emails and phone numbers are masked by default on exports and on screen. Fields that fail a checksum or where the OCR engines disagree are withheld and sent to review, and every human correction is written to an audit trail.",
+      "url": "/work/doxentra#built",
+      "keywords": "quality evaluation tested checks limits limitations safety guardrails disclaimer"
+    },
+    {
+      "id": "doxentra-architecture",
+      "title": "Doxentra — Architecture",
+      "text": "Doxentra (October 2026): Upload invoices, IDs and marksheets; get checked fields, flagged problems and a knowledge graph. Architecture: The React client uploads files to Supabase Storage and starts a job on the Express API. A background queue runs the Gemini pipeline and the local OCR cross-check, then validation, and stores the results in MongoDB, which the client polls. Components: React client (Upload · review · graph), Express API (Job queue · validation), Gemini (OCR · reasoning), Local OCR (Tesseract · PaddleOCR), MongoDB (Jobs · extractions). Connections: React client to Express API via jobs · polling; Express API to Gemini via pages · text; Express API to Local OCR via cross-check; Express API to MongoDB via Mongoose.",
+      "url": "/work/doxentra#architecture",
+      "keywords": "architecture how it works components system design stack diagram"
+    },
+    {
+      "id": "doxentra-decisions",
+      "title": "Doxentra — Key decisions",
+      "text": "Doxentra key decisions. Decision: Upload files straight to Supabase Storage instead of through the API. Why: Vercel functions cap request bodies at 4.5 MB, and real scans are often bigger. Trade-off: One more service to configure and keep in sync with the database. Decision: Cross-check fields with two local OCR engines and withhold anything they disagree on. Why: A wrong amount or ID number is worse than an empty field that a person fills in. Trade-off: Fewer fields are filled in automatically, so reviewers do more work. Decision: Run long documents as background jobs with page-level checkpoints. Why: Multi-page PDFs and rate limits can outlast a single request, and a retry should not start from page one. Trade-off: The client has to poll for results, and the queue adds moving parts.",
+      "url": "/work/doxentra#decisions",
+      "keywords": "decisions choices why trade-offs tradeoffs"
+    },
+    {
+      "id": "doxentra-results",
+      "title": "Doxentra — Results",
+      "text": "Doxentra (October 2026): Upload invoices, IDs and marksheets; get checked fields, flagged problems and a knowledge graph. A document intelligence app that reads PDFs, scans and photos, classifies them, extracts fields with confidence scores and source references, flags missing or inconsistent details, and builds a knowledge graph, roadmap and quiz from the content. Results: Deployed on Vercel at doxentra.vercel.app. 84.4% field accuracy and 3 of 3 correct classifications on the live benchmark samples. Status: Live. Links: https://doxentra.vercel.app/, https://github.com/mitarthpathak/Doxentra, https://github.com/mitarthpathak/Glyph.",
+      "url": "/work/doxentra#results",
+      "keywords": "results outcome impact status live deployed"
+    },
+    {
+      "id": "doxentra-learned",
+      "title": "Doxentra — What he learned",
+      "text": "Doxentra (October 2026): Upload invoices, IDs and marksheets; get checked fields, flagged problems and a knowledge graph. What Mitarth learned building Doxentra: Measuring field accuracy against ground truth showed which pipeline changes actually helped. Serverless limits, like body size and bundling native OCR models, shape the architecture. Admitting uncertainty and handing a field to a person is a feature, not a failure.",
+      "url": "/work/doxentra#learned",
       "keywords": "learned lessons learnings takeaways next"
     }
   ]

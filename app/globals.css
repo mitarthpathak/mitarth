@@ -36,7 +36,6 @@ html {
   overscroll-behavior: none;
 }
 
-
 body {
   font-family: var(--font-body);
   background: var(--cream);
@@ -1251,7 +1250,7 @@ body {
 .ide-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 16px;
   padding: 7px 16px;
   font-family: var(--font-mono);
   font-size: clamp(10px, 0.9vw, 12px);
@@ -1264,6 +1263,82 @@ body {
   color: rgba(255, 255, 255, 0.25);
 }
 
+.ide-breadcrumb-path {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* The 01/02/03 section nav, on the right of the breadcrumb bar. */
+.ide-stack-nav {
+  position: relative;
+  margin-left: auto;
+  padding-bottom: 6px;
+}
+
+.ide-stack-nav-list {
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: clamp(14px, 2vw, 30px);
+  margin: 0;
+  padding: 0;
+}
+
+.ide-stack-nav-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: clamp(12px, 0.95vw, 14px);
+  font-weight: 500;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+  transition: color 0.35s ease, text-shadow 0.35s ease;
+}
+
+.ide-stack-nav-item.is-active {
+  color: var(--yellow);
+  font-weight: 800;
+  text-shadow: 0 0 18px rgba(255, 209, 70, 0.45);
+}
+
+.ide-stack-nav-index {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  transition: color 0.35s ease;
+}
+
+.ide-stack-nav-item.is-active .ide-stack-nav-index {
+  color: var(--yellow);
+}
+
+.ide-stack-nav-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.ide-stack-nav-track-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--yellow);
+  transform: scaleX(0);
+  transform-origin: left;
+  will-change: transform;
+}
+
 /* --- Main editor pane --- */
 .ide-main {
   --ide-main-pad: clamp(16px, 2.2vw, 26px);
@@ -1274,78 +1349,15 @@ body {
   overflow: hidden;
 }
 
-/* --- Terminal card (shared chrome for all "running tool" views) --- */
-.ide-terminal-stage {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
+/* The two graph panes fill the editor edge to edge, flush under the
+   breadcrumb bar, with no frame of their own. */
+.ide-main.ide-main-graph {
+  padding: 0;
 }
 
-.ide-terminal-float {
-  position: relative;
-  z-index: 1;
-}
-
-.ide-terminal-card {
-  width: min(520px, 92%);
-  background: #000000;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 16px 40px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
-}
-
-.ide-terminal-card-wide {
-  width: min(760px, 96%);
-}
-
-.ide-terminal-float-whoami {
-  margin-top: -160px;
-  margin-left: 40px;
-}
-
-.ide-terminal-float-whoami .ide-terminal-card-wide {
-  width: min(640px, 90vw);
-}
-
-.ide-terminal-card.is-draggable .ide-terminal-titlebar {
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-}
-
-.ide-terminal-card.is-draggable .ide-terminal-titlebar:active {
-  cursor: grabbing;
-}
-
-.ide-terminal-titlebar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #000000;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.ide-terminal-name {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.ide-terminal-body {
-  padding: 12px 14px;
-  font-family: var(--font-mono);
-  font-size: clamp(11px, 1vw, 13px);
-  line-height: 1.7;
-}
-
-.ide-terminal-body-compact {
-  font-size: clamp(11px, 1vw, 12px);
-  line-height: 1.7;
+.ide-main-graph > .lang-graph {
+  border: none;
+  border-radius: 0;
 }
 
 .term-prompt {
@@ -1359,49 +1371,6 @@ body {
 .term-out {
   color: rgba(255, 255, 255, 0.5);
 }
-
-.ls-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 20px;
-  margin-top: 4px;
-}
-
-.ls-file {
-  font-weight: 500;
-}
-
-.whoami-rows {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.whoami-row {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-}
-
-.whoami-label {
-  flex: 0 0 84px;
-  color: rgba(255, 209, 70, 0.9);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.whoami-label::after {
-  content: ":";
-  opacity: 0.5;
-}
-
-.whoami-value {
-  color: rgba(255, 255, 255, 0.75);
-}
-
 
 /* --- Language graph explorer (Languages pane) --- */
 .lang-graph {
@@ -1617,10 +1586,196 @@ body {
   position: relative;
   perspective: 1000px;
   cursor: zoom-in;
+  /* Night sky over the code city: a cool glow rising off the grid. */
   background:
-    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.05), transparent 55%),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0px, transparent 1px, transparent 28px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0px, transparent 1px, transparent 28px);
+    radial-gradient(ellipse 85% 50% at 50% 100%, rgba(77, 141, 255, 0.13), transparent 70%),
+    radial-gradient(ellipse 60% 35% at 50% 0%, rgba(140, 140, 255, 0.05), transparent 70%),
+    #05060a;
+}
+
+/* Name tags in the 3D language graph. --c is the node's own color. */
+.lg3d-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.lg3d-label b {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.lg3d-label-lang {
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(8, 10, 18, 0.72);
+  border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--c) 30%, transparent);
+}
+
+.lg3d-label-lang::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 8px var(--c);
+}
+
+.lg3d-label-lang b {
+  font-size: 10.5px;
+}
+
+.lg3d-label-repo {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--c) 40%, #fff);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.95);
+}
+
+/* A tiny repo glyph, like the book icon GitHub puts next to repo names. */
+.lg3d-label-repo::before {
+  content: "";
+  width: 7px;
+  height: 8px;
+  border: 1.5px solid var(--c);
+  border-radius: 1.5px;
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--c) 60%, transparent);
+}
+
+/* Database silos: a small cylinder glyph, lighter than the district pills. */
+.lg3d-label-silo {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--c) 35%, #fff);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.95);
+}
+
+.lg3d-label-silo::before {
+  content: "";
+  width: 7px;
+  height: 9px;
+  border: 1.5px solid var(--c);
+  border-radius: 50% / 22%;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--c) 60%, transparent);
+}
+
+.lg3d-label-silo b {
+  font-size: 9.5px;
+}
+
+.lg3d-label-silo.is-focus {
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--c);
+  background: rgba(8, 10, 18, 0.8);
+  color: #fff;
+  text-shadow: none;
+}
+
+/* Full-screen toggle in the corner of each graph canvas. */
+.lang-graph-fullscreen {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 12, 18, 0.72);
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.lang-graph-fullscreen:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(20, 24, 34, 0.88);
+}
+
+.lang-graph-fullscreen:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+.lang-graph-fullscreen svg {
+  width: 15px;
+  height: 15px;
+}
+
+.lang-graph.is-fullscreen {
+  border: none;
+  border-radius: 0;
+}
+
+/* iPhone fallback: the pane covers the screen instead of going truly full screen. */
+.lang-graph.is-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  width: 100vw;
+  height: 100dvh;
+}
+
+/* Engraved label plates on the monochrome language structure. */
+.lg3d-label-plate {
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(226, 231, 238, 0.86);
+  background: rgba(12, 14, 19, 0.8);
+  border: 1px solid rgba(200, 206, 216, 0.26);
+}
+
+.lg3d-label-plate b {
+  font-weight: 500;
+  color: rgba(226, 231, 238, 0.5);
+}
+
+.lg3d-label-plate.is-focus {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
+}
+
+.lang-graph-row.is-static {
+  cursor: default;
+}
+
+.lg3d-label-repo b {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.lg3d-label-lang.is-focus,
+.lg3d-label-repo.is-focus {
+  color: #fff;
+  border-color: var(--c);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--c) 55%, transparent);
+}
+
+.lg3d-label-repo.is-focus {
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--c);
+  background: rgba(8, 10, 18, 0.8);
+  text-shadow: none;
 }
 
 .lang-graph-canvas.is-zoomed {
@@ -1804,395 +1959,6 @@ body {
 
 .lang-graph-detail-link:hover {
   border-bottom-color: var(--yellow);
-}
-
-/* --- DataGrip-style DB client replica (backdrop behind the devtask popup) --- */
-.db-replica {
-  position: absolute;
-  inset: calc(-1 * var(--ide-main-pad, 0px));
-  z-index: 0;
-  display: flex;
-  flex-direction: column;
-  background: #1e1f22;
-  color: #dfe1e5;
-  font-family: var(--font-mono);
-  overflow: hidden;
-  user-select: none;
-}
-
-/* low-specificity reset so the specific .dbrep-* rules below always win */
-:where(.db-replica) button {
-  all: unset;
-  box-sizing: border-box;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.dbrep-tabbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 0 8px;
-  height: 26px;
-  flex: 0 0 auto;
-  background: #2b2d30;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 9px;
-}
-
-.dbrep-tabbar-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  height: 100%;
-}
-
-.dbrep-tab {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding: 0 2px;
-  color: #8a8e94;
-  border-bottom: 2px solid transparent;
-}
-
-.dbrep-tab:hover {
-  color: #dfe1e5;
-}
-
-.dbrep-tab:focus-visible {
-  outline: 1px solid #3574f0;
-  outline-offset: 1px;
-}
-
-.dbrep-tab.is-active {
-  color: #dfe1e5;
-  border-bottom-color: #3574f0;
-}
-
-.dbrep-tabbar-right {
-  display: flex;
-  align-items: center;
-  height: 100%;
-}
-
-.dbrep-querytab,
-.dbrep-resulttab {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
-  border-radius: 3px;
-  color: #8a8e94;
-}
-
-.dbrep-querytab:hover,
-.dbrep-resulttab:hover {
-  color: #dfe1e5;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.dbrep-querytab:focus-visible,
-.dbrep-resulttab:focus-visible {
-  outline: 1px solid #3574f0;
-  outline-offset: 1px;
-}
-
-.dbrep-querytab.is-active,
-.dbrep-resulttab.is-active {
-  color: #dfe1e5;
-  background: #3b3d41;
-}
-
-.dbrep-tab-close {
-  opacity: 0.6;
-}
-
-.dbrep-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 4px 8px;
-  flex: 0 0 auto;
-  background: #2b2d30;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 8px;
-}
-
-.dbrep-toolbar-icons {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #8a8e94;
-}
-
-.dbrep-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  font-size: 9px;
-}
-
-.dbrep-icon:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #dfe1e5;
-}
-
-.dbrep-icon:active {
-  transform: scale(0.9);
-}
-
-.dbrep-icon:focus-visible {
-  outline: 1px solid #3574f0;
-}
-
-.dbrep-icon-run {
-  color: #59a869;
-}
-
-.dbrep-toolbar-conn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  color: #8a8e94;
-}
-
-.dbrep-check {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  cursor: pointer;
-}
-
-.dbrep-check input {
-  width: 9px;
-  height: 9px;
-  cursor: pointer;
-}
-
-.dbrep-conn-label {
-  color: #6b6f76;
-}
-
-.dbrep-dd,
-.dbrep-input {
-  display: inline-flex;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: #1e1f22;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #dfe1e5;
-}
-
-.dbrep-dd:hover {
-  background: #2b2d30;
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.dbrep-dd:active {
-  background: #34363a;
-}
-
-.dbrep-dd:focus-visible {
-  outline: 1px solid #3574f0;
-}
-
-.dbrep-body {
-  display: flex;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.dbrep-sidebar {
-  flex: 0 0 clamp(120px, 15vw, 170px);
-  overflow: hidden;
-  background: #2b2d30;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 8px;
-  line-height: 1.9;
-}
-
-.dbrep-tree-row {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding-right: 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #c9ccd0;
-}
-
-.dbrep-tree-row.lvl0 { padding-left: 6px; font-weight: 600; }
-.dbrep-tree-row.lvl1 { padding-left: 16px; color: #9da1a8; }
-.dbrep-tree-row.lvl2 { padding-left: 24px; }
-.dbrep-tree-row.lvl3 { padding-left: 32px; color: #9da1a8; }
-.dbrep-tree-row.lvl4 { padding-left: 40px; }
-.dbrep-tree-row.lvl5 { padding-left: 48px; color: #9da1a8; }
-.dbrep-tree-row.lvl6 { padding-left: 58px; }
-
-.dbrep-tree-row:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.dbrep-tree-row:focus-visible {
-  outline: 1px solid #3574f0;
-  outline-offset: -1px;
-}
-
-.dbrep-tree-row.is-selected {
-  background: #43454a;
-  color: #ffffff;
-}
-
-.dbrep-tree-row.is-selected:hover {
-  background: #4a4c52;
-}
-
-.dbrep-main {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.dbrep-editor {
-  flex: 0 0 auto;
-  max-height: 45%;
-  overflow: hidden;
-  padding: 4px 0;
-  font-size: 8.5px;
-  line-height: 1.7;
-  cursor: text;
-  user-select: text;
-}
-
-.dbrep-caret {
-  display: inline-block;
-  width: 1px;
-  height: 1em;
-  margin-left: 1px;
-  background: #dfe1e5;
-  vertical-align: text-bottom;
-  animation: dbrep-caret-blink 1s steps(1, end) infinite;
-}
-
-@keyframes dbrep-caret-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
-
-.dbrep-editor-line {
-  display: flex;
-  padding: 0 8px;
-}
-
-.dbrep-ln {
-  flex: 0 0 20px;
-  color: #5c6066;
-  text-align: right;
-  padding-right: 8px;
-}
-
-.dbrep-code {
-  min-width: 0;
-  overflow: hidden;
-  color: #dfe1e5;
-  white-space: pre;
-}
-
-.dbrep-tok-kw { color: #cc7832; }
-.dbrep-tok-fn { color: #56a8f5; }
-.dbrep-tok-str { color: #6a8759; }
-
-.dbrep-editor-status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex: 0 0 auto;
-  padding: 2px 8px;
-  font-size: 7.5px;
-  color: #6b6f76;
-  background: #26282b;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.dbrep-resulttabs {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex: 0 0 auto;
-  padding: 3px 8px;
-  font-size: 8px;
-}
-
-.dbrep-grid-wrap {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.dbrep-grid {
-  table-layout: fixed;
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 7.5px;
-  white-space: nowrap;
-}
-
-.dbrep-grid th:nth-child(1), .dbrep-grid td:nth-child(1) { width: 5%; }
-.dbrep-grid th:nth-child(2), .dbrep-grid td:nth-child(2) { width: 16%; }
-.dbrep-grid th:nth-child(3), .dbrep-grid td:nth-child(3) { width: 10%; }
-.dbrep-grid th:nth-child(4), .dbrep-grid td:nth-child(4) { width: 8%; }
-.dbrep-grid th:nth-child(5), .dbrep-grid td:nth-child(5) { width: 11%; }
-.dbrep-grid th:nth-child(6), .dbrep-grid td:nth-child(6) { width: 8%; }
-.dbrep-grid th:nth-child(7), .dbrep-grid td:nth-child(7) { width: 12%; }
-.dbrep-grid th:nth-child(8), .dbrep-grid td:nth-child(8) { width: 30%; }
-
-.dbrep-grid th {
-  position: sticky;
-  top: 0;
-  background: #2b2d30;
-  color: #9da1a8;
-  text-align: left;
-  font-weight: 600;
-  padding: 3px 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.dbrep-grid td {
-  padding: 2px 8px;
-  color: #c9ccd0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dbrep-grid tbody tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.dbrep-grid-status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex: 0 0 auto;
-  padding: 2px 8px;
-  font-size: 7.5px;
-  color: #6b6f76;
-  background: #26282b;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* --- Framework & Tools: 3-up / 2-down bento grid of VS-Code-style terminals --- */
@@ -2434,276 +2200,6 @@ body {
   align-items: center;
   gap: 4px;
   color: #6dd39e;
-}
-
-/* --- Right panel: category nav + changed files (replaces external label list) --- */
-.ide-right-panel {
-  flex: 0 0 clamp(200px, 20vw, 270px);
-  background: #0a0a0a;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  padding: clamp(15px, 2vw, 23px) clamp(13px, 1.7vw, 19px);
-  overflow-y: auto;
-}
-
-.ide-right-nav {
-  display: flex;
-  gap: clamp(12px, 1.4vw, 18px);
-}
-
-.ide-right-nav-track {
-  position: relative;
-  width: 2px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.12);
-  overflow: hidden;
-}
-
-.ide-right-nav-track-fill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--yellow);
-  transform: scaleY(0);
-  transform-origin: top;
-  will-change: transform;
-}
-
-.ide-right-nav-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(16px, 2.4vh, 26px);
-}
-
-.ide-right-nav-item {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-family: var(--font-body);
-  font-size: clamp(14px, 1.05vw, 17px);
-  font-weight: 500;
-  line-height: 1.2;
-  color: rgba(255, 255, 255, 0.55);
-  opacity: 1;
-  transform: translateX(0) scale(1);
-  transform-origin: left center;
-  transition: color 0.35s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.35s ease;
-}
-
-.ide-right-nav-item.is-active {
-  color: var(--yellow);
-  font-weight: 800;
-  transform: translateX(3px) scale(1.08);
-  text-shadow: 0 0 18px rgba(255, 209, 70, 0.45);
-}
-
-.ide-right-nav-item.is-active .ide-right-nav-index {
-  color: var(--yellow);
-}
-
-.ide-right-nav-index {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.4);
-  transition: color 0.35s ease;
-}
-
-.ide-right-divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: clamp(20px, 3vh, 30px) 0 clamp(14px, 2vh, 20px);
-}
-
-.ide-right-panel-label {
-  margin: 0 0 12px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-}
-
-.ide-file-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.ide-file-stat-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: clamp(11px, 1vw, 13px);
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.ide-file-stat-row svg {
-  width: 13px;
-  height: 13px;
-  flex: 0 0 auto;
-}
-
-.ide-file-stat-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ide-file-stat-nums {
-  margin-left: auto;
-  display: flex;
-  gap: 6px;
-  flex: 0 0 auto;
-}
-
-.ide-stat-add {
-  color: #3fb950;
-}
-
-.ide-stat-del {
-  color: #f85149;
-}
-
-/* --- Source Control panel (real VS Code SCM replica) --- */
-.ide-scm-commit-box {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin-bottom: 14px;
-}
-
-.ide-scm-commit-input {
-  width: 100%;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: #000000;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: #dfe1e5;
-  resize: none;
-  overflow: hidden;
-}
-
-.ide-scm-commit-input::placeholder {
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.ide-scm-commit-input:focus {
-  outline: none;
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.ide-scm-commit-input:focus-visible {
-  outline: 2px solid var(--yellow);
-  outline-offset: 2px;
-}
-
-.ide-scm-commit-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 0;
-  border: none;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #000000;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
-}
-
-.ide-scm-commit-btn:hover {
-  background: #e6e6e6;
-}
-
-.ide-scm-commit-btn:active {
-  transform: scale(0.97);
-}
-
-.ide-scm-commit-btn:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.6);
-  outline-offset: 2px;
-}
-
-.ide-scm-commit-caret {
-  opacity: 0.7;
-}
-
-.ide-scm-changes-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 9px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.ide-scm-count {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  font-size: 9px;
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-.ide-scm-file-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ide-scm-file-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--font-mono);
-  font-size: clamp(10px, 0.9vw, 12px);
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.ide-scm-file-row svg {
-  width: 13px;
-  height: 13px;
-  flex: 0 0 auto;
-}
-
-.ide-scm-file-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ide-scm-file-path {
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ide-scm-status {
-  margin-left: auto;
-  flex: 0 0 auto;
-  font-weight: 700;
-  font-size: 11px;
-}
-
-.ide-scm-status-M {
-  color: #e2c08d;
-}
-
-.ide-scm-status-U {
-  color: #3fb950;
 }
 
 /* ========== PROJECTS SECTION ========== */
@@ -2983,8 +2479,6 @@ body {
       rgba(247, 241, 237, 0.97) 100%);
   z-index: 2;
 }
-
-
 
 /* HOVER STATES (mouse) — keyboard focus gets the same image preview */
 .project-card:hover .project-bg,
@@ -3474,14 +2968,6 @@ body {
     transform: translateY(-16px);
   }
 
-  .ide-right-panel {
-    max-height: 40%;
-  }
-
-  .ide-terminal-card {
-    width: 100%;
-  }
-
   .ide-agent-grid {
     position: static;
     inset: auto;
@@ -3499,22 +2985,39 @@ body {
     height: auto;
   }
 
-  .ide-right-panel {
-    flex: 0 0 auto;
-    max-width: 100%;
-    border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  /* Fake git changes / source control panel — decorative, not information a
-     visitor needs; keep only the functional 01/02/03 category nav above it. */
-  .ide-right-panel-extra {
-    display: none;
-  }
-
   .lang-graph-sidebar,
   .lang-graph-detail {
     display: none;
+  }
+
+  /* No room for the file path and three full labels on a phone: the nav
+     takes the bar, and only the active section keeps its name. */
+  .ide-breadcrumb-path {
+    display: none;
+  }
+
+  .ide-stack-nav {
+    margin-left: 0;
+    flex: 1 1 auto;
+  }
+
+  .ide-stack-nav-list {
+    justify-content: space-between;
+  }
+
+  .ide-stack-nav-item:not(.is-active) .ide-stack-nav-label {
+    display: none;
+  }
+
+  /* The scenes are small on a phone: tags keep just the name. */
+  .lg3d-label-lang b,
+  .lg3d-label-plate b {
+    display: none;
+  }
+
+  .lg3d-label-lang {
+    padding: 2px 7px 2px 6px;
+    font-size: 10.5px;
   }
 
   .lang-graph-filters,
@@ -3522,28 +3025,9 @@ body {
     display: none;
   }
 
-  .ide-right-nav-list {
-    gap: 12px;
-  }
-
   .ide-main {
     min-width: 0;
     max-width: 100%;
-  }
-
-  /* --- Backend & Database pane: drop the DataGrip-style mockup behind the
-     whoami card, it's a wide fixed layout that can't reasonably reflow, and
-     let the card sit in normal flow instead of floating over it. --- */
-  .db-replica {
-    display: none;
-  }
-
-  .ide-terminal-float-whoami {
-    margin: 0;
-  }
-
-  .ide-terminal-float-whoami .ide-terminal-card-wide {
-    width: 100%;
   }
 
   /* --- Framework & Tools pane: the neofetch/docker ASCII art has a fixed
