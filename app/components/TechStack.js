@@ -411,7 +411,7 @@ function AutoOrbitCamera({ enabled, target, radius = 22, height = 13, speed = 0.
 
 // Billboarded name tag pinned to a point in the city. Tags on the far side
 // fade back, so the ones in front stay readable while the city turns.
-function NodeLabel({ anchor, offset, variant, color, dim, focus, distanceFactor = 10, children }) {
+function NodeLabel({ anchor, offset, variant, color, dim, focus, swatch, distanceFactor = 10, children }) {
   const ref = useRef(null);
   const point = useMemo(() => new Vector3(...anchor), [anchor]);
   useFrame(({ camera }) => {
@@ -425,7 +425,7 @@ function NodeLabel({ anchor, offset, variant, color, dim, focus, distanceFactor 
     <Html position={offset} center distanceFactor={distanceFactor} zIndexRange={[40, 0]} style={{ pointerEvents: "none" }}>
       <span
         ref={ref}
-        className={`lg3d-label lg3d-label-${variant}${focus ? " is-focus" : ""}`}
+        className={`lg3d-label lg3d-label-${variant}${focus ? " is-focus" : ""}${swatch ? " has-swatch" : ""}`}
         style={{ "--c": color }}
       >
         {children}
@@ -499,15 +499,15 @@ function Building3D({ node, isActive, isFocus, focusKey, showLabel, onHover, onL
             <mesh key={f.key} position={[0, f.y, 0]}>
               <boxGeometry args={[node.size, f.h, node.size]} />
               <meshStandardMaterial
-                color={darken(f.color, 0.55)}
+                color={darken(f.color, 0.62)}
                 emissive={f.color}
-                emissiveIntensity={lit ? 0.75 : 0.2}
-                roughness={0.45}
-                metalness={0.25}
+                emissiveIntensity={lit ? 0.7 : 0.14}
+                roughness={0.3}
+                metalness={0.55}
                 transparent
                 opacity={0.92 * fade}
               />
-              <Edges color={lit ? lighten(f.color, 0.35) : f.color} lineWidth={lit ? 1.8 : 1} transparent opacity={fade} />
+              <Edges color={lit ? lighten(f.color, 0.35) : f.color} lineWidth={lit ? 1.8 : 0.9} transparent opacity={fade} />
             </mesh>
           );
         })
@@ -568,10 +568,10 @@ function CityScene({
         args={[40, 40]}
         cellSize={CELL / 2}
         cellThickness={0.6}
-        cellColor="#131a2a"
+        cellColor="#121a2c"
         sectionSize={CELL * 2}
         sectionThickness={1}
-        sectionColor="#24304d"
+        sectionColor={ACCENT.navy}
         fadeDistance={26}
         fadeStrength={1.6}
         infiniteGrid
@@ -617,7 +617,8 @@ function CityScene({
 // layered by the languages inside them; every other repo is a small cube in
 // the grids on the outermost shell. Braided conduits run from each language
 // to every repo layer that uses it. One language is always active — the most
-// used, until the visitor picks another. Monochrome, so the form reads first.
+// used, until the visitor picks another. Monochrome with two quiet accents,
+// so the form still reads first.
 // World units; it's all generated from fixed seeds, so every visit (and the
 // server render) builds the same structure.
 const MONO = {
@@ -625,6 +626,17 @@ const MONO = {
   plate: "#7b818c",
   dark: "#3b4049",
   line: "#9aa3b2",
+};
+// The accents: ice blue for what's live (the core, the active language, its
+// conduits, the readouts) and champagne gold for the fittings (filaments,
+// chamber rings, name plates, one shell's rods); one shell's bands are navy.
+const ACCENT = {
+  ice: "#9fd4ff",
+  iceLight: "#dff1ff",
+  iceGlow: "#4fa8ff",
+  gold: "#d6b56f",
+  goldDeep: "#a8894f",
+  navy: "#2a3a57",
 };
 const SHELL_RADII = [1.05, 1.55, 2.15, 2.75, 3.35, 3.95];
 const CORE_R = 0.55;
@@ -823,6 +835,22 @@ const TOP_LANG = [...LANG_NODES].sort((a, b) => LANG_TOTALS[b.key] - LANG_TOTALS
     });
 }
 
+// Each repo gets its own anodised-metal tint, so the monoliths and cubes
+// read as different pieces; ice blue stays reserved for the active state.
+const REPO_TINTS = [
+  "#D9A38F", // rose gold
+  "#6F8FE0", // sapphire
+  "#7CC4A4", // jade
+  "#B49AD8", // amethyst
+  "#E0C48A", // champagne
+  "#C8835E", // copper
+  "#C9707F", // garnet
+  "#CDB79E", // sand
+];
+PROJECT_NODES.filter((p) => p.big)
+  .concat(PROJECT_NODES.filter((p) => !p.big))
+  .forEach((p, i) => (p.tint = REPO_TINTS[i % REPO_TINTS.length]));
+
 // Where a conduit plugs into a layer of a monolith (its inner face) or into
 // a repo cube (its inner side).
 const ZAXIS = new Vector3(0, 0, 1);
@@ -970,7 +998,7 @@ function LineCloud({ positions, opacity }) {
   );
 }
 
-function Shell3D({ shell, spinning }) {
+function Shell3D({ shell, index, spinning }) {
   const ref = useRef(null);
   const axis = useMemo(() => new Vector3(...shell.axis).normalize(), [shell]);
 
@@ -988,12 +1016,21 @@ function Shell3D({ shell, spinning }) {
                 <ringGeometry
                   args={[shell.r - a.width / 2, shell.r + a.width / 2, Math.max(8, Math.round(a.length * 24)), 1, a.start, a.length]}
                 />
-                <meshStandardMaterial color={MONO.plate} metalness={0.6} roughness={0.42} side={DoubleSide} />
+                <meshStandardMaterial
+                  color={index === 4 ? ACCENT.navy : MONO.plate}
+                  metalness={index === 4 ? 0.75 : 0.6}
+                  roughness={index === 4 ? 0.35 : 0.42}
+                  side={DoubleSide}
+                />
               </mesh>
             ) : (
               <mesh key={j} rotation={[0, 0, a.start]}>
                 <torusGeometry args={[shell.r, a.tube, 4, Math.max(8, Math.round(a.length * 28)), a.length]} />
-                <meshStandardMaterial color={MONO.metal} metalness={0.7} roughness={0.32} />
+                <meshStandardMaterial
+                  color={index === 2 ? ACCENT.gold : MONO.metal}
+                  metalness={index === 2 ? 0.85 : 0.7}
+                  roughness={index === 2 ? 0.28 : 0.32}
+                />
               </mesh>
             )
           )}
@@ -1015,11 +1052,18 @@ function Core3D({ spinning }) {
         <icosahedronGeometry args={[0.2, 0]} />
         <meshStandardMaterial color={MONO.metal} metalness={0.75} roughness={0.28} flatShading />
       </mesh>
-      <InstancedBoxes items={CORE_BLOCKS} color={MONO.metal} metalness={0.65} roughness={0.35} />
+      <InstancedBoxes
+        items={CORE_BLOCKS}
+        color={ACCENT.ice}
+        emissive={ACCENT.iceGlow}
+        emissiveIntensity={0.35}
+        metalness={0.45}
+        roughness={0.3}
+      />
       {CORE_KNOTS.map((k, i) => (
         <mesh key={i} rotation={k.rotation}>
           <torusKnotGeometry args={[k.r, 0.006, 220, 5, k.p, k.q]} />
-          <meshStandardMaterial color={MONO.line} metalness={0.8} roughness={0.25} />
+          <meshStandardMaterial color={ACCENT.gold} metalness={0.9} roughness={0.25} />
         </mesh>
       ))}
     </group>
@@ -1027,7 +1071,7 @@ function Core3D({ spinning }) {
 }
 
 // A language: a vertical chamber with a charge inside, capped by rings and
-// held in its own broken ring. The active language's charge burns white.
+// held in its own broken gold ring. The active language's charge burns ice blue.
 function LangChamber3D({ node, isActive, isHot, onHover, onLeave, onSelect }) {
   const { chamberR: r, chamberH: h, ringR } = node;
   const fade = isActive ? 1 : 0.25;
@@ -1044,14 +1088,14 @@ function LangChamber3D({ node, isActive, isHot, onHover, onLeave, onSelect }) {
           transparent
           opacity={0.8 * fade}
         />
-        <Edges threshold={10} color={isHot ? "#ffffff" : MONO.line} lineWidth={isHot ? 1.4 : 0.8} transparent opacity={fade} />
+        <Edges threshold={10} color={isHot ? ACCENT.ice : MONO.line} lineWidth={isHot ? 1.4 : 0.8} transparent opacity={fade} />
       </mesh>
       <mesh>
         <cylinderGeometry args={[r * 0.5, r * 0.5, h * 0.86, 16]} />
         <meshStandardMaterial
-          color={isHot ? "#ffffff" : MONO.dark}
-          emissive="#ffffff"
-          emissiveIntensity={isHot ? 2.2 : 0.04}
+          color={isHot ? ACCENT.iceLight : MONO.dark}
+          emissive={ACCENT.iceGlow}
+          emissiveIntensity={isHot ? 2.2 : 0.08}
           metalness={0.3}
           roughness={0.5}
           transparent
@@ -1061,7 +1105,7 @@ function LangChamber3D({ node, isActive, isHot, onHover, onLeave, onSelect }) {
       {[h / 2, -h / 2].map((y) => (
         <mesh key={y} position={[0, y, 0]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[r * 1.06, Math.max(0.008, r * 0.08), 6, 28]} />
-          <meshStandardMaterial color={MONO.metal} metalness={0.75} roughness={0.3} transparent opacity={fade} />
+          <meshStandardMaterial color={ACCENT.gold} metalness={0.85} roughness={0.28} transparent opacity={fade} />
         </mesh>
       ))}
       <group rotation={node.ringTilt}>
@@ -1070,11 +1114,11 @@ function LangChamber3D({ node, isActive, isHot, onHover, onLeave, onSelect }) {
             <mesh key={i} rotation={[0, 0, a.start]}>
               <torusGeometry args={[ringR, 0.014, 4, 24, a.length]} />
               <meshStandardMaterial
-                color={isHot ? "#ffffff" : MONO.plate}
-                emissive="#ffffff"
-                emissiveIntensity={isHot ? 0.8 : 0}
-                metalness={0.6}
-                roughness={0.4}
+                color={isHot ? ACCENT.gold : ACCENT.goldDeep}
+                emissive={ACCENT.gold}
+                emissiveIntensity={isHot ? 0.5 : 0}
+                metalness={0.85}
+                roughness={0.32}
                 transparent
                 opacity={fade}
               />
@@ -1096,50 +1140,60 @@ function RepoMonolith3D({ node, isActive, isHot, hotKey, onHover, onLeave, onSel
   const b = node.block;
   const fade = isActive ? 1 : 0.22;
   const top = b.H / 2;
+  const { tint } = node;
 
   return (
     <group position={b.pos} rotation={[0, b.facing, 0]} {...pointerHandlers(onHover, onLeave, onSelect)}>
-      {b.layers.map((l) => {
+      {b.layers.map((l, k) => {
         const lit = isHot || hotKey === l.key;
         return (
           <mesh key={l.key} position={[0, l.y, 0]} scale={[(b.W / 2) * l.inset, l.h, b.D / 2]}>
             <cylinderGeometry args={[1, 1, 1, 6]} />
             <meshStandardMaterial
-              color={lit ? "#eef1f6" : MONO.metal}
-              emissive="#ffffff"
-              emissiveIntensity={lit ? 1.1 : 0}
-              metalness={0.65}
-              roughness={0.33}
+              color={lit ? ACCENT.iceLight : k % 2 ? lighten(tint, 0.12) : tint}
+              emissive={ACCENT.iceGlow}
+              emissiveIntensity={lit ? 0.9 : 0}
+              metalness={0.75}
+              roughness={0.28}
               transparent
               opacity={0.95 * fade}
             />
-            <Edges threshold={15} color={lit ? "#ffffff" : MONO.dark} lineWidth={lit ? 1.4 : 0.8} transparent opacity={fade} />
+            <Edges threshold={15} color={lit ? ACCENT.ice : darken(tint, 0.45)} lineWidth={lit ? 1.4 : 0.8} transparent opacity={fade} />
           </mesh>
         );
       })}
       {b.silhouette === 1 && (
         <mesh position={[0, top + 0.09, 0]} scale={[b.W / 2, 0.16, b.D / 2]}>
           <cylinderGeometry args={[0.55, 1, 1, 6]} />
-          <meshStandardMaterial color={MONO.metal} metalness={0.65} roughness={0.33} transparent opacity={0.95 * fade} />
+          <meshStandardMaterial color={tint} metalness={0.75} roughness={0.28} transparent opacity={0.95 * fade} />
         </mesh>
       )}
       {b.silhouette === 2 && (
         <mesh position={[0, top + 0.08, 0]} scale={[b.W * 0.27, 0.14, b.D * 0.4]}>
           <cylinderGeometry args={[1, 1, 1, 6]} />
-          <meshStandardMaterial color={MONO.metal} metalness={0.65} roughness={0.33} transparent opacity={0.95 * fade} />
+          <meshStandardMaterial color={tint} metalness={0.75} roughness={0.28} transparent opacity={0.95 * fade} />
         </mesh>
       )}
       {b.silhouette === 3 && (
         <mesh position={[b.W * 0.22, top + 0.15, 0]}>
           <boxGeometry args={[b.W * 0.12, 0.3, b.D * 0.5]} />
-          <meshStandardMaterial color={MONO.metal} metalness={0.65} roughness={0.33} transparent opacity={0.95 * fade} />
+          <meshStandardMaterial color={tint} metalness={0.75} roughness={0.28} transparent opacity={0.95 * fade} />
         </mesh>
       )}
       <mesh position={[0, -top - 0.1, 0]}>
         <boxGeometry args={[b.W * 0.95, 0.07, 0.03]} />
-        <meshStandardMaterial color={MONO.dark} metalness={0.5} roughness={0.55} transparent opacity={fade} />
+        <meshStandardMaterial color={ACCENT.goldDeep} metalness={0.85} roughness={0.3} transparent opacity={fade} />
       </mesh>
-      <NodeLabel anchor={b.pos} offset={[0, -top - 0.24, 0]} variant="plate" distanceFactor={6} dim={!isActive} focus={isHot}>
+      <NodeLabel
+        anchor={b.pos}
+        offset={[0, -top - 0.24, 0]}
+        variant="plate"
+        color={tint}
+        swatch
+        distanceFactor={6}
+        dim={!isActive}
+        focus={isHot}
+      >
         {node.label}
       </NodeLabel>
     </group>
@@ -1154,18 +1208,18 @@ function RepoCube3D({ node, isActive, isHot, showLabel, onHover, onLeave, onSele
       <mesh {...pointerHandlers(onHover, onLeave, onSelect)}>
         <boxGeometry args={[0.11, 0.11, 0.11]} />
         <meshStandardMaterial
-          color={isHot ? "#eef1f6" : MONO.metal}
-          emissive="#ffffff"
-          emissiveIntensity={isHot ? 1 : 0}
-          metalness={0.6}
-          roughness={0.38}
+          color={isHot ? ACCENT.iceLight : node.tint}
+          emissive={ACCENT.iceGlow}
+          emissiveIntensity={isHot ? 0.9 : 0}
+          metalness={0.75}
+          roughness={0.3}
           transparent
           opacity={isActive ? 1 : 0.25}
         />
-        <Edges color={isHot ? "#ffffff" : MONO.dark} lineWidth={0.8} />
+        <Edges color={isHot ? ACCENT.ice : darken(node.tint, 0.45)} lineWidth={0.8} />
       </mesh>
       {showLabel && (
-        <NodeLabel anchor={c.pos} offset={[0, 0.16, 0]} variant="plate" distanceFactor={6} focus={isHot}>
+        <NodeLabel anchor={c.pos} offset={[0, 0.16, 0]} variant="plate" color={node.tint} swatch distanceFactor={6} focus={isHot}>
           {node.label}
         </NodeLabel>
       )}
@@ -1173,7 +1227,7 @@ function RepoCube3D({ node, isActive, isHot, showLabel, onHover, onLeave, onSele
   );
 }
 
-// An active conduit: three braided white tubes with a pulse running along
+// An active conduit: three braided ice-blue tubes with a pulse running along
 // them from the language to the repo.
 function HotConduit3D({ edge }) {
   const geometries = useMemo(
@@ -1194,12 +1248,12 @@ function HotConduit3D({ edge }) {
     <group>
       {geometries.map((g, i) => (
         <mesh key={i} geometry={g}>
-          <meshStandardMaterial color="#dfe4ec" emissive="#ffffff" emissiveIntensity={0.55} metalness={0.4} roughness={0.35} />
+          <meshStandardMaterial color={ACCENT.ice} emissive={ACCENT.iceGlow} emissiveIntensity={0.6} metalness={0.4} roughness={0.35} />
         </mesh>
       ))}
       <mesh ref={pulseRef}>
         <sphereGeometry args={[edge.big ? 0.028 : 0.018, 12, 12]} />
-        <meshBasicMaterial color="#ffffff" />
+        <meshBasicMaterial color={ACCENT.iceLight} />
       </mesh>
     </group>
   );
@@ -1534,7 +1588,7 @@ function LanguagesPane() {
               onMouseLeave={clearHover}
               onClick={() => selectProject(p.name)}
             >
-              <span className="ide-folder-dot" />
+              <span className="ide-folder-dot" style={{ background: p.tint }} />
               <span className="lang-graph-row-name">{p.label}</span>
               <span className="lang-graph-row-chips">
                 {p.majorKeys.map((key) => (
@@ -1555,13 +1609,13 @@ function LanguagesPane() {
           >
             <Core3D spinning={spinning} />
             {SHELLS.map((shell, i) => (
-              <Shell3D key={i} shell={shell} spinning={spinning} />
+              <Shell3D key={i} index={i} shell={shell} spinning={spinning} />
             ))}
             <LineCloud positions={STRUCT_DETAIL.streaks} opacity={0.16} />
             <LineCloud positions={STRUCT_DETAIL.scaffold} opacity={0.34} />
             <InstancedBoxes items={STRUCT_DETAIL.cubes} color={MONO.metal} metalness={0.6} roughness={0.4} />
             <InstancedBoxes items={STRUCT_DETAIL.readouts} color={MONO.dark} metalness={0.4} roughness={0.6} />
-            <InstancedBoxes items={STRUCT_DETAIL.bars} color={MONO.line} emissive="#ffffff" emissiveIntensity={0.35} />
+            <InstancedBoxes items={STRUCT_DETAIL.bars} color={ACCENT.ice} emissive={ACCENT.iceGlow} emissiveIntensity={0.5} />
 
             {LANG_NODES.map((s) => (
               <LangChamber3D
@@ -1652,27 +1706,30 @@ function LanguagesPane() {
 // them. Found by reading each repo's manifests (package.json, pom.xml,
 // Gradle, Cargo) and the code that imports them, October 2026; `bytes` is
 // the size of each repo's backend source only.
+// A curated palette rather than brand colours: metals for the backends,
+// muted gemstones for the databases, champagne gold for auth, matching the
+// accents of pane 01.
 const BACKENDS = {
-  express: { name: "Express", note: "Node.js", color: "#E6EAF2" },
-  spring: { name: "Spring Boot", note: "Java", color: "#6DB33F" },
-  nextapi: { name: "Next.js API", note: "Route handlers", color: "#A78BFA" },
-  hono: { name: "Hono", note: "Node.js", color: "#FF7A45" },
-  soroban: { name: "Soroban", note: "Stellar smart contract", color: "#FDE047" },
-  device: { name: "On-device", note: "No server", color: "#94A3B8" },
+  express: { name: "Express", note: "Node.js", color: "#DADFE6" }, // platinum
+  spring: { name: "Spring Boot", note: "Java", color: "#93B88C" }, // sage
+  nextapi: { name: "Next.js API", note: "Route handlers", color: ACCENT.ice },
+  hono: { name: "Hono", note: "Node.js", color: "#C9825B" }, // copper
+  soroban: { name: "Soroban", note: "Stellar smart contract", color: "#B8A2E3" }, // amethyst
+  device: { name: "On-device", note: "No server", color: "#8E97A6" }, // pewter
 };
 
 const DATABASES = {
-  mongodb: { name: "MongoDB", type: "Document database", color: "#00ED64" },
-  postgres: { name: "PostgreSQL", type: "Relational database", color: "#4D6BFF" },
-  h2: { name: "H2", type: "In-memory SQL", color: "#7DD3FC" },
-  supabase: { name: "Supabase Storage", type: "Object storage", color: "#14B8A6" },
-  redis: { name: "Redis", type: "Key-value (Upstash)", color: "#FF4D5E" },
-  cloudinary: { name: "Cloudinary", type: "Media storage", color: "#F472B6" },
-  sqlite: { name: "SQLite", type: "On-device SQL (Room)", color: "#E2C08D" },
-  ledger: { name: "Stellar ledger", type: "On-chain storage", color: "#F59E0B" },
+  mongodb: { name: "MongoDB", type: "Document database", color: "#4FBF8F" }, // emerald
+  postgres: { name: "PostgreSQL", type: "Relational database", color: "#5B7FE0" }, // sapphire
+  h2: { name: "H2", type: "In-memory SQL", color: "#7FD1D6" }, // aquamarine
+  supabase: { name: "Supabase Storage", type: "Object storage", color: "#3FA99A" }, // jade
+  redis: { name: "Redis", type: "Key-value (Upstash)", color: "#D0606E" }, // garnet
+  cloudinary: { name: "Cloudinary", type: "Media storage", color: "#E4A6C0" }, // rose quartz
+  sqlite: { name: "SQLite", type: "On-device SQL (Room)", color: "#D9C7A3" }, // pearl
+  ledger: { name: "Stellar ledger", type: "On-chain storage", color: "#E0A845" }, // amber
 };
 
-const AUTH_COLOR = "#FDE68A";
+const AUTH_COLOR = ACCENT.gold;
 
 // data: [database, the library that talks to it]; auth: how people sign in.
 const BACKEND_REPOS = [
@@ -1831,7 +1888,7 @@ function backendRelations(sel) {
 }
 
 // A database: a silo shaped like the classic database icon — a cylinder
-// with stacked disks — glowing in its own color.
+// with stacked disks — in its own gemstone colour, banded in gold.
 function Silo3D({ silo, isActive, isFocus, onHover, onLeave, onSelect }) {
   const fade = isActive ? 1 : 0.15;
   const { color, h } = silo;
@@ -1843,9 +1900,9 @@ function Silo3D({ silo, isActive, isFocus, onHover, onLeave, onSelect }) {
         <meshStandardMaterial
           color={darken(color, 0.6)}
           emissive={color}
-          emissiveIntensity={isFocus ? 0.7 : 0.2}
-          roughness={0.4}
-          metalness={0.3}
+          emissiveIntensity={isFocus ? 0.7 : 0.16}
+          roughness={0.3}
+          metalness={0.55}
           transparent
           opacity={0.9 * fade}
         />
@@ -1860,7 +1917,7 @@ function Silo3D({ silo, isActive, isFocus, onHover, onLeave, onSelect }) {
       {[h / 3, (2 * h) / 3].map((y) => (
         <mesh key={y} position={[0, y, 0]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[SILO_R + 0.004, 0.012, 8, 48]} />
-          <meshBasicMaterial color={color} transparent opacity={0.9 * fade} />
+          <meshBasicMaterial color={ACCENT.gold} transparent opacity={0.9 * fade} />
         </mesh>
       ))}
       <NodeLabel
@@ -2105,7 +2162,7 @@ function BackendPane() {
             {/* The data center: the pad the silos stand on. */}
             <mesh position={[0, 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
               <ringGeometry args={[SILO_RING + 0.62, SILO_RING + 0.68, 96]} />
-              <meshBasicMaterial color="#3b4a7a" transparent opacity={0.6} />
+              <meshBasicMaterial color={ACCENT.goldDeep} transparent opacity={0.55} />
             </mesh>
 
             {BE_DISTRICTS.map((d) => (

@@ -934,7 +934,7 @@ body {
 .tech-window-body {
   position: relative;
   display: flex;
-  height: clamp(520px, 68vh, 840px);
+  height: clamp(520px, 76vh, 900px);
 }
 
 /* --- Sidebar file tree --- */
@@ -1747,10 +1747,24 @@ body {
   color: rgba(226, 231, 238, 0.5);
 }
 
+/* A repo's own tint, as a small swatch before its name. */
+.lg3d-label.has-swatch::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 1.5px;
+  background: var(--c);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--c) 70%, transparent);
+}
+
 .lg3d-label-plate.is-focus {
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
+  border-color: rgba(159, 212, 255, 0.9);
+  box-shadow: 0 0 14px rgba(79, 168, 255, 0.35);
+}
+
+.lg3d-label-plate.is-focus b {
+  color: #d6b56f;
 }
 
 .lang-graph-row.is-static {
