@@ -411,7 +411,7 @@ function AutoOrbitCamera({ enabled, target, radius = 22, height = 13, speed = 0.
 
 // Billboarded name tag pinned to a point in the city. Tags on the far side
 // fade back, so the ones in front stay readable while the city turns.
-function NodeLabel({ anchor, offset, variant, color, dim, focus, distanceFactor = 10, children }) {
+function NodeLabel({ anchor, offset, variant, color, dim, focus, swatch, distanceFactor = 10, children }) {
   const ref = useRef(null);
   const point = useMemo(() => new Vector3(...anchor), [anchor]);
   useFrame(({ camera }) => {
@@ -425,7 +425,7 @@ function NodeLabel({ anchor, offset, variant, color, dim, focus, distanceFactor 
     <Html position={offset} center distanceFactor={distanceFactor} zIndexRange={[40, 0]} style={{ pointerEvents: "none" }}>
       <span
         ref={ref}
-        className={`lg3d-label lg3d-label-${variant}${focus ? " is-focus" : ""}`}
+        className={`lg3d-label lg3d-label-${variant}${focus ? " is-focus" : ""}${swatch ? " has-swatch" : ""}`}
         style={{ "--c": color }}
       >
         {children}
@@ -835,6 +835,22 @@ const TOP_LANG = [...LANG_NODES].sort((a, b) => LANG_TOTALS[b.key] - LANG_TOTALS
     });
 }
 
+// Each repo gets its own anodised-metal tint, so the monoliths and cubes
+// read as different pieces; ice blue stays reserved for the active state.
+const REPO_TINTS = [
+  "#D9A38F", // rose gold
+  "#6F8FE0", // sapphire
+  "#7CC4A4", // jade
+  "#B49AD8", // amethyst
+  "#E0C48A", // champagne
+  "#C8835E", // copper
+  "#C9707F", // garnet
+  "#CDB79E", // sand
+];
+PROJECT_NODES.filter((p) => p.big)
+  .concat(PROJECT_NODES.filter((p) => !p.big))
+  .forEach((p, i) => (p.tint = REPO_TINTS[i % REPO_TINTS.length]));
+
 // Where a conduit plugs into a layer of a monolith (its inner face) or into
 // a repo cube (its inner side).
 const ZAXIS = new Vector3(0, 0, 1);
@@ -1124,50 +1140,60 @@ function RepoMonolith3D({ node, isActive, isHot, hotKey, onHover, onLeave, onSel
   const b = node.block;
   const fade = isActive ? 1 : 0.22;
   const top = b.H / 2;
+  const { tint } = node;
 
   return (
     <group position={b.pos} rotation={[0, b.facing, 0]} {...pointerHandlers(onHover, onLeave, onSelect)}>
-      {b.layers.map((l) => {
+      {b.layers.map((l, k) => {
         const lit = isHot || hotKey === l.key;
         return (
           <mesh key={l.key} position={[0, l.y, 0]} scale={[(b.W / 2) * l.inset, l.h, b.D / 2]}>
             <cylinderGeometry args={[1, 1, 1, 6]} />
             <meshStandardMaterial
-              color={lit ? ACCENT.iceLight : MONO.metal}
+              color={lit ? ACCENT.iceLight : k % 2 ? lighten(tint, 0.12) : tint}
               emissive={ACCENT.iceGlow}
               emissiveIntensity={lit ? 0.9 : 0}
-              metalness={0.65}
-              roughness={0.33}
+              metalness={0.75}
+              roughness={0.28}
               transparent
               opacity={0.95 * fade}
             />
-            <Edges threshold={15} color={lit ? ACCENT.ice : MONO.dark} lineWidth={lit ? 1.4 : 0.8} transparent opacity={fade} />
+            <Edges threshold={15} color={lit ? ACCENT.ice : darken(tint, 0.45)} lineWidth={lit ? 1.4 : 0.8} transparent opacity={fade} />
           </mesh>
         );
       })}
       {b.silhouette === 1 && (
         <mesh position={[0, top + 0.09, 0]} scale={[b.W / 2, 0.16, b.D / 2]}>
           <cylinderGeometry args={[0.55, 1, 1, 6]} />
-          <meshStandardMaterial color={MONO.metal} metalness={0.65} roughness={0.33} transparent opacity={0.95 * fade} />
+          <meshStandardMaterial color={tint} metalness={0.75} roughness={0.28} transparent opacity={0.95 * fade} />
         </mesh>
       )}
       {b.silhouette === 2 && (
         <mesh position={[0, top + 0.08, 0]} scale={[b.W * 0.27, 0.14, b.D * 0.4]}>
           <cylinderGeometry args={[1, 1, 1, 6]} />
-          <meshStandardMaterial color={MONO.metal} metalness={0.65} roughness={0.33} transparent opacity={0.95 * fade} />
+          <meshStandardMaterial color={tint} metalness={0.75} roughness={0.28} transparent opacity={0.95 * fade} />
         </mesh>
       )}
       {b.silhouette === 3 && (
         <mesh position={[b.W * 0.22, top + 0.15, 0]}>
           <boxGeometry args={[b.W * 0.12, 0.3, b.D * 0.5]} />
-          <meshStandardMaterial color={MONO.metal} metalness={0.65} roughness={0.33} transparent opacity={0.95 * fade} />
+          <meshStandardMaterial color={tint} metalness={0.75} roughness={0.28} transparent opacity={0.95 * fade} />
         </mesh>
       )}
       <mesh position={[0, -top - 0.1, 0]}>
         <boxGeometry args={[b.W * 0.95, 0.07, 0.03]} />
         <meshStandardMaterial color={ACCENT.goldDeep} metalness={0.85} roughness={0.3} transparent opacity={fade} />
       </mesh>
-      <NodeLabel anchor={b.pos} offset={[0, -top - 0.24, 0]} variant="plate" distanceFactor={6} dim={!isActive} focus={isHot}>
+      <NodeLabel
+        anchor={b.pos}
+        offset={[0, -top - 0.24, 0]}
+        variant="plate"
+        color={tint}
+        swatch
+        distanceFactor={6}
+        dim={!isActive}
+        focus={isHot}
+      >
         {node.label}
       </NodeLabel>
     </group>
@@ -1182,18 +1208,18 @@ function RepoCube3D({ node, isActive, isHot, showLabel, onHover, onLeave, onSele
       <mesh {...pointerHandlers(onHover, onLeave, onSelect)}>
         <boxGeometry args={[0.11, 0.11, 0.11]} />
         <meshStandardMaterial
-          color={isHot ? ACCENT.iceLight : MONO.metal}
+          color={isHot ? ACCENT.iceLight : node.tint}
           emissive={ACCENT.iceGlow}
           emissiveIntensity={isHot ? 0.9 : 0}
-          metalness={0.6}
-          roughness={0.38}
+          metalness={0.75}
+          roughness={0.3}
           transparent
           opacity={isActive ? 1 : 0.25}
         />
-        <Edges color={isHot ? ACCENT.ice : MONO.dark} lineWidth={0.8} />
+        <Edges color={isHot ? ACCENT.ice : darken(node.tint, 0.45)} lineWidth={0.8} />
       </mesh>
       {showLabel && (
-        <NodeLabel anchor={c.pos} offset={[0, 0.16, 0]} variant="plate" distanceFactor={6} focus={isHot}>
+        <NodeLabel anchor={c.pos} offset={[0, 0.16, 0]} variant="plate" color={node.tint} swatch distanceFactor={6} focus={isHot}>
           {node.label}
         </NodeLabel>
       )}
@@ -1562,7 +1588,7 @@ function LanguagesPane() {
               onMouseLeave={clearHover}
               onClick={() => selectProject(p.name)}
             >
-              <span className="ide-folder-dot" />
+              <span className="ide-folder-dot" style={{ background: p.tint }} />
               <span className="lang-graph-row-name">{p.label}</span>
               <span className="lang-graph-row-chips">
                 {p.majorKeys.map((key) => (
