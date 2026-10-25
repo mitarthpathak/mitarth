@@ -499,15 +499,15 @@ function Building3D({ node, isActive, isFocus, focusKey, showLabel, onHover, onL
             <mesh key={f.key} position={[0, f.y, 0]}>
               <boxGeometry args={[node.size, f.h, node.size]} />
               <meshStandardMaterial
-                color={darken(f.color, 0.55)}
+                color={darken(f.color, 0.62)}
                 emissive={f.color}
-                emissiveIntensity={lit ? 0.75 : 0.2}
-                roughness={0.45}
-                metalness={0.25}
+                emissiveIntensity={lit ? 0.7 : 0.14}
+                roughness={0.3}
+                metalness={0.55}
                 transparent
                 opacity={0.92 * fade}
               />
-              <Edges color={lit ? lighten(f.color, 0.35) : f.color} lineWidth={lit ? 1.8 : 1} transparent opacity={fade} />
+              <Edges color={lit ? lighten(f.color, 0.35) : f.color} lineWidth={lit ? 1.8 : 0.9} transparent opacity={fade} />
             </mesh>
           );
         })
@@ -568,10 +568,10 @@ function CityScene({
         args={[40, 40]}
         cellSize={CELL / 2}
         cellThickness={0.6}
-        cellColor="#131a2a"
+        cellColor="#121a2c"
         sectionSize={CELL * 2}
         sectionThickness={1}
-        sectionColor="#24304d"
+        sectionColor={ACCENT.navy}
         fadeDistance={26}
         fadeStrength={1.6}
         infiniteGrid
@@ -1680,27 +1680,30 @@ function LanguagesPane() {
 // them. Found by reading each repo's manifests (package.json, pom.xml,
 // Gradle, Cargo) and the code that imports them, October 2026; `bytes` is
 // the size of each repo's backend source only.
+// A curated palette rather than brand colours: metals for the backends,
+// muted gemstones for the databases, champagne gold for auth, matching the
+// accents of pane 01.
 const BACKENDS = {
-  express: { name: "Express", note: "Node.js", color: "#E6EAF2" },
-  spring: { name: "Spring Boot", note: "Java", color: "#6DB33F" },
-  nextapi: { name: "Next.js API", note: "Route handlers", color: "#A78BFA" },
-  hono: { name: "Hono", note: "Node.js", color: "#FF7A45" },
-  soroban: { name: "Soroban", note: "Stellar smart contract", color: "#FDE047" },
-  device: { name: "On-device", note: "No server", color: "#94A3B8" },
+  express: { name: "Express", note: "Node.js", color: "#DADFE6" }, // platinum
+  spring: { name: "Spring Boot", note: "Java", color: "#93B88C" }, // sage
+  nextapi: { name: "Next.js API", note: "Route handlers", color: ACCENT.ice },
+  hono: { name: "Hono", note: "Node.js", color: "#C9825B" }, // copper
+  soroban: { name: "Soroban", note: "Stellar smart contract", color: "#B8A2E3" }, // amethyst
+  device: { name: "On-device", note: "No server", color: "#8E97A6" }, // pewter
 };
 
 const DATABASES = {
-  mongodb: { name: "MongoDB", type: "Document database", color: "#00ED64" },
-  postgres: { name: "PostgreSQL", type: "Relational database", color: "#4D6BFF" },
-  h2: { name: "H2", type: "In-memory SQL", color: "#7DD3FC" },
-  supabase: { name: "Supabase Storage", type: "Object storage", color: "#14B8A6" },
-  redis: { name: "Redis", type: "Key-value (Upstash)", color: "#FF4D5E" },
-  cloudinary: { name: "Cloudinary", type: "Media storage", color: "#F472B6" },
-  sqlite: { name: "SQLite", type: "On-device SQL (Room)", color: "#E2C08D" },
-  ledger: { name: "Stellar ledger", type: "On-chain storage", color: "#F59E0B" },
+  mongodb: { name: "MongoDB", type: "Document database", color: "#4FBF8F" }, // emerald
+  postgres: { name: "PostgreSQL", type: "Relational database", color: "#5B7FE0" }, // sapphire
+  h2: { name: "H2", type: "In-memory SQL", color: "#7FD1D6" }, // aquamarine
+  supabase: { name: "Supabase Storage", type: "Object storage", color: "#3FA99A" }, // jade
+  redis: { name: "Redis", type: "Key-value (Upstash)", color: "#D0606E" }, // garnet
+  cloudinary: { name: "Cloudinary", type: "Media storage", color: "#E4A6C0" }, // rose quartz
+  sqlite: { name: "SQLite", type: "On-device SQL (Room)", color: "#D9C7A3" }, // pearl
+  ledger: { name: "Stellar ledger", type: "On-chain storage", color: "#E0A845" }, // amber
 };
 
-const AUTH_COLOR = "#FDE68A";
+const AUTH_COLOR = ACCENT.gold;
 
 // data: [database, the library that talks to it]; auth: how people sign in.
 const BACKEND_REPOS = [
@@ -1859,7 +1862,7 @@ function backendRelations(sel) {
 }
 
 // A database: a silo shaped like the classic database icon — a cylinder
-// with stacked disks — glowing in its own color.
+// with stacked disks — in its own gemstone colour, banded in gold.
 function Silo3D({ silo, isActive, isFocus, onHover, onLeave, onSelect }) {
   const fade = isActive ? 1 : 0.15;
   const { color, h } = silo;
@@ -1871,9 +1874,9 @@ function Silo3D({ silo, isActive, isFocus, onHover, onLeave, onSelect }) {
         <meshStandardMaterial
           color={darken(color, 0.6)}
           emissive={color}
-          emissiveIntensity={isFocus ? 0.7 : 0.2}
-          roughness={0.4}
-          metalness={0.3}
+          emissiveIntensity={isFocus ? 0.7 : 0.16}
+          roughness={0.3}
+          metalness={0.55}
           transparent
           opacity={0.9 * fade}
         />
@@ -1888,7 +1891,7 @@ function Silo3D({ silo, isActive, isFocus, onHover, onLeave, onSelect }) {
       {[h / 3, (2 * h) / 3].map((y) => (
         <mesh key={y} position={[0, y, 0]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[SILO_R + 0.004, 0.012, 8, 48]} />
-          <meshBasicMaterial color={color} transparent opacity={0.9 * fade} />
+          <meshBasicMaterial color={ACCENT.gold} transparent opacity={0.9 * fade} />
         </mesh>
       ))}
       <NodeLabel
@@ -2133,7 +2136,7 @@ function BackendPane() {
             {/* The data center: the pad the silos stand on. */}
             <mesh position={[0, 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
               <ringGeometry args={[SILO_RING + 0.62, SILO_RING + 0.68, 96]} />
-              <meshBasicMaterial color="#3b4a7a" transparent opacity={0.6} />
+              <meshBasicMaterial color={ACCENT.goldDeep} transparent opacity={0.55} />
             </mesh>
 
             {BE_DISTRICTS.map((d) => (
