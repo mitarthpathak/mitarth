@@ -26,6 +26,7 @@ import {
   Vector3,
 } from "three";
 import { EffectComposer, Bloom, DepthOfField, N8AO } from "@react-three/postprocessing";
+import { createPortal } from "react-dom";
 import useIsMobile from "../hooks/useIsMobile";
 import LazyTerminal from "./terminal/LazyTerminal";
 
@@ -394,12 +395,15 @@ function Beam3D({ edge, state = "focus" }) {
 // finger swipe that's actually meant to scroll the page. It stops for good,
 // right where it is, once the visitor taps the graph.
 function AutoOrbitCamera({ enabled, target, radius = 22, height = 13, speed = 0.12 }) {
-  useFrame(({ camera, clock }) => {
+  useFrame(({ camera, clock, size }) => {
     if (!enabled) return;
     const t = clock.elapsedTime * speed;
-    camera.position.x = Math.sin(t) * radius;
-    camera.position.z = Math.cos(t) * radius;
-    camera.position.y = height;
+    // A tall, narrow screen (a phone in full screen) sees less sideways, so
+    // the camera backs off to keep the whole scene in frame.
+    const fit = Math.max(1, 0.62 / (size.width / size.height));
+    camera.position.x = Math.sin(t) * radius * fit;
+    camera.position.z = Math.cos(t) * radius * fit;
+    camera.position.y = height * fit;
     camera.lookAt(target[0], target[1], target[2]);
   });
   return null;
@@ -1265,8 +1269,85 @@ function StructureScene({ isMobile, spinning, onStopSpinning, onMissed, children
   );
 }
 
+// Full screen for a graph pane: the real Fullscreen API where the browser
+// has it, and on iPhone (where only videos may go full screen) an overlay
+// portalled to <body> instead, closed by the button or Escape.
+function useGraphFullscreen(ref) {
+  const [mode, setMode] = useState(null); // null | "native" | "overlay"
+
+  useEffect(() => {
+    const onChange = () => {
+      const el = document.fullscreenElement || document.webkitFullscreenElement;
+      setMode((m) => (el && el === ref.current ? "native" : m === "native" ? null : m));
+    };
+    document.addEventListener("fullscreenchange", onChange);
+    document.addEventListener("webkitfullscreenchange", onChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onChange);
+      document.removeEventListener("webkitfullscreenchange", onChange);
+    };
+  }, [ref]);
+
+  useEffect(() => {
+    if (mode !== "overlay") return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setMode(null);
+    };
+    const root = document.documentElement;
+    const overflow = root.style.overflow;
+    root.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      root.style.overflow = overflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [mode]);
+
+  const toggle = () => {
+    if (mode === "native") {
+      (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+      return;
+    }
+    if (mode === "overlay") {
+      setMode(null);
+      return;
+    }
+    const el = ref.current;
+    const request = el?.requestFullscreen || el?.webkitRequestFullscreen;
+    if (!request) {
+      setMode("overlay");
+      return;
+    }
+    Promise.resolve(request.call(el)).catch(() => setMode("overlay"));
+  };
+
+  return [mode, toggle];
+}
+
+// The small corner button that toggles a graph pane in and out of full
+// screen. It keeps its press to itself, so it doesn't stop the auto-turn.
+function FullscreenButton({ mode, onToggle }) {
+  const label = mode ? "Exit full screen" : "Full screen";
+  return (
+    <button
+      type="button"
+      className="lang-graph-fullscreen"
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={onToggle}
+      aria-label={label}
+      title={label}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d={mode ? "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" : "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"} />
+      </svg>
+    </button>
+  );
+}
+
 function LanguagesPane() {
   const isMobile = useIsMobile();
+  const rootRef = useRef(null);
+  const [fullscreen, toggleFullscreen] = useGraphFullscreen(rootRef);
   const [hovered, setHovered] = useState(null);
   const [pinned, setPinned] = useState(null);
   const [query, setQuery] = useState("");
@@ -1383,8 +1464,11 @@ function LanguagesPane() {
     };
   })();
 
-  return (
-    <div className="lang-graph">
+  const graph = (
+    <div
+      ref={rootRef}
+      className={`lang-graph${fullscreen ? " is-fullscreen" : ""}${fullscreen === "overlay" ? " is-overlay" : ""}`}
+    >
       <div className="lang-graph-header">
         <label className="lang-graph-search">
           <span className="lang-graph-search-icon">&#9906;</span>
@@ -1462,6 +1546,7 @@ function LanguagesPane() {
         </div>
 
         <div className="lang-graph-canvas" style={{ cursor: isMobile ? "default" : "grab" }}>
+          <FullscreenButton mode={fullscreen} onToggle={toggleFullscreen} />
           <StructureScene
             isMobile={isMobile}
             spinning={spinning}
@@ -1555,6 +1640,8 @@ function LanguagesPane() {
       </div>
     </div>
   );
+
+  return fullscreen === "overlay" ? createPortal(graph, document.body) : graph;
 }
 
 // Pane 02 reads the same code city for backend and data. Every public repo
@@ -1793,6 +1880,8 @@ function Silo3D({ silo, isActive, isFocus, onHover, onLeave, onSelect }) {
 
 function BackendPane() {
   const isMobile = useIsMobile();
+  const rootRef = useRef(null);
+  const [fullscreen, toggleFullscreen] = useGraphFullscreen(rootRef);
   const [hovered, setHovered] = useState(null);
   const [pinned, setPinned] = useState(null);
   const [query, setQuery] = useState("");
@@ -1891,8 +1980,11 @@ function BackendPane() {
     };
   })();
 
-  return (
-    <div className="lang-graph">
+  const graph = (
+    <div
+      ref={rootRef}
+      className={`lang-graph${fullscreen ? " is-fullscreen" : ""}${fullscreen === "overlay" ? " is-overlay" : ""}`}
+    >
       <div className="lang-graph-header">
         <label className="lang-graph-search">
           <span className="lang-graph-search-icon">&#9906;</span>
@@ -1999,6 +2091,7 @@ function BackendPane() {
         </div>
 
         <div className="lang-graph-canvas" style={{ cursor: isMobile ? "default" : "grab" }}>
+          <FullscreenButton mode={fullscreen} onToggle={toggleFullscreen} />
           <CityScene
             isMobile={isMobile}
             spinning={spinning}
@@ -2088,6 +2181,8 @@ function BackendPane() {
       </div>
     </div>
   );
+
+  return fullscreen === "overlay" ? createPortal(graph, document.body) : graph;
 }
 
 // Pane 03 is the real terminal: commands over the site's content, plus

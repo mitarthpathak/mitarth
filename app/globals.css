@@ -1668,6 +1668,56 @@ body {
   text-shadow: none;
 }
 
+/* Full-screen toggle in the corner of each graph canvas. */
+.lang-graph-fullscreen {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 12, 18, 0.72);
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.lang-graph-fullscreen:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(20, 24, 34, 0.88);
+}
+
+.lang-graph-fullscreen:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+.lang-graph-fullscreen svg {
+  width: 15px;
+  height: 15px;
+}
+
+.lang-graph.is-fullscreen {
+  border: none;
+  border-radius: 0;
+}
+
+/* iPhone fallback: the pane covers the screen instead of going truly full screen. */
+.lang-graph.is-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  width: 100vw;
+  height: 100dvh;
+}
+
 /* Engraved label plates on the monochrome language structure. */
 .lg3d-label-plate {
   padding: 2px 7px;
