@@ -319,8 +319,8 @@ export default function Home() {
                 <Image
                   src="/portrait.png"
                   alt="Portrait of Mitarth Pathak"
-                  width={1240}
-                  height={2098}
+                  width={676}
+                  height={1469}
                   sizes="(max-width: 768px) 80vw, 45vh"
                   className="portrait-img"
                 />
