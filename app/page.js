@@ -295,7 +295,7 @@ export default function Home() {
                   yellowPillsRef.current[0] = el;
                 }}
               >
-                AI Developer
+                Backend Developer
               </div>
               <div
                 className="yellow-pill pill-center"
@@ -303,7 +303,7 @@ export default function Home() {
                   yellowPillsRef.current[1] = el;
                 }}
               >
-                Web Designer
+                AI Designer
               </div>
               <div
                 className="yellow-pill pill-right"
@@ -311,7 +311,7 @@ export default function Home() {
                   yellowPillsRef.current[2] = el;
                 }}
               >
-                AI Learner
+                NextJS Developer
               </div>
 
               {/* Portrait */}
