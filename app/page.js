@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import SignatureAnimation from "./components/SignatureAnimation";
 import ProjectCard from "./components/ProjectCard";
@@ -16,6 +16,8 @@ import TiltedCard from "./components/TiltedCard";
 import TechStack from "./components/TechStack";
 import ParticleImageReveal from "./components/ParticleImageReveal";
 import ScrollReveal from "./components/ScrollReveal";
+import { setCursorState, useCursorState } from "./hooks/cursorState";
+import { smoothing } from "./lib/smoothing";
 
 const emailId = "mpathak6207@gmail.com";
 
@@ -28,28 +30,8 @@ export default function Home() {
   const footerRevealColsRef = useRef([]);
   const footerSectionRef = useRef(null);
   const footerNameContainerRef = useRef(null);
-  const [hoveredProject, setHoveredProject] = useState(null);
-  const [isMailHovered, setIsMailHovered] = useState(false);
-  const [mailCopied, setMailCopied] = useState(false);
-
-  const copyEmailId = async () => {
-    try {
-      await navigator.clipboard.writeText(emailId);
-    } catch {
-      const textarea = document.createElement("textarea");
-      textarea.value = emailId;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
-    }
-
-    setMailCopied(true);
-    window.setTimeout(() => setMailCopied(false), 1200);
-  };
+  const brushRef = useRef(null);
+  const brushPathsRef = useRef([]);
 
   // The fixed guide lines would run straight through the card titles, so
   // they step aside while the work section is on screen.
@@ -68,129 +50,121 @@ export default function Home() {
     };
   }, []);
 
+  // Scroll-driven scene: the staircase reveals, the brush stroke and the
+  // role pills. The scroll position is smoothed (frame-rate independent, so
+  // a 120 Hz screen gets twice the frames at the same pace), every layout
+  // read happens before any write in a frame, a style is only written when
+  // its value changes, and the loop sleeps as soon as it has caught up — a
+  // page at rest costs nothing.
   useEffect(() => {
-    let animationFrameId;
+    let rafId = 0;
+    let last = 0;
     let targetScrollY = window.scrollY;
-    let currentScrollY = window.scrollY;
+    let currentScrollY = targetScrollY;
+    const written = new WeakMap();
 
-    const lerp = (start, end, factor) => start + (end - start) * factor;
-
-    const handleScroll = () => {
-      targetScrollY = window.scrollY;
+    const write = (el, prop, value) => {
+      let store = written.get(el);
+      if (!store) written.set(el, (store = {}));
+      if (store[prop] === value) return;
+      store[prop] = value;
+      el.style[prop] = value;
     };
 
-    const updateAnimations = () => {
-      // Smooth interpolation for that flow state feel
-      currentScrollY = lerp(currentScrollY, targetScrollY, 0.07);
-      const scrollDiff = targetScrollY - currentScrollY;
+    const clamp01 = (v) => Math.min(1, Math.max(0, v));
+    const PILL_DIRECTIONS = [-1, 0, 1];
 
+    const frame = (now) => {
+      const dt = last ? now - last : 1000 / 60;
+      last = now;
+      targetScrollY = window.scrollY;
+      currentScrollY += (targetScrollY - currentScrollY) * smoothing(0.1, dt);
+      const settled = Math.abs(targetScrollY - currentScrollY) < 0.25;
+      if (settled) currentScrollY = targetScrollY;
+      const scrollDiff = targetScrollY - currentScrollY;
       const viewH = window.innerHeight;
 
+      // --- Reads ---
+      const footerTop = footerRevealContainerRef.current?.getBoundingClientRect().top;
+      const yellowRect = yellowRef.current?.getBoundingClientRect();
+
       // --- Footer reveal columns (symmetric stair-step from top) ---
-      if (footerRevealColsRef.current.length > 0 && footerRevealContainerRef.current) {
-        const colRect = footerRevealContainerRef.current.getBoundingClientRect();
-        const lerpedTop = colRect.top + scrollDiff;
-        // rawProgress: 0 when columns just enter viewport bottom, 1 when columns top hits ~15% from top
-        const rawProgress = Math.min(1, Math.max(0, (viewH - lerpedTop) / (viewH * 0.85)));
-
+      if (footerTop !== undefined) {
+        // 0 when the columns enter at the bottom, 1 when their top is ~15% from the top
+        const rawProgress = clamp01((viewH - (footerTop + scrollDiff)) / (viewH * 0.85));
         footerRevealColsRef.current.forEach((col, i) => {
-          if (col) {
-            const dist = Math.abs(i - 2);
-            const delay = dist * 0.28;
-            let colProgress = Math.min(1, Math.max(0, (rawProgress - delay) / (1 - delay || 0.001)));
-            if (dist === 0) colProgress = Math.min(1, colProgress * 1.35);
-            col.style.transform = `scaleY(${1 - colProgress})`;
-          }
+          if (!col) return;
+          const dist = Math.abs(i - 2);
+          const delay = dist * 0.28;
+          let colProgress = clamp01((rawProgress - delay) / (1 - delay || 0.001));
+          if (dist === 0) colProgress = Math.min(1, colProgress * 1.35);
+          write(col, "transform", `scaleY(${(1 - colProgress).toFixed(4)})`);
         });
       }
 
-      // --- Reveal columns (symmetric stair-step) ---
-      if (revealColsRef.current.length > 0 && revealContainerRef.current) {
-        const scrollProgress = Math.min(
-          1,
-          Math.max(0, currentScrollY / (viewH * 0.9 || 1))
-        );
+      // --- Hero reveal columns (symmetric stair-step) ---
+      const scrollProgress = clamp01(currentScrollY / (viewH * 0.9 || 1));
+      revealColsRef.current.forEach((col, i) => {
+        if (!col) return;
+        const dist = Math.abs(i - 2);
+        const delay = dist * 0.3;
+        let colProgress = clamp01((scrollProgress - delay) / (1 - delay));
+        if (dist === 0) colProgress = Math.min(1, colProgress * 1.35);
+        write(col, "transform", `scaleY(${(1 - colProgress).toFixed(4)})`);
+      });
 
-        revealColsRef.current.forEach((col, i) => {
-          if (col) {
-            const dist = Math.abs(i - 2);
-            const delay = dist * 0.3;
-            let colProgress = Math.min(
-              1,
-              Math.max(0, (scrollProgress - delay) / (1 - delay))
-            );
-            if (dist === 0) {
-              colProgress = Math.min(1, colProgress * 1.35);
-            }
-            col.style.transform = `scaleY(${1 - colProgress})`;
-          }
-        });
-      }
+      // --- Brush stroke + role pills ---
+      if (yellowRect) {
+        const yellowProgress = clamp01((viewH - (yellowRect.top + scrollDiff)) / (viewH * 0.95));
+        const wipeProgress = clamp01((viewH - (yellowRect.bottom + scrollDiff) + viewH * 0.75) / (viewH * 1.05));
 
-      if (yellowRef.current) {
-        const rect = yellowRef.current.getBoundingClientRect();
-        const lerpedTop = rect.top + scrollDiff;
-        const lerpedBottom = rect.bottom + scrollDiff;
+        if (brushRef.current) {
+          write(brushRef.current, "opacity", yellowProgress.toFixed(3));
+          write(brushRef.current, "transform", `translate3d(${(-120 + yellowProgress * 120).toFixed(2)}px, 0, 0)`);
+        }
+        const dash = (1320 - yellowProgress * 1320).toFixed(1);
+        brushPathsRef.current.forEach((path) => path && write(path, "strokeDashoffset", dash));
 
-        const yellowProgress = Math.min(
-          1,
-          Math.max(0, (viewH - lerpedTop) / (viewH * 0.95))
-        );
-        const brushProgress = Math.min(1, Math.max(0, yellowProgress));
-
-        yellowRef.current.style.setProperty("--brush-progress", brushProgress.toFixed(3));
-        yellowRef.current.style.setProperty(
-          "--brush-dash",
-          `${1320 - brushProgress * 1320}`
-        );
-        yellowRef.current.style.setProperty(
-          "--brush-entry-x",
-          `${-120 + brushProgress * 120}px`
-        );
-        yellowRef.current.style.setProperty("--brush-opacity", brushProgress.toFixed(3));
-
-        const wipeProgress = Math.min(
-          1,
-          Math.max(0, (viewH - lerpedBottom + viewH * 0.75) / (viewH * 1.05))
-        );
-        yellowRef.current.style.setProperty("--wipe-progress", wipeProgress.toFixed(3));
-
+        const lift = ((1 - yellowProgress) * 42).toFixed(2);
+        const scale = (0.92 + yellowProgress * 0.08).toFixed(4);
+        const pillOpacity = clamp01(Math.min(yellowProgress, 1 - wipeProgress * 2)).toFixed(3);
         yellowPillsRef.current.forEach((pill, i) => {
           if (!pill) return;
-
-          const directions = [-1, 0, 1];
-          const sidePush = directions[i] * yellowProgress * 22;
-          const lift = (1 - yellowProgress) * 42;
-          const scale = 0.92 + yellowProgress * 0.08;
-
-          pill.style.setProperty("--scroll-x", `${sidePush}px`);
-          pill.style.setProperty("--scroll-y", `${lift}px`);
-          pill.style.setProperty("--scroll-scale", scale.toFixed(3));
-          const pillOpacity = Math.max(0, Math.min(yellowProgress, 1 - wipeProgress * 2));
-          pill.style.setProperty("--scroll-opacity", pillOpacity.toFixed(3));
+          const sidePush = (PILL_DIRECTIONS[i] * yellowProgress * 22).toFixed(2);
+          write(pill, "translate", `${sidePush}px ${lift}px`);
+          write(pill, "scale", scale);
+          write(pill, "opacity", pillOpacity);
         });
       }
 
-      animationFrameId = requestAnimationFrame(updateAnimations);
+      rafId = settled ? 0 : requestAnimationFrame(frame);
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    animationFrameId = requestAnimationFrame(updateAnimations); // start initial check and loop
+    const wake = () => {
+      if (rafId) return;
+      last = 0;
+      rafId = requestAnimationFrame(frame);
+    };
+
+    window.addEventListener("scroll", wake, { passive: true });
+    window.addEventListener("resize", wake);
+    // Late fonts / images can move the sections without any scroll event.
+    const ro = new ResizeObserver(wake);
+    ro.observe(document.body);
+    wake(); // initial state
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("scroll", wake);
+      window.removeEventListener("resize", wake);
+      ro.disconnect();
+      cancelAnimationFrame(rafId);
     };
   }, []);
 
   return (
     <>
-      <CursorFollower
-        isHoveringProject={hoveredProject !== null}
-        isHoveringMail={isMailHovered}
-        mailCursorText={mailCopied ? "Copied" : "Copy ID"}
-      />
-      <ProjectImageCursor isActive={hoveredProject !== null} />
+      <CursorFollower />
+      <ProjectImageCursor />
       <SignatureAnimation />
       <div id="sig-page-content">
         {/* Vertical guide lines */}
@@ -267,9 +241,12 @@ export default function Home() {
               <DotCanvas />
 
               {/* Brush Stroke SVG */}
-              <div className="brush-stroke">
+              <div className="brush-stroke" ref={brushRef}>
                 <svg viewBox="0 -100 1000 400" preserveAspectRatio="none" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
                   <path
+                    ref={(el) => {
+                      brushPathsRef.current[0] = el;
+                    }}
                     className="brush-stroke-path brush-stroke-shadow"
                     d="M-100,100 Q150,220 350,50 T700,150 T1100,50"
                     fill="none"
@@ -278,6 +255,9 @@ export default function Home() {
                     strokeLinecap="round"
                   />
                   <path
+                    ref={(el) => {
+                      brushPathsRef.current[1] = el;
+                    }}
                     className="brush-stroke-path brush-stroke-main"
                     d="M-100,100 Q150,220 350,50 T700,150 T1100,50"
                     fill="none"
@@ -295,7 +275,7 @@ export default function Home() {
                   yellowPillsRef.current[0] = el;
                 }}
               >
-                AI Developer
+                <span className="yellow-pill-body">Backend Developer</span>
               </div>
               <div
                 className="yellow-pill pill-center"
@@ -303,7 +283,7 @@ export default function Home() {
                   yellowPillsRef.current[1] = el;
                 }}
               >
-                Web Designer
+                <span className="yellow-pill-body">AI Designer</span>
               </div>
               <div
                 className="yellow-pill pill-right"
@@ -311,7 +291,7 @@ export default function Home() {
                   yellowPillsRef.current[2] = el;
                 }}
               >
-                AI Learner
+                <span className="yellow-pill-body">NextJS Developer</span>
               </div>
 
               {/* Portrait */}
@@ -364,11 +344,11 @@ export default function Home() {
             </div>
 
             <div className="projects-grid">
-              {projects.map((project, index) => (
+              {projects.map((project) => (
                 <ProjectCard
                   key={project.slug}
                   project={project}
-                  onHoverChange={(hovering) => setHoveredProject(hovering ? index : null)}
+                  onHoverChange={setProjectHover}
                 />
               ))}
             </div>
@@ -417,9 +397,9 @@ export default function Home() {
                   imageSrc="/portrait.png"
                   altText="Portrait of Mitarth"
                   captionText="Mitarth Pathak"
-                  containerHeight="clamp(430px, 62vh, 430px)"
+                  containerHeight="var(--footer-portrait-h)"
                   containerWidth="fit-content"
-                  imageHeight="clamp(430px, 62vh, 430px)"
+                  imageHeight="var(--footer-portrait-h)"
                   imageWidth="auto"
                   rotateAmplitude={12}
                   scaleOnHover={1.05}
@@ -499,121 +479,147 @@ export default function Home() {
                   rootMargin="0px"
                   textAlign="right"
                 />
-                <ScrollReveal
-                  as="div"
-                  className={`footer-social-icons ${isMailHovered ? "is-mail-active" : ""}`}
-                  selector=":scope > a, :scope > div"
-                  stagger={0.07}
-                  duration={0.6}
-                  ease="back.out(1.6)"
-                  from={{ opacity: 0, y: 18, scale: 0.8 }}
-                  to={{ opacity: 1, y: 0, scale: 1 }}
-                  threshold={0}
-                  rootMargin="0px"
-                  clearProps="opacity,transform"
-                >
-                  {/* Instagram */}
-                  <a
-                    href="https://www.instagram.com/_mitarth"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="footer-social-icon"
-                    aria-label="Instagram"
-                  >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                      <circle cx="12" cy="12" r="4" />
-                      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-                    </svg>
-                  </a>
-                  {/* GitHub */}
-                  <a
-                    href="https://github.com/mitarthpathak/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="footer-social-icon"
-                    aria-label="GitHub"
-                  >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-                    </svg>
-                  </a>
-                  {/* LinkedIn */}
-                  <a
-                    href="https://www.linkedin.com/in/mitarth-pathak"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="footer-social-icon"
-                    aria-label="LinkedIn"
-                  >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="2" width="20" height="20" rx="3" />
-                      <line x1="8" y1="11" x2="8" y2="17" />
-                      <line x1="8" y1="7" x2="8" y2="7.5" strokeWidth="2.4" />
-                      <path d="M12 11v6M12 11a3 3 0 0 1 6 0v6" />
-                    </svg>
-                  </a>
-                  {/* Twitter / X */}
-                  <a
-                    href="https://x.com/mpathak6207"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="footer-social-icon"
-                    aria-label="Twitter"
-                  >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                    </svg>
-                  </a>
-                  {/* Spotify */}
-                  <a
-                    href="https://open.spotify.com/user/31fufrhc4ywnuuhw3b2nj4f3xdsq?si=4a3c68532c794088"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="footer-social-icon"
-                    aria-label="Spotify"
-                  >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M8 10c2.5-1 6.5-1 9 1" />
-                      <path d="M8.5 13c2-1 5.5-1 7.5 .5" />
-                      <path d="M9.5 15.5c1.5-.5 4-.5 5.5 .5" />
-                    </svg>
-                  </a>
-                  <div
-                    className={`footer-email-wrap ${isMailHovered ? "is-active" : ""}`}
-                    onMouseEnter={() => setIsMailHovered(true)}
-                    onMouseLeave={() => {
-                      setIsMailHovered(false);
-                      setMailCopied(false);
-                    }}
-                    onFocus={() => setIsMailHovered(true)}
-                    onBlur={() => {
-                      setIsMailHovered(false);
-                      setMailCopied(false);
-                    }}
-                  >
-                    <div className="footer-email-popover" aria-hidden={!isMailHovered}>
-                      {emailId}
-                    </div>
-                    <button
-                      type="button"
-                      className="footer-social-icon footer-email-button"
-                      aria-label="Copy email ID"
-                      onClick={copyEmailId}
-                    >
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="2" y="5" width="20" height="14" rx="3" />
-                        <path d="M2 8l10 7 10-7" />
-                      </svg>
-                    </button>
-                  </div>
-                </ScrollReveal>
+                <FooterSocialIcons />
               </div>
             </div>
           </section>
         </main>
       </div>
     </>
+  );
+}
+
+const setProjectHover = (hovering) => setCursorState({ project: hovering });
+
+async function copyEmailId() {
+  try {
+    await navigator.clipboard.writeText(emailId);
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = emailId;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+  }
+
+  setCursorState({ mailCopied: true });
+  window.setTimeout(() => setCursorState({ mailCopied: false }), 1200);
+}
+
+const setMailActive = (active) => setCursorState(active ? { mail: true } : { mail: false, mailCopied: false });
+
+// The footer's social icons and copy-email button. Its own component so the
+// mail hover only re-renders this row, not the whole page.
+function FooterSocialIcons() {
+  const { mail: isMailActive } = useCursorState();
+  return (
+    <ScrollReveal
+      as="div"
+      className={`footer-social-icons ${isMailActive ? "is-mail-active" : ""}`}
+      selector=":scope > a, :scope > div"
+      stagger={0.07}
+      duration={0.6}
+      ease="back.out(1.6)"
+      from={{ opacity: 0, y: 18, scale: 0.8 }}
+      to={{ opacity: 1, y: 0, scale: 1 }}
+      threshold={0}
+      rootMargin="0px"
+      clearProps="opacity,transform"
+    >
+      {/* Instagram */}
+      <a
+        href="https://www.instagram.com/_mitarth"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="footer-social-icon"
+        aria-label="Instagram"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+          <circle cx="12" cy="12" r="4" />
+          <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      </a>
+      {/* GitHub */}
+      <a
+        href="https://github.com/mitarthpathak/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="footer-social-icon"
+        aria-label="GitHub"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+        </svg>
+      </a>
+      {/* LinkedIn */}
+      <a
+        href="https://www.linkedin.com/in/mitarth-pathak"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="footer-social-icon"
+        aria-label="LinkedIn"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="3" />
+          <line x1="8" y1="11" x2="8" y2="17" />
+          <line x1="8" y1="7" x2="8" y2="7.5" strokeWidth="2.4" />
+          <path d="M12 11v6M12 11a3 3 0 0 1 6 0v6" />
+        </svg>
+      </a>
+      {/* Twitter / X */}
+      <a
+        href="https://x.com/mpathak6207"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="footer-social-icon"
+        aria-label="Twitter"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+        </svg>
+      </a>
+      {/* Spotify */}
+      <a
+        href="https://open.spotify.com/user/31fufrhc4ywnuuhw3b2nj4f3xdsq?si=4a3c68532c794088"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="footer-social-icon"
+        aria-label="Spotify"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M8 10c2.5-1 6.5-1 9 1" />
+          <path d="M8.5 13c2-1 5.5-1 7.5 .5" />
+          <path d="M9.5 15.5c1.5-.5 4-.5 5.5 .5" />
+        </svg>
+      </a>
+      <div
+        className={`footer-email-wrap ${isMailActive ? "is-active" : ""}`}
+        onMouseEnter={() => setMailActive(true)}
+        onMouseLeave={() => setMailActive(false)}
+        onFocus={() => setMailActive(true)}
+        onBlur={() => setMailActive(false)}
+      >
+        <div className="footer-email-popover" aria-hidden={!isMailActive}>
+          {emailId}
+        </div>
+        <button
+          type="button"
+          className="footer-social-icon footer-email-button"
+          aria-label="Copy email ID"
+          onClick={copyEmailId}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="3" />
+            <path d="M2 8l10 7 10-7" />
+          </svg>
+        </button>
+      </div>
+    </ScrollReveal>
   );
 }

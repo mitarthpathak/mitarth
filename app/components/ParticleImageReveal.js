@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from "react";
 export default function ParticleImageReveal({ src, children, duration = 1.6, particleGap = 3 }) {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
-  const particlesRef = useRef(null); // cached { w, h, base: [{tx,ty,r,g,b,a}] } — computed once per src
+  const particlesRef = useRef(null); // cached { w, h, base: [{tx,ty,fill,a}] } — computed once per src
   const rafRef = useRef(null);
   const wasVisibleRef = useRef(false);
   const [revealed, setRevealed] = useState(false);
@@ -77,7 +77,9 @@ export default function ParticleImageReveal({ src, children, duration = 1.6, par
             const i = (y * w + x) * 4;
             const a = data[i + 3];
             if (a < 60) continue;
-            base.push({ tx: x, ty: y, r: data[i], g: data[i + 1], b: data[i + 2], a: a / 255 });
+            // The colour string is built once here, not for every particle
+            // on every frame of the animation.
+            base.push({ tx: x, ty: y, fill: `rgb(${data[i]}, ${data[i + 1]}, ${data[i + 2]})`, a: a / 255 });
           }
         }
         particlesRef.current = { w, h, base };
@@ -157,7 +159,7 @@ export default function ParticleImageReveal({ src, children, duration = 1.6, par
             const cy = p.y + (p.ty - p.y) * e;
             const alphaMix = p.scatterAlpha + (1 - p.scatterAlpha) * e;
             ctx.globalAlpha = p.a * alphaMix;
-            ctx.fillStyle = `rgb(${p.r}, ${p.g}, ${p.b})`;
+            ctx.fillStyle = p.fill;
             ctx.fillRect(cx, cy, p.size, p.size);
           }
           ctx.globalAlpha = 1;

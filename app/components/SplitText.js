@@ -140,6 +140,9 @@ const SplitText = ({
                 anticipatePin: 0.4,
               },
               onComplete: () => {
+                // Hand the GPU layers back once the reveal is done; dozens of
+                // permanently promoted glyphs make every later frame heavier.
+                gsap.set(targets, { willChange: "auto" });
                 animationCompletedRef.current = true;
                 onCompleteRef.current?.();
               },
@@ -190,7 +193,6 @@ const SplitText = ({
     display: "inline-block",
     whiteSpace: "normal",
     wordWrap: "break-word",
-    willChange: "transform, opacity",
     opacity: delayReady ? 1 : 0,
   };
 

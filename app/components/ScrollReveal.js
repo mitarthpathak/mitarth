@@ -57,6 +57,7 @@ export default function ScrollReveal({
         ease,
         stagger,
         clearProps,
+        onComplete: () => gsap.set(targets, { willChange: "auto" }),
         scrollTrigger: {
           trigger: ref.current,
           start,
