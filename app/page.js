@@ -397,9 +397,9 @@ export default function Home() {
                   imageSrc="/portrait.png"
                   altText="Portrait of Mitarth"
                   captionText="Mitarth Pathak"
-                  containerHeight="clamp(430px, 62vh, 430px)"
+                  containerHeight="var(--footer-portrait-h)"
                   containerWidth="fit-content"
-                  imageHeight="clamp(430px, 62vh, 430px)"
+                  imageHeight="var(--footer-portrait-h)"
                   imageWidth="auto"
                   rotateAmplitude={12}
                   scaleOnHover={1.05}
