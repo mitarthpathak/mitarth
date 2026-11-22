@@ -13,8 +13,8 @@ import {
 } from "react-icons/si";
 import { RiOpenaiFill } from "react-icons/ri";
 import { FaJava } from "react-icons/fa6";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Line, Html, Stars, Edges, Grid, Environment, Lightformer } from "@react-three/drei";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls, Line, Html, Stars, Edges, Grid, Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
 import {
   BufferGeometry,
   CatmullRomCurve3,
@@ -28,6 +28,9 @@ import {
 import { EffectComposer, Bloom, DepthOfField, N8AO } from "@react-three/postprocessing";
 import { createPortal } from "react-dom";
 import useIsMobile from "../hooks/useIsMobile";
+import useInView from "../hooks/useInView";
+import useIntroDone from "../hooks/useIntroDone";
+import { smoothing } from "../lib/smoothing";
 import LazyTerminal from "./terminal/LazyTerminal";
 
 const FILE_ICONS = {
@@ -537,6 +540,68 @@ function Building3D({ node, isActive, isFocus, focusKey, showLabel, onHover, onL
 
 // The stage both city panes share: the night grid, lights and stars, the
 // camera controls and the bloom that makes the neon edges glow.
+// A <Canvas> that only costs anything while it can be seen. These scenes
+// carry post-processing (bloom, ambient occlusion, depth of field), and a
+// plain Canvas renders them every frame from the moment the page loads —
+// even with the visitor still up in the hero, which is what made the rest
+// of the page stutter. This one:
+// - mounts in idle time once the hero's entrance has finished (or right
+//   away if the visitor gets within a screen of it first), and renders a
+//   single warm-up frame so building the scene and compiling its shaders —
+//   a one-off hitch — happens while the visitor is reading the hero, not
+//   while they are scrolling;
+// - runs its frame loop only while it is actually on screen.
+function WarmUpFrame() {
+  const advance = useThree((state) => state.advance);
+  useEffect(() => {
+    const id = requestAnimationFrame((t) => advance(t));
+    return () => cancelAnimationFrame(id);
+  }, [advance]);
+  return null;
+}
+
+function LiveCanvas({ children, dpr, ...props }) {
+  const holderRef = useRef(null);
+  const near = useInView(holderRef, { rootMargin: "100% 0px" });
+  const visible = useInView(holderRef);
+  const [mounted, setMounted] = useState(false);
+  // On a GPU that can't hold the frame rate (an integrated laptop chip on a
+  // high-DPI screen), drop to 1x resolution for the rest of the visit
+  // rather than stutter.
+  const [degraded, setDegraded] = useState(false);
+  const introDone = useIntroDone();
+  if (near && !mounted) setMounted(true);
+
+  useEffect(() => {
+    if (mounted || !introDone) return;
+    let idleId = 0;
+    // The hero's entrance takes ~2 s after the intro; start after it.
+    const timer = window.setTimeout(() => {
+      if (window.requestIdleCallback) {
+        idleId = window.requestIdleCallback(() => setMounted(true), { timeout: 3000 });
+      } else {
+        setMounted(true);
+      }
+    }, 2600);
+    return () => {
+      window.clearTimeout(timer);
+      if (idleId) window.cancelIdleCallback?.(idleId);
+    };
+  }, [introDone, mounted]);
+
+  return (
+    <div ref={holderRef} className="live-canvas">
+      {mounted && (
+        <Canvas {...props} dpr={degraded ? 1 : dpr} frameloop={visible ? "always" : "never"}>
+          {!visible && <WarmUpFrame />}
+          {visible && !degraded && <PerformanceMonitor onDecline={() => setDegraded(true)} />}
+          {children}
+        </Canvas>
+      )}
+    </div>
+  );
+}
+
 function CityScene({
   isMobile,
   spinning,
@@ -549,7 +614,7 @@ function CityScene({
   children,
 }) {
   return (
-    <Canvas
+    <LiveCanvas
       camera={{ position: camera, fov: 38 }}
       gl={{ alpha: true, antialias: !isMobile }}
       resize={{ offsetSize: true }}
@@ -606,7 +671,7 @@ function CityScene({
           <Bloom luminanceThreshold={0.25} luminanceSmoothing={0.3} intensity={0.7} mipmapBlur radius={0.6} />
         </EffectComposer>
       )}
-    </Canvas>
+    </LiveCanvas>
   );
 }
 
@@ -1271,7 +1336,7 @@ function Conduit3D({ edge, dim }) {
 // for the active state and depth of field focused on the core.
 function StructureScene({ isMobile, spinning, onStopSpinning, onMissed, children }) {
   return (
-    <Canvas
+    <LiveCanvas
       camera={{ position: [9.6, -3.2, 12.5], fov: 34 }}
       gl={{ alpha: true, antialias: !isMobile }}
       resize={{ offsetSize: true }}
@@ -1319,7 +1384,7 @@ function StructureScene({ isMobile, spinning, onStopSpinning, onMissed, children
           <DepthOfField target={[0, 0, 0]} worldFocusRange={4.5} bokehScale={2.2} />
         </EffectComposer>
       )}
-    </Canvas>
+    </LiveCanvas>
   );
 }
 
@@ -2312,7 +2377,6 @@ export default function TechStack() {
   const edgeFillRef = useRef(null);
   const sceneRef = useRef(null);
   const hintRef = useRef(null);
-  const rafRef = useRef(null);
   const activeIndexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [manualOpenProject, setManualOpenProject] = useState(undefined);
@@ -2327,12 +2391,28 @@ export default function TechStack() {
   const openProject =
     manualOpenProject !== undefined ? manualOpenProject : STACK[activeIndex].featured;
 
+  // Scroll-driven progress for the IDE window. Wakes on scroll / resize,
+  // eases with frame-rate independent smoothing, only writes styles that
+  // changed and sleeps once it has caught up — it used to read layout and
+  // rewrite every style on every frame for the whole visit.
   useEffect(() => {
-    const lerp = (start, end, factor) => start + (end - start) * factor;
+    let rafId = 0;
+    let last = 0;
     let targetProgress = 0;
     let currentProgress = 0;
     let targetEntrance = 0;
     let currentEntrance = 0;
+    let first = true;
+    const written = new WeakMap();
+
+    const write = (el, prop, value) => {
+      if (!el) return;
+      let store = written.get(el);
+      if (!store) written.set(el, (store = {}));
+      if (store[prop] === value) return;
+      store[prop] = value;
+      el.style[prop] = value;
+    };
 
     const computeTarget = () => {
       const el = wrapRef.current;
@@ -2356,29 +2436,23 @@ export default function TechStack() {
 
     const applyProgress = (progress, entrance, indexProgress) => {
       // Index tracks the real (unsmoothed) scroll progress so the visible
-      // pane is never behind when the section unpins — the lerp below is
+      // pane is never behind when the section unpins — the smoothing is
       // purely cosmetic for the track fill / entrance transform.
       const index = Math.min(SEGMENTS - 1, Math.floor(indexProgress * SEGMENTS));
 
-      if (trackFillRef.current) {
-        trackFillRef.current.style.transform = `scaleX(${progress})`;
-      }
+      write(trackFillRef.current, "transform", `scaleX(${progress.toFixed(4)})`);
+      write(edgeFillRef.current, "transform", `scaleY(${progress.toFixed(4)})`);
+      write(sceneRef.current, "opacity", entrance.toFixed(3));
+      write(
+        sceneRef.current,
+        "transform",
+        `translate3d(0, ${((1 - entrance) * 64).toFixed(2)}px, 0) scale(${(0.92 + entrance * 0.08).toFixed(4)})`
+      );
 
-      if (edgeFillRef.current) {
-        edgeFillRef.current.style.transform = `scaleY(${progress})`;
-      }
-
-      if (sceneRef.current) {
-        sceneRef.current.style.opacity = entrance;
-        sceneRef.current.style.transform = `translateY(${(1 - entrance) * 64}px) scale(${0.92 + entrance * 0.08})`;
-      }
-
-      if (hintRef.current) {
-        // Nudges the visitor once the window has faded in, then gets out of
-        // the way as soon as they actually start scrolling through it.
-        const hintFade = Math.max(0, 1 - progress * 5);
-        hintRef.current.style.opacity = (entrance * hintFade).toFixed(3);
-      }
+      // Nudges the visitor once the window has faded in, then gets out of
+      // the way as soon as they actually start scrolling through it.
+      const hintFade = Math.max(0, 1 - progress * 5);
+      write(hintRef.current, "opacity", (entrance * hintFade).toFixed(3));
 
       // While the visitor is typing in the terminal (pane 03), the pane stays
       // put: a phone keyboard or a stray scroll must not swap it away.
@@ -2389,24 +2463,47 @@ export default function TechStack() {
       }
     };
 
-    const tick = () => {
+    const tick = (now) => {
+      const dt = last ? now - last : 1000 / 60;
+      last = now;
       computeTarget();
-      currentProgress = lerp(currentProgress, targetProgress, 0.12);
-      if (Math.abs(currentProgress - targetProgress) < 0.0005) {
+      if (first) {
+        // Start where the page already is (a reload mid-page) instead of
+        // animating in from zero.
+        first = false;
         currentProgress = targetProgress;
-      }
-      currentEntrance = lerp(currentEntrance, targetEntrance, 0.1);
-      if (Math.abs(currentEntrance - targetEntrance) < 0.0005) {
         currentEntrance = targetEntrance;
       }
+      currentProgress += (targetProgress - currentProgress) * smoothing(0.12, dt);
+      if (Math.abs(currentProgress - targetProgress) < 0.0005) currentProgress = targetProgress;
+      currentEntrance += (targetEntrance - currentEntrance) * smoothing(0.1, dt);
+      if (Math.abs(currentEntrance - targetEntrance) < 0.0005) currentEntrance = targetEntrance;
       applyProgress(currentProgress, currentEntrance, targetProgress);
-      rafRef.current = requestAnimationFrame(tick);
+
+      const settled = currentProgress === targetProgress && currentEntrance === targetEntrance;
+      rafId = settled ? 0 : requestAnimationFrame(tick);
     };
 
-    rafRef.current = requestAnimationFrame(tick);
+    const wake = () => {
+      if (rafId) return;
+      last = 0;
+      rafId = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener("scroll", wake, { passive: true });
+    window.addEventListener("resize", wake);
+    // A blur out of the terminal can unlock a pane change without scrolling.
+    document.addEventListener("focusout", wake);
+    const ro = new ResizeObserver(wake);
+    ro.observe(document.body);
+    wake();
 
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      window.removeEventListener("scroll", wake);
+      window.removeEventListener("resize", wake);
+      document.removeEventListener("focusout", wake);
+      ro.disconnect();
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
 

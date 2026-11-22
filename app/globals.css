@@ -251,10 +251,21 @@ body {
 }
 
 /* ========== CURSOR FOLLOWER (Blue "hey" bubble) ========== */
-.cursor-follower {
+/* Moved every frame by CursorFollower with a transform only (no layout). */
+.cursor-follower-pos {
   position: fixed;
+  top: 0;
+  left: 0;
   /* Below the fixed Menu (1000) so it never covers it */
   z-index: 900;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.cursor-follower {
+  position: absolute;
+  top: 0;
+  left: 0;
   pointer-events: none;
   display: inline-flex;
   align-items: center;
@@ -273,7 +284,6 @@ body {
   transform: translate(12px, 14px) scale(1);
   box-shadow: 0 8px 30px rgba(55, 172, 232, 0.4);
   transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), padding 0.3s ease, min-width 0.3s ease;
-  will-change: left, top, transform, opacity;
 }
 
 .cursor-follower.fade-out {
@@ -354,9 +364,6 @@ body {
 /* ========== YELLOW SECTION ========== */
 .yellow-section {
   position: relative;
-  --brush-dash: 1320;
-  --brush-entry-x: -120px;
-  --brush-opacity: 0;
   margin-top: -40vh;
   /* Pulled up so it's behind the reveal columns */
   width: 100%;
@@ -391,18 +398,19 @@ body {
   width: 110%;
   height: 35vh;
   z-index: 2;
-  opacity: var(--brush-opacity);
+  /* opacity / transform are written by the home page's scroll loop, which
+     already smooths them; a CSS transition on top only added lag. */
+  opacity: 0;
   pointer-events: none;
-  transform: translateX(var(--brush-entry-x));
-  transition: opacity 0.08s linear, transform 0.08s linear;
+  transform: translate3d(-120px, 0, 0);
+  will-change: transform, opacity;
 }
 
 .brush-stroke-path {
   stroke-dasharray: 1320;
-  stroke-dashoffset: var(--brush-dash);
+  stroke-dashoffset: 1320;
   transform-origin: center;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.08));
-  transition: stroke-dashoffset 0.08s linear;
 }
 
 .brush-stroke-shadow {
@@ -414,39 +422,47 @@ body {
   opacity: 0.96;
 }
 
-/* Yellow Section Pills */
+/* Yellow Section Pills
+   Three layers of motion, each on its own property so none of them makes
+   the browser recompute styles every frame:
+   - scroll entrance: `translate` / `scale` / `opacity`, written by the home
+     page's scroll loop on .yellow-pill
+   - idle float: `transform` keyframes with fixed values on .yellow-pill, so
+     the compositor runs them off the main thread
+   - hover pop: `transform` on .yellow-pill-body, with a real transition */
 .yellow-pill {
   position: absolute;
-  --scroll-x: 0px;
-  --scroll-y: 42px;
-  --scroll-scale: 0.92;
-  --scroll-opacity: 0;
+  z-index: 25;
+  /* Above portrait */
+  translate: 0 42px;
+  scale: 0.92;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.yellow-pill-body {
+  position: relative;
+  display: block;
   background: var(--dark);
   color: white;
   font-family: var(--font-body);
   font-size: clamp(14px, 1.5vw, 22px);
   padding: 14px 32px;
   border-radius: 999px;
-  z-index: 25;
-  /* Above portrait */
   white-space: nowrap;
-  opacity: var(--scroll-opacity);
   overflow: hidden;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
-  will-change: transform, opacity;
-  transition: opacity 0.25s ease-out, box-shadow 0.25s ease, filter 0.25s ease, color 0.25s ease, text-shadow 0.25s ease;
-  --hover-scale: 1;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, filter 0.25s ease, text-shadow 0.25s ease;
 }
 
-.yellow-pill:hover {
-  --hover-scale: 1.15;
+.yellow-pill:hover .yellow-pill-body {
+  transform: scale(1.15);
   box-shadow: 0 24px 50px rgba(0, 0, 0, 0.6);
   filter: brightness(1.15);
-  color: #ffffff;
   text-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
 }
 
-.yellow-pill::after {
+.yellow-pill-body::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -462,9 +478,13 @@ body {
   animation: float-left 4.8s ease-in-out infinite;
 }
 
+/* Centred without a -50% transform, which would fight the float keyframes */
 .pill-center {
   bottom: 25%;
-  left: 50%;
+  left: 0;
+  right: 0;
+  width: max-content;
+  margin-inline: auto;
   animation: float-center 5.2s ease-in-out infinite;
 }
 
@@ -478,11 +498,11 @@ body {
 
   0%,
   100% {
-    transform: translate3d(var(--scroll-x), var(--scroll-y), 0) scale(calc(var(--scroll-scale) * var(--hover-scale))) rotate(-2deg);
+    transform: translate3d(0, 0, 0) rotate(-2deg);
   }
 
   50% {
-    transform: translate3d(calc(var(--scroll-x) + 8px), calc(var(--scroll-y) - 14px), 0) scale(calc(var(--scroll-scale) * var(--hover-scale))) rotate(2deg);
+    transform: translate3d(8px, -14px, 0) rotate(2deg);
   }
 }
 
@@ -490,11 +510,11 @@ body {
 
   0%,
   100% {
-    transform: translate3d(calc(-50% + var(--scroll-x)), var(--scroll-y), 0) scale(calc(var(--scroll-scale) * var(--hover-scale))) rotate(1deg);
+    transform: translate3d(0, 0, 0) rotate(1deg);
   }
 
   50% {
-    transform: translate3d(calc(-50% + var(--scroll-x) - 6px), calc(var(--scroll-y) - 16px), 0) scale(calc(var(--scroll-scale) * var(--hover-scale))) rotate(-1.5deg);
+    transform: translate3d(-6px, -16px, 0) rotate(-1.5deg);
   }
 }
 
@@ -502,11 +522,11 @@ body {
 
   0%,
   100% {
-    transform: translate3d(var(--scroll-x), var(--scroll-y), 0) scale(calc(var(--scroll-scale) * var(--hover-scale))) rotate(2deg);
+    transform: translate3d(0, 0, 0) rotate(2deg);
   }
 
   50% {
-    transform: translate3d(calc(var(--scroll-x) - 8px), calc(var(--scroll-y) - 13px), 0) scale(calc(var(--scroll-scale) * var(--hover-scale))) rotate(-2deg);
+    transform: translate3d(-8px, -13px, 0) rotate(-2deg);
   }
 }
 
@@ -1593,6 +1613,14 @@ body {
     #05060a;
 }
 
+/* Holder for a 3D scene (TechStack's LiveCanvas); sized exactly like the
+   wrapper <Canvas> renders itself, so the scene lays out the same. */
+.live-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 /* Name tags in the 3D language graph. --c is the node's own color. */
 .lg3d-label {
   display: inline-flex;
@@ -2677,7 +2705,6 @@ body {
   height: clamp(360px, 62vh, 690px);
   max-height: calc(100vh - 130px);
   width: auto;
-  image-rendering: pixelated;
   filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.18));
   border-radius: 0;
   object-position: bottom;
@@ -2894,19 +2921,24 @@ body {
      stack them in a clear band above its head instead. The floating
      micro-animation is desktop-only chrome; dropping it here also means one
      less continuously-running animation on a phone. */
-  .yellow-pill {
+  .yellow-pill-body {
     font-size: 14px;
     padding: 10px 22px;
   }
 
+  /* Stacked and centred; the scroll loop's sideways push and lift are
+     desktop-only too. */
   .pill-left,
   .pill-center,
   .pill-right {
     animation: none;
-    left: 50%;
-    right: auto;
+    left: 0;
+    right: 0;
     bottom: auto;
-    transform: translateX(-50%);
+    width: max-content;
+    margin-inline: auto;
+    translate: none !important;
+    scale: none !important;
   }
 
   .pill-left {
@@ -3235,6 +3267,13 @@ body {
 
 ::view-transition-new(site-menu) {
   animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yellow-pill,
+  .yellow-pill-body::after {
+    animation: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
